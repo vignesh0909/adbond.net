@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
-const { testConnection } = require('./config/db');
+const { pgConnection } = require('./models/db_connection');
 
 // Initialize express app
 const app = express();
@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
 // Test database connection
-testConnection();
+pgConnection();
 
 // Define routes
 app.get('/', (req, res) => {
