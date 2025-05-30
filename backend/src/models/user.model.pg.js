@@ -3,6 +3,7 @@ const client = require('./db_connection').pool;
 const createUsersTableQuery = `
 CREATE TABLE IF NOT EXISTS users (
     user_id TEXT PRIMARY KEY,
+    entity_id TEXT REFERENCES entities(entity_id) ON DELETE SET NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100),
     email VARCHAR(255) NOT NULL UNIQUE,

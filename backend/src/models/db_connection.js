@@ -16,13 +16,22 @@ const pgConnection = async () => {
         const client = await pool.connect();
         console.log('PostgreSQL database connection established successfully');
         client.release();
+        return true;
     } catch (error) {
         console.error('Error connecting to PostgreSQL database:', error.message);
+        throw error;
     }
+};
+
+// Create a client for backwards compatibility with existing model files
+const client = {
+    query: (text, params) => pool.query(text, params),
+    pool: pool
 };
 
 module.exports = {
     pool,
     pgConnection,
+    client,
     query: (text, params) => pool.query(text, params),
 };

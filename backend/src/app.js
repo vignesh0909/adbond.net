@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
-const { pgConnection } = require('./models/db_connection');
 
 // Initialize express app
 const app = express();
@@ -13,16 +12,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Test database connection
-pgConnection();
-
 // Define routes
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
 // Import routes
-const userRoutes = require('./routes/userRoutes');
+const userRoutes = require('./routes/user.router');
+const entityRoutes = require('./routes/entity.router');
+const offerRoutes = require('./routes/offer.router');
 
 // Use routes
 app.use('/api/users', userRoutes);
