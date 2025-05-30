@@ -20,10 +20,12 @@ app.get('/', (req, res) => {
 // Import routes
 const userRoutes = require('./routes/user.router');
 const entityRoutes = require('./routes/entity.router');
-const offerRoutes = require('./routes/offer.router');
+const offersRoutes = require('./routes/offers.router');
 
 // Use routes
 app.use('/api/users', userRoutes);
+app.use('/api/entities', entityRoutes);
+app.use('/api/offers', offersRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
