@@ -196,7 +196,7 @@ const checkOfferRequestPermissions = async (req, res, next) => {
 // PUBLIC ROUTES
 
 // Get all active offers (public)
-router.get('/offers', async (req, res) => {
+router.get('/fetch_all', async (req, res) => {
     try {
         const {
             category,
@@ -207,6 +207,8 @@ router.get('/offers', async (req, res) => {
             limit = 20,
             offset = 0
         } = req.query;
+
+        console.log(req.user)
 
         const filters = {};
         if (category) filters.category = category;
@@ -235,13 +237,14 @@ router.get('/offers', async (req, res) => {
     }
 });
 
-// Get all active offer requests (public)
-router.get('/offer-requests', async (req, res) => {
+// Get all active offer requests (protected)
+router.get('/offer-requests', authenticateToken, async (req, res) => {
     try {
         const {
             vertical,
             desired_payout_type,
             entity_type,
+            exclude_entity_id,
             limit = 20,
             offset = 0
         } = req.query;
@@ -250,6 +253,7 @@ router.get('/offer-requests', async (req, res) => {
         if (vertical) filters.vertical = vertical;
         if (desired_payout_type) filters.desired_payout_type = desired_payout_type;
         if (entity_type) filters.entity_type = entity_type;
+        if (exclude_entity_id) filters.exclude_entity_id = exclude_entity_id;
 
         const result = await OffersModel.getOfferRequests(filters, parseInt(limit), parseInt(offset));
         
@@ -272,7 +276,7 @@ router.get('/offer-requests', async (req, res) => {
 });
 
 // Get specific offer details (public)
-router.get('/offers/:offer_id', async (req, res) => {
+router.get('/:offer_id', async (req, res) => {
     try {
         const { offer_id } = req.params;
         
@@ -292,7 +296,7 @@ router.get('/offers/:offer_id', async (req, res) => {
 });
 
 // Track offer click (public)
-router.post('/offers/:offer_id/click', async (req, res) => {
+router.post('/:offer_id/click', async (req, res) => {
     try {
         const { offer_id } = req.params;
         const { entity_id } = req.body;
@@ -330,7 +334,7 @@ router.post('/offers/:offer_id/click', async (req, res) => {
 // PROTECTED ROUTES (require authentication)
 
 // Create new offer (advertisers and networks only)
-router.post('/offers', authenticateToken, validateOfferData, checkOfferPermissions, async (req, res) => {
+router.post('/create', authenticateToken, validateOfferData, checkOfferPermissions, async (req, res) => {
     try {
         const offerData = {
             ...req.body,
@@ -354,7 +358,7 @@ router.post('/offers', authenticateToken, validateOfferData, checkOfferPermissio
 });
 
 // Create new offer request (affiliates and networks only)
-router.post('/offer-requests', authenticateToken, validateOfferRequestData, checkOfferRequestPermissions, async (req, res) => {
+router.post('/offer-request', authenticateToken, validateOfferRequestData, checkOfferRequestPermissions, async (req, res) => {
     try {
         const requestData = {
             ...req.body,
@@ -453,6 +457,120 @@ router.get('/offer-requests/:offer_request_id/bids', authenticateToken, async (r
             res.json({
                 success: true,
                 bids: result.bids
+            });
+        } else {
+            res.status(500).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Get offers by entity (public)
+router.get('/entity/public/:entity_id', async (req, res) => {
+    try {
+        const { entity_id } = req.params;
+        const {
+            category,
+            limit = 20,
+            offset = 0
+        } = req.query;
+
+        const filters = { 
+            entity_id,
+            status: 'active' // Only show active offers for public view
+        };
+        if (category) filters.category = category;
+
+        const result = await OffersModel.getOffersByEntity(entity_id, filters, parseInt(limit), parseInt(offset));
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                offers: result.offers,
+                pagination: {
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    count: result.offers.length
+                }
+            });
+        } else {
+            res.status(404).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Get offers by entity (protected)
+router.get('/entity/:entity_id', authenticateToken, async (req, res) => {
+    try {
+        const { entity_id } = req.params;
+        const {
+            status,
+            category,
+            limit = 20,
+            offset = 0
+        } = req.query;
+
+        const filters = { entity_id };
+        if (status) filters.status = status;
+        if (category) filters.category = category;
+
+        const result = await OffersModel.getOffersByEntity(entity_id, filters, parseInt(limit), parseInt(offset));
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                offers: result.offers,
+                pagination: {
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    count: result.offers.length
+                }
+            });
+        } else {
+            res.status(500).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Get offer requests by user (protected)
+router.get('/offer-requests/user/:user_id', authenticateToken, async (req, res) => {
+    try {
+        const { user_id } = req.params;
+        const {
+            status,
+            vertical,
+            limit = 20,
+            offset = 0
+        } = req.query;
+
+        // Check if user is requesting their own data or is admin
+        if (req.user.user_id !== user_id && req.user.role !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                error: 'Access denied. You can only view your own offer requests.' 
+            });
+        }
+
+        const filters = { user_id };
+        if (status) filters.status = status;
+        if (vertical) filters.vertical = vertical;
+
+        const result = await OffersModel.getOfferRequestsByUser(user_id, filters, parseInt(limit), parseInt(offset));
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                requests: result.requests,
+                pagination: {
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    count: result.requests.length
+                }
             });
         } else {
             res.status(500).json({ success: false, error: result.error });

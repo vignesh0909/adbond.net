@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
 const userRoutes = require('./routes/user.router');
 const entityRoutes = require('./routes/entity.router');
 const offersRoutes = require('./routes/offers.router');
+const { authenticateToken } = require('./middleware/auth');
 
 // Use routes
 app.use('/api/users', userRoutes);

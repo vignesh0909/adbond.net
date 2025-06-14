@@ -168,7 +168,7 @@ class OffersModel {
     // Get offers with filtering
     static async getOffers(filters = {}, limit = 20, offset = 0) {
         let query = `
-            SELECT o.*, e.name as entity_name, e.entity_type
+            SELECT o.*, e.name as entity_name, e.entity_type, e.website
             FROM offers o
             LEFT JOIN entities e ON o.entity_id = e.entity_id
             WHERE o.offer_status = 'active'
@@ -294,6 +294,12 @@ class OffersModel {
             values.push(filters.entity_type);
         }
 
+        if (filters.exclude_entity_id) {
+            paramCount++;
+            query += ` AND (req.entity_id != $${paramCount} OR req.entity_id IS NULL)`;
+            values.push(filters.exclude_entity_id);
+        }
+
         query += ` ORDER BY req.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
         values.push(limit, offset);
 
@@ -413,6 +419,78 @@ class OffersModel {
         try {
             const result = await client.query(query, [offer_request_id]);
             return { success: true, bids: result.rows };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Get offers by entity
+    static async getOffersByEntity(entity_id, filters = {}, limit = 20, offset = 0) {
+        let query = `
+            SELECT o.*, e.name as entity_name, e.entity_type
+            FROM offers o
+            LEFT JOIN entities e ON o.entity_id = e.entity_id
+            WHERE o.entity_id = $1
+        `;
+        
+        const values = [entity_id];
+        let paramCount = 1;
+
+        if (filters.status) {
+            paramCount++;
+            query += ` AND o.offer_status = $${paramCount}`;
+            values.push(filters.status);
+        }
+
+        if (filters.category) {
+            paramCount++;
+            query += ` AND o.category = $${paramCount}`;
+            values.push(filters.category);
+        }
+
+        query += ` ORDER BY o.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+        values.push(limit, offset);
+
+        try {
+            const result = await client.query(query, values);
+            return { success: true, offers: result.rows };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Get offer requests by user
+    static async getOfferRequestsByUser(user_id, filters = {}, limit = 20, offset = 0) {
+        let query = `
+            SELECT req.*, e.name as entity_name, e.entity_type, 
+                   CONCAT(u.first_name, ' ', u.last_name) as user_name
+            FROM offer_requests req
+            LEFT JOIN entities e ON req.entity_id = e.entity_id
+            LEFT JOIN users u ON req.user_id = u.user_id
+            WHERE req.user_id = $1
+        `;
+        
+        const values = [user_id];
+        let paramCount = 1;
+
+        if (filters.status) {
+            paramCount++;
+            query += ` AND req.request_status = $${paramCount}`;
+            values.push(filters.status);
+        }
+
+        if (filters.vertical) {
+            paramCount++;
+            query += ` AND req.vertical = $${paramCount}`;
+            values.push(filters.vertical);
+        }
+
+        query += ` ORDER BY req.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+        values.push(limit, offset);
+
+        try {
+            const result = await client.query(query, values);
+            return { success: true, requests: result.rows };
         } catch (error) {
             return { success: false, error: error.message };
         }

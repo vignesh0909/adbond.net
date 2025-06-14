@@ -105,7 +105,7 @@ const validateEntityRegistration = [
         .withMessage('Please provide a valid email')
         .normalizeEmail(),
     
-    body('website')
+    body('website_url')
         .trim()
         .notEmpty()
         .withMessage('Website is required')
@@ -115,40 +115,48 @@ const validateEntityRegistration = [
     body('contact_info')
         .isObject()
         .withMessage('Contact info must be an object')
-        .custom((value) => {
-            if (!value.phone && !value.telegram && !value.teams && !value.linkedin && !value.address) {
-                throw new Error('At least one contact method is required (phone, telegram, teams, linkedin, or address)');
+        .custom((value, { req }) => {
+            if (!value.address || typeof value.address !== 'string' || value.address.trim() === '') {
+                throw new Error('Address is required in contact_info and cannot be empty.');
+            }
+
+            const hasPhone = value.phone && typeof value.phone === 'string' && value.phone.trim() !== '';
+            const hasTelegram = value.telegram && typeof value.telegram === 'string' && value.telegram.trim() !== '';
+            const hasTeams = value.teams && typeof value.teams === 'string' && value.teams.trim() !== '';
+            const hasLinkedin = value.linkedin && typeof value.linkedin === 'string' && value.linkedin.trim() !== '';
+
+            if (!(hasPhone || hasTelegram || hasTeams || hasLinkedin)) {
+                throw new Error('At least one of phone, telegram, teams, or linkedin is required in contact_info, in addition to address.');
             }
             return true;
         }),
     
-    body('contact_info.phone')
-        .optional()
-        .matches(/^\+?[\d\s\-\(\)]+$/)
-        .withMessage('Please provide a valid phone number'),
+    // body('contact_info.phone')
+    //     .optional()
+    //     .matches(/^\+?[\d\s\-\(\)]+$/)
+    //     .withMessage('Please provide a valid phone number'),
     
-    body('contact_info.telegram')
-        .optional()
-        .trim()
-        .isLength({ min: 3, max: 50 })
-        .withMessage('Telegram username must be between 3 and 50 characters'),
+    // body('contact_info.telegram')
+    //     .optional()
+    //     .trim()
+    //     .isLength({ min: 3, max: 50 })
+    //     .withMessage('Telegram username must be between 3 and 50 characters'),
     
-    body('contact_info.teams')
-        .optional()
-        .trim()
-        .isLength({ min: 3, max: 100 })
-        .withMessage('Teams contact must be between 3 and 100 characters'),
+    // body('contact_info.teams')
+    //     .optional()
+    //     .trim()
+    //     .isLength({ min: 3, max: 100 })
+    //     .withMessage('Teams contact must be between 3 and 100 characters'),
 
-    body('contact_info.linkedin')
-        .optional()
-        .isURL()
-        .withMessage('LinkedIn profile must be a valid URL'),
+    // body('contact_info.linkedin')
+    //     .optional()
+    //     .isURL()
+    //     .withMessage('LinkedIn profile must be a valid URL'),
 
-    body('contact_info.address')
-        .optional()
-        .trim()
-        .isLength({ min: 5, max: 500 })
-        .withMessage('Address must be between 5 and 500 characters'),
+    // body('contact_info.address')
+    //     .trim() // Ensure it's a string and not empty, handled by custom validator now for presence
+    //     .isLength({ min: 5, max: 500 })
+    //     .withMessage('Address must be between 5 and 500 characters'),
 
     body('secondary_email')
         .optional()

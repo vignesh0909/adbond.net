@@ -1,0 +1,48 @@
+{
+  "name": "John Doe",
+  "email": "",
+  "contact_info": {
+    "phone": "",
+    "teams": "",
+    "linkedin": "",
+    "telegram": "",
+    "address": ""
+  },
+  "secondary_email": "",
+  "description": "Experienced affiliate marketer with a focus on digital marketing and e-commerce. Specializes in CPA, CPL, and CPI models. Looking to expand network and collaborate with advertisers in various verticals.",
+  "additional_notes": "",
+  "how_you_heard": "Online Search",
+  "website": "https://www.johndoeaffiliate.com",
+
+  "network": {
+    "network_name": "AdNetworkX",
+    "signup_url": "https://www.adnetworkx.com/signup",
+    "tracking_platform": "AdNetworkX Platform",
+    "supported_models": ["CPA", "CPL", "CPI", "RevShare"],
+    "verticals": ["Finance", "Health", "E-commerce", "Travel"],
+    "payment_terms": "Net 90/Net 60/Net 45/Net 30/Net 15/Net 7/Weekly/Biweekly",
+    "offers_available": 10,
+    "minimum_payout": 100,
+    "referral_commission": 0.1
+  },
+  "affliate": {
+    "verticals": [],
+    "monthly_revenue": 0,
+    "traffic_provided_geos": [],
+    "reference_details": {}
+  },
+  "advertiser": {
+    "company_name": "AdNetworkX Advertiser",
+    "singup_url": "https://www.adnetworkx.com/advertiser-signup",
+    "program_name": "AdNetworkX Program",
+    "program_category": "Digital Marketing",
+    "social_media": {
+      "facebook": "https://www.facebook.com/adnetworkx",
+      "twitter": "https://twitter.com/adnetworkx",
+      "linkedin": "https://www.linkedin.com/company/adnetworkx"
+    },
+    "payout_types": ["CPC", "CPM", "CPL", "CPA"],
+    "payment_terms": "NEt 90/Net 60/Net 45/Net 30/Net 15/Net 7/Weekly/Biweekly",
+    "referral_commission": 0.1
+  }
+}

@@ -17,10 +17,16 @@ CREATE TABLE IF NOT EXISTS users (
     identity_verified BOOLEAN DEFAULT FALSE,
     verification_method VARCHAR(50) CHECK (verification_method IN ('linkedin', 'business_email')),
     verification_date TIMESTAMP,
+    password_reset_required BOOLEAN DEFAULT FALSE,
+    temp_password_expires TIMESTAMP,
     last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add missing columns if they don't exist
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_required BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS temp_password_expires TIMESTAMP;
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -45,7 +51,16 @@ const userModel = {
     // Create a new user
     async createUser(userData) {
         try {
-            const { first_name, last_name, email, password, role = 'user' } = userData;
+            const { 
+                first_name, 
+                last_name, 
+                email, 
+                password, 
+                role = 'user', 
+                entity_id = null,
+                password_reset_required = false,
+                temp_password_expires = null
+            } = userData;
             const user_id = uuidv4();
             
             // Hash password
@@ -53,12 +68,19 @@ const userModel = {
             const hashedPassword = await bcrypt.hash(password, saltRounds);
             
             const query = `
-                INSERT INTO users (user_id, first_name, last_name, email, password, role)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING user_id, first_name, last_name, email, role, status, created_at
+                INSERT INTO users (
+                    user_id, entity_id, first_name, last_name, email, password, role,
+                    password_reset_required, temp_password_expires
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                RETURNING user_id, entity_id, first_name, last_name, email, role, status, 
+                         password_reset_required, created_at
             `;
             
-            const values = [user_id, first_name, last_name, email, hashedPassword, role];
+            const values = [
+                user_id, entity_id, first_name, last_name, email, hashedPassword, role,
+                password_reset_required, temp_password_expires
+            ];
             const result = await client.query(query, values);
             
             return result.rows[0];
@@ -82,9 +104,9 @@ const userModel = {
     async getUserById(user_id) {
         try {
             const query = `
-                SELECT user_id, first_name, last_name, email, role, status, 
+                SELECT user_id, entity_id, first_name, last_name, email, role, status, 
                        profile_image_url, linkedin_profile, identity_verified, 
-                       last_login, created_at, updated_at
+                       password_reset_required, last_login, created_at, updated_at
                 FROM users 
                 WHERE user_id = $1
             `;
@@ -159,11 +181,67 @@ const userModel = {
         }
     },
 
+    // Update password
+    async updatePassword(user_id, newPassword) {
+        try {
+            // Hash password
+            const saltRounds = 12;
+            const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+            const query = `
+                UPDATE users 
+                SET password = $2,
+                    password_reset_required = FALSE,
+                    temp_password_expires = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $1
+                RETURNING user_id, email
+            `;
+
+            const result = await client.query(query, [user_id, hashedPassword]);
+            return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
     // Delete user
     async deleteUser(user_id) {
         try {
             const query = 'DELETE FROM users WHERE user_id = $1';
             await client.query(query, [user_id]);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Check if temporary password has expired
+    async checkTempPasswordExpiry(user_id) {
+        try {
+            const query = `
+                SELECT password_reset_required, temp_password_expires 
+                FROM users 
+                WHERE user_id = $1
+            `;
+            const result = await client.query(query, [user_id]);
+            const user = result.rows[0];
+            
+            if (!user || !user.password_reset_required) {
+                return { expired: false, requires_reset: false };
+            }
+            
+            if (!user.temp_password_expires) {
+                return { expired: false, requires_reset: true };
+            }
+            
+            const now = new Date();
+            const expiryDate = new Date(user.temp_password_expires);
+            
+            return { 
+                expired: now > expiryDate,
+                requires_reset: user.password_reset_required,
+                expiry_date: user.temp_password_expires
+            };
         } catch (error) {
             throw error;
         }

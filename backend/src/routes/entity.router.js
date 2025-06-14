@@ -73,7 +73,7 @@ router.get('/type/:type', async (req, res, next) => {
 router.get('/metadata/template/:type', (req, res) => {
     try {
         const { type } = req.params;
-        
+
         const validTypes = ['advertiser', 'affiliate', 'network'];
         if (!validTypes.includes(type)) {
             return res.status(400).json({
@@ -82,7 +82,7 @@ router.get('/metadata/template/:type', (req, res) => {
         }
 
         const template = entityModel.createDefaultMetadata(type);
-        
+
         // Add common fields info
         const commonFields = {
             name: "string - Entity name",
@@ -123,24 +123,14 @@ router.post('/register',
     handleValidationErrors,
     async (req, res, next) => {
         try {
-            const { 
-                entity_type, 
-                name, 
-                email, 
-                secondary_email,
-                website, 
-                contact_info, 
-                description, 
-                additional_notes,
-                how_you_heard,
-                entity_metadata 
-            } = req.body;
+            const { entity_type, name, email, secondary_email, website_url, contact_info, description, additional_notes,
+                how_you_heard, entity_metadata } = req.body;
 
             // Validation
-            if (!entity_type || !name || !email || !website || !contact_info || !description || !entity_metadata) {
+            if (!entity_type || !name || !email || !website_url || !contact_info || !description || !entity_metadata) {
                 return res.status(400).json({
                     message: 'All required fields must be provided',
-                    required: ['entity_type', 'name', 'email', 'website', 'contact_info', 'description', 'entity_metadata']
+                    required: ['entity_type', 'name', 'email', 'website_url', 'contact_info', 'description', 'entity_metadata']
                 });
             }
 
@@ -174,7 +164,7 @@ router.post('/register',
                 name,
                 email,
                 secondary_email,
-                website,
+                website_url,
                 contact_info,
                 description,
                 additional_notes,
@@ -190,7 +180,7 @@ router.post('/register',
                     name: entity.name,
                     email: entity.email,
                     secondary_email: entity.secondary_email,
-                    website: entity.website,
+                    website_url: entity.website_url,
                     description: entity.description,
                     verification_status: entity.verification_status,
                     created_at: entity.created_at
@@ -249,14 +239,14 @@ router.get('/statistics', authenticateToken, async (req, res, next) => {
 // Get entities by specific criteria in metadata (authentication required)
 router.get('/by-criteria', authenticateToken, async (req, res, next) => {
     try {
-        const { 
-            entity_type, 
-            verticals, 
-            payment_terms, 
+        const {
+            entity_type,
+            verticals,
+            payment_terms,
             supported_models,
             min_payout,
-            page = 1, 
-            limit = 10 
+            page = 1,
+            limit = 10
         } = req.query;
 
         if (!entity_type) {
@@ -348,6 +338,39 @@ router.get('/search', authenticateToken, async (req, res, next) => {
         });
     } catch (error) {
         console.error('Search entities error:', error);
+        next(error);
+    }
+});
+
+// Get public entity details by ID (no authentication required)
+router.get('/public/:id', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const entity = await entityModel.getEntityById(id);
+        if (!entity) {
+            return res.status(404).json({ message: 'Entity not found' });
+        }
+
+        // Return only public information
+        const publicEntity = {
+            entity_id: entity.entity_id,
+            entity_type: entity.entity_type,
+            name: entity.name,
+            website: entity.website,
+            description: entity.description,
+            reputation_score: entity.reputation_score,
+            total_reviews: entity.total_reviews,
+            created_at: entity.created_at,
+            entity_metadata: entity.entity_metadata,
+            verification_status: entity.verification_status
+        };
+
+        res.json({
+            entity: publicEntity
+        });
+    } catch (error) {
+        console.error('Get public entity by ID error:', error);
         next(error);
     }
 });
@@ -461,6 +484,7 @@ router.put('/:id/verification',
         try {
             const { id } = req.params;
             const { verification_status, admin_notes } = req.body;
+            console.log(req.user);
 
             const validStatuses = ['pending', 'approved', 'rejected', 'on_hold'];
             if (!validStatuses.includes(verification_status)) {
@@ -475,7 +499,34 @@ router.put('/:id/verification',
                 return res.status(404).json({ message: 'Entity not found' });
             }
 
-            const updatedEntity = await entityModel.updateVerificationStatus(id, verification_status, req.user.user_id, admin_notes);
+            const updatedEntity = await entityModel.updateVerificationStatus({ entity_id: id, verification_status: verification_status, admin_user_id: req.user.user_id, admin_notes });
+
+            // Create user account only when entity is being approved
+            if (verification_status === 'approved') {
+                try {
+                    // Import the mailer service
+                    const { sendWelcomeEmail } = require('../utilities/mailerService');
+                    
+                    // Create user account for approved entity
+                    const { user, tempPassword } = await entityModel.createUserAccountForEntity(entity);
+                    console.log('User account temp password:', tempPassword);
+
+                    // Send welcome email with login credentials
+                    const emailResult = await sendWelcomeEmail(entity, user, tempPassword);
+                    console.log('Email sending result:', emailResult);
+
+                    // Update entity with user account created flag
+                    const linkedEntity = await entityModel.linkEntityToUser(entity.entity_id, user.user_id);
+                    console.log('Entity linked to user account:', linkedEntity);
+                    
+                    // Update the response entity with the user account created flag
+                    updatedEntity.user_account_created = true;
+                } catch (accountError) {
+                    console.error('Error creating user account for entity:', accountError);
+                    // Continue with approval even if account creation fails
+                    // We don't want to block the approval process
+                }
+            }
 
             res.json({
                 message: 'Entity verification status updated successfully',
@@ -537,17 +588,61 @@ router.put('/admin/bulk-verification',
             }
 
             const updatedEntities = await entityModel.bulkUpdateVerificationStatus(
-                entity_ids, 
-                verification_status, 
+                entity_ids,
+                verification_status,
                 req.user.user_id,
                 admin_notes
             );
 
-            res.json({
-                message: `${updatedEntities.length} entities verification status updated successfully`,
-                updated_entities: updatedEntities,
-                verification_status: verification_status
-            });
+            // Create user accounts for approved entities
+            if (verification_status === 'approved') {
+                const { sendWelcomeEmail } = require('../utilities/mailerService');
+                const accountCreationResults = [];
+
+                // Process accounts sequentially to avoid race conditions
+                for (const entity of updatedEntities) {
+                    try {
+                        // Create user account for entity
+                        const { user, tempPassword } = await entityModel.createUserAccountForEntity(entity);
+                        
+                        // Send welcome email with login credentials
+                        const emailResult = await sendWelcomeEmail(entity, user, tempPassword);
+                        console.log(`Email sending result for ${entity.name}:`, emailResult);
+                        
+                        // Update entity with user account created flag
+                        const linkedEntity = await entityModel.linkEntityToUser(entity.entity_id, user.user_id);
+                        console.log(`Entity linked to user account: ${entity.name}`);
+                        
+                        // Store the results
+                        accountCreationResults.push({
+                            entity_id: entity.entity_id,
+                            success: true,
+                            email_sent: emailResult.success
+                        });
+                    } catch (accountError) {
+                        console.error(`Error creating user account for entity ${entity.entity_id}:`, accountError);
+                        accountCreationResults.push({
+                            entity_id: entity.entity_id,
+                            success: false,
+                            error: accountError.message
+                        });
+                    }
+                }
+
+                // Update the response to include account creation results
+                res.json({
+                    message: `${updatedEntities.length} entities verification status updated successfully`,
+                    updated_entities: updatedEntities,
+                    verification_status: verification_status,
+                    account_creation_results: accountCreationResults
+                });
+            } else {
+                res.json({
+                    message: `${updatedEntities.length} entities verification status updated successfully`,
+                    updated_entities: updatedEntities,
+                    verification_status: verification_status
+                });
+            }
         } catch (error) {
             console.error('Bulk update verification status error:', error);
             next(error);
@@ -596,17 +691,17 @@ router.put('/:id/reputation',
 // Validate entity data before submission (public route)
 router.post('/validate', async (req, res, next) => {
     try {
-        const { 
-            entity_type, 
-            name, 
-            email, 
+        const {
+            entity_type,
+            name,
+            email,
             secondary_email,
-            website, 
-            contact_info, 
-            description, 
+            website,
+            contact_info,
+            description,
             additional_notes,
             how_you_heard,
-            entity_metadata 
+            entity_metadata
         } = req.body;
 
         const errors = [];
@@ -648,12 +743,12 @@ router.post('/validate', async (req, res, next) => {
 
         // Contact info validation
         if (contact_info) {
-            const hasContactMethod = contact_info.phone || 
-                                   contact_info.telegram || 
-                                   contact_info.teams || 
-                                   contact_info.linkedin || 
-                                   contact_info.address;
-            
+            const hasContactMethod = contact_info.phone ||
+                contact_info.telegram ||
+                contact_info.teams ||
+                contact_info.linkedin ||
+                contact_info.address;
+
             if (!hasContactMethod) {
                 errors.push('At least one contact method is required (phone, telegram, teams, linkedin, or address)');
             }
@@ -721,7 +816,7 @@ router.get('/email/:email', authenticateToken, async (req, res, next) => {
         }
 
         const entity = await entityModel.getEntityByEmail(email);
-        
+
         if (!entity) {
             return res.status(404).json({ message: 'Entity not found with this email' });
         }

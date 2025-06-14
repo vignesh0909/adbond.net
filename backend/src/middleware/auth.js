@@ -29,6 +29,7 @@ const authenticateToken = async (req, res, next) => {
 
         // Add user info to request object
         req.user = { user_id: decoded.user_id, email: decoded.email, role: decoded.role };
+        console.log(`Authenticated user: ${req.user.email} (${req.user.user_id})`);
 
         next();
     } catch (error) {

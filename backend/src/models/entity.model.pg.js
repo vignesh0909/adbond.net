@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS entities (
     flag_history JSONB,
     reputation_score DECIMAL(3,2) DEFAULT 0.00 CHECK (reputation_score >= 0 AND reputation_score <= 5),
     total_reviews INTEGER DEFAULT 0,
+    user_account_created BOOLEAN DEFAULT FALSE,
     is_public BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -30,6 +31,9 @@ CREATE TABLE IF NOT EXISTS entities (
         contact_info ? 'address'
     )
 );
+
+-- Add missing column if it doesn't exist
+ALTER TABLE entities ADD COLUMN IF NOT EXISTS user_account_created BOOLEAN DEFAULT FALSE;
 
 -- Indexes for entities
 CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);
@@ -129,7 +133,7 @@ const entityModel = {
     // Validate and structure entity metadata based on entity type
     validateEntityMetadata(entity_type, metadata) {
         const commonFields = ['name', 'email', 'contact_info', 'secondary_email', 'description', 'additional_notes', 'how_you_heard', 'website'];
-        
+
         // Define required fields for each entity type
         const typeSpecificFields = {
             network: {
@@ -148,7 +152,7 @@ const entityModel = {
 
         const requiredFields = typeSpecificFields[entity_type]?.required || [];
         const missingFields = requiredFields.filter(field => !metadata.hasOwnProperty(field));
-        
+
         if (missingFields.length > 0) {
             throw new Error(`Missing required fields for ${entity_type}: ${missingFields.join(', ')}`);
         }
@@ -202,7 +206,7 @@ const entityModel = {
                 name,
                 email,
                 secondary_email,
-                website,
+                website_url,
                 contact_info,
                 description,
                 additional_notes,
@@ -225,7 +229,7 @@ const entityModel = {
             `;
 
             const values = [
-                entity_id, entity_type, name, email, secondary_email, website,
+                entity_id, entity_type, name, email, secondary_email, website_url,
                 contact_info, description, additional_notes, how_you_heard, entity_metadata
             ];
 
@@ -254,7 +258,7 @@ const entityModel = {
                 SELECT entity_id, entity_type, name, email, secondary_email, website, 
                        contact_info, description, additional_notes, how_you_heard,
                        verification_status, approved_by, entity_metadata, reputation_score, 
-                       total_reviews, is_public, created_at, updated_at
+                       total_reviews, is_public, user_account_created, created_at, updated_at
                 FROM entities 
                 WHERE entity_id = $1
             `;
@@ -356,15 +360,16 @@ const entityModel = {
     },
 
     // Update entity verification status (admin only)
-    async updateVerificationStatus(entity_id, verification_status, admin_user_id, admin_notes = null) {
+    async updateVerificationStatus({ entity_id, verification_status, admin_user_id, admin_notes = null }) {
         try {
             const query = `
                 UPDATE entities 
-                SET verification_status = $2,
-                    approved_by = CASE WHEN $2 = 'approved' THEN $3 ELSE approved_by END,
+                SET verification_status = $2::VARCHAR,
+                    approved_by = CASE WHEN $2::VARCHAR = 'approved' THEN $3 ELSE approved_by END,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE entity_id = $1
-                RETURNING entity_id, entity_type, name, email, verification_status, approved_by, updated_at
+                RETURNING entity_id, entity_type, name, email, verification_status, approved_by, 
+                         updated_at, user_account_created
             `;
 
             const result = await client.query(query, [entity_id, verification_status, admin_user_id]);
@@ -572,7 +577,7 @@ const entityModel = {
 
             const currentTotal = entity.total_reviews;
             const currentScore = entity.reputation_score;
-            
+
             // Calculate new average rating
             const newTotal = currentTotal + 1;
             const newScore = ((currentScore * currentTotal) + new_rating) / newTotal;
@@ -644,7 +649,8 @@ const entityModel = {
                     approved_by = CASE WHEN $1 = 'approved' THEN $3 ELSE approved_by END,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE entity_id = ANY($2)
-                RETURNING entity_id, entity_type, name, verification_status, approved_by
+                RETURNING entity_id, entity_type, name, email, description, website,
+                         contact_info, verification_status, approved_by, updated_at
             `;
 
             const result = await client.query(query, [verification_status, entity_ids, admin_user_id]);
@@ -652,7 +658,57 @@ const entityModel = {
         } catch (error) {
             throw error;
         }
+    },
+
+    // Create user account for entity
+    async createUserAccountForEntity(entity) {
+        const { userModel } = require('./user.model.pg');
+        
+        // Generate temporary password
+        const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+        
+        // Extract name parts from entity name
+        const nameParts = entity.name.split(' ');
+        const firstName = nameParts[0] || entity.name;
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        // Set password expiry (24 hours from now)
+        const expiryDate = new Date();
+        expiryDate.setHours(expiryDate.getHours() + 24);
+        
+        // Create user account
+        const userData = {
+            first_name: firstName,
+            last_name: lastName,
+            email: entity.email,
+            password: tempPassword,
+            role: entity.entity_type, // advertiser, affiliate, network
+            entity_id: entity.entity_id,
+            password_reset_required: true,
+            temp_password_expires: expiryDate
+        };
+        
+        const user = await userModel.createUser(userData);
+        
+        return { user, tempPassword };
+    },
+    
+    // Link entity to user
+    async linkEntityToUser(entity_id, user_id) {
+        try {
+            // Update entity with user_id reference
+            const query = `
+                UPDATE entities
+                SET user_account_created = TRUE
+                WHERE entity_id = $1
+                RETURNING entity_id, name, email, verification_status
+            `;
+            
+            const result = await client.query(query, [entity_id]);
+            return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
     }
 }
-
 module.exports = { pool: client, entityModel };
