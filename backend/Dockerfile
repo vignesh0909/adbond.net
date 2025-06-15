@@ -15,4 +15,4 @@ COPY . ./
 EXPOSE 5000
 
 # Start the backend application
-CMD ["node", "src/app.js"]
+CMD ["node", "app.js"]
