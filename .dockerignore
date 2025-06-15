@@ -1,0 +1,30 @@
+# .dockerignore file located at the project root: linkindin.us/.dockerignore
+
+# General ignores
+.git
+.vscode
+*.md
+
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend specific ignores (relative to frontend/)
+frontend/node_modules
+frontend/dist
+frontend/.env*
+frontend/.DS_Store
+
+# UI-Server specific ignores (relative to ui-server/)
+ui-server/node_modules
+ui-server/public # This will be populated by the Docker build
+ui-server/logs
+ui-server/.env*
+ui-server/.DS_Store
+
+# Backend specific ignores (if you dockerize it later)
+backend/node_modules
+backend/.env*
+backend/.DS_Store
