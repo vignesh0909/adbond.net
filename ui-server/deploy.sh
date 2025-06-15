@@ -73,7 +73,7 @@ if check_ec2; then
     
     # Start the application with PM2
     print_status "Starting application with PM2..."
-    pm2 start server.js --name "linkindin-ui" --log-file logs/ui-server.log
+    pm2 start app.js --name "linkindin-ui" --log-file logs/ui-server.log
     pm2 save
     pm2 startup
     
