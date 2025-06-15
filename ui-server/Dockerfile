@@ -8,7 +8,7 @@ WORKDIR /app
 # Copy frontend package files and install dependencies
 # Copy package.json and lock files first to leverage Docker cache
 COPY frontend/package.json frontend/package-lock.json* frontend/yarn.lock* frontend/pnpm-lock.yaml* ./frontend/
-RUN cd frontend && npm install
+RUN cd frontend && npm config set registry https://registry.npmjs.org/ && npm install
 
 # Copy the rest of the frontend source code
 COPY frontend/ ./frontend/
@@ -23,7 +23,7 @@ WORKDIR /app
 # Copy ui-server package files and install production dependencies
 # Copy package.json and lock files first
 COPY ui-server/package.json ui-server/package-lock.json* ui-server/yarn.lock* ui-server/pnpm-lock.yaml* ./ui-server/
-RUN cd ui-server && npm install --production
+RUN cd ui-server && npm config set registry https://registry.npmjs.org/ && npm install --production
 
 # Copy the rest of the ui-server application code
 # Assuming your main server file is server.js as per your ui-server/package.json
