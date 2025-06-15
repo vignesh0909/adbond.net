@@ -2,7 +2,7 @@
 # Build context is the project root: linkindin.us/
 
 # Stage 1: Build the frontend
-FROM node:22-alpine AS frontend-builder
+FROM node:22-alpine AS adbond-ui-builder
 WORKDIR /app
 
 # Copy frontend package.json and install dependencies
@@ -17,7 +17,7 @@ WORKDIR /app/frontend
 RUN npm run build
 
 # Stage 2: Setup the backend
-FROM node:22-alpine AS backend-prod
+FROM node:22-alpine AS adbond-api-prod
 WORKDIR /app
 
 # Copy backend package.json and install dependencies
@@ -32,8 +32,8 @@ COPY backend/ ./backend/
 # Create directories for logs
 RUN mkdir -p ./backend/logs
 
-# Copy built frontend assets from the frontend-builder stage
-COPY --from=frontend-builder /app/frontend/dist ./backend/public/
+# Copy built frontend assets from the adbond-ui-builder stage
+COPY --from=adbond-ui-builder /app/frontend/dist ./backend/public/
 
 # Expose ports for both frontend and backend
 EXPOSE 3001 5000
@@ -44,4 +44,4 @@ ENV FRONTEND_PORT=3001
 ENV BACKEND_PORT=5000
 
 # Start both frontend and backend applications
-CMD ["sh", "-c", "pm2-runtime start backend/src/app.js --name adbond-backend && pm2-runtime start frontend/src/main.jsx --name adbond-frontend"]
+CMD ["sh", "-c", "pm2-runtime start backend/src/app.js --name adbond-api && pm2-runtime start frontend/src/main.jsx --name adbond-ui"]
