@@ -2,7 +2,7 @@
 # Build context is the project root: linkindin.us/
 
 # Stage 1: Build the frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 WORKDIR /app
 
 # Copy frontend package files and install dependencies
@@ -17,7 +17,7 @@ COPY frontend/ ./frontend/
 RUN cd frontend && npm run build
 
 # Stage 2: Setup the UI server (production)
-FROM node:18-alpine AS ui-server-prod
+FROM node:22-alpine AS ui-server-prod
 WORKDIR /app
 
 # Copy ui-server package files and install production dependencies
