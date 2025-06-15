@@ -1,5 +1,6 @@
 // Replace hardcoded API base URL with environment variable
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4100/api';
+console.log(import.meta.env.VITE_API_BASE_URL);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4100/api';
 
 // API service for backend integration
 
