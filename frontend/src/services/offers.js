@@ -1,5 +1,5 @@
 // API service for backend integration
-const API_BASE_URL = 'http://localhost:4100/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4100/api';
 
 // Generic fetch wrapper with error handling
 const fetchAPI = async (endpoint, options = {}) => {
