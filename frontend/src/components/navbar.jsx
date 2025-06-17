@@ -117,7 +117,7 @@ const Navbar = () => {
           <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
               <img
-                src="/assets/AdBond-Logo-1.png"
+                src="/assets/Favicon-dark-mode.png"
                 alt="Linkin Logo"
                 className="h-12 w-auto sm:h-16 drop-shadow-lg transition-transform group-hover:scale-105"
               />
