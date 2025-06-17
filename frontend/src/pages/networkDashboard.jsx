@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/navbar';
+import EntityReviewsDashboard from '../components/EntityReviewsDashboard';
 import { authAPI, offersAPI } from '../services/api';
 
 export default function NetworkDashboard() {
@@ -312,6 +313,24 @@ export default function NetworkDashboard() {
             >
               My Offers ({myOffers.length})
             </button>
+            <button
+              onClick={() => setSelectedTab('my-requests')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'my-requests'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              My Requests ({myRequests.length})
+            </button>
+            <button
+              onClick={() => setSelectedTab('reviews')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'reviews'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Reviews
+            </button>
             {/* <button
               onClick={() => setSelectedTab('available-offers')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'available-offers'
@@ -330,15 +349,6 @@ export default function NetworkDashboard() {
             >
               Affiliate Requests ({offerRequests.length})
             </button> */}
-            <button
-              onClick={() => setSelectedTab('my-requests')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'my-requests'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              My Offer Requests ({myRequests.length})
-            </button>
           </nav>
         </div>
 
@@ -498,6 +508,14 @@ export default function NetworkDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Reviews Tab */}
+        {selectedTab === 'reviews' && currentUser?.entity_id && (
+          <div>
+            <h3 className="text-xl font-semibold mb-6">Entity Reviews</h3>
+            <EntityReviewsDashboard entityId={currentUser.entity_id} />
           </div>
         )}
 

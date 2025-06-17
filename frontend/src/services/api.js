@@ -118,6 +118,11 @@ export const authAPI = {
       return null;
     }
   },
+
+  // Get auth token from localStorage
+  getToken: () => {
+    return localStorage.getItem('authToken');
+  },
 };
 
 // Entity Management APIs

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import Navbar from '../components/navbar';
+import EntityReviews from '../components/EntityReviews';
 import { entityAPI, offersAPI } from '../services/api';
 
 export default function EntityDetailsPage() {
@@ -11,6 +12,7 @@ export default function EntityDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [offersLoading, setOffersLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     const fetchEntityDetails = async () => {
@@ -141,11 +143,13 @@ export default function EntityDetailsPage() {
             <div className="text-gray-600">Active Offers</div>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">4.5</div>
+            <div className="text-3xl font-bold text-green-600 mb-2">
+              {entity.reputation_score > 0 ? entity.reputation_score.toFixed(1) : 'N/A'}
+            </div>
             <div className="text-gray-600">Rating</div>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="text-3xl font-bold text-purple-600 mb-2">23</div>
+            <div className="text-3xl font-bold text-purple-600 mb-2">{entity.total_reviews || 0}</div>
             <div className="text-gray-600">Reviews</div>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
@@ -156,61 +160,170 @@ export default function EntityDetailsPage() {
           </div>
         </div>
 
-        {/* Entity Offers */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Offers from {entity.name}</h2>
-          
-          {offersLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Loading offers...</span>
-            </div>
-          ) : entityOffers.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-gray-500">No offers available from this entity</div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {entityOffers.map((offer, index) => (
-                <Link 
-                  key={index}
-                  to={`/offer/${offer.offer_id}`}
-                  state={{ offer }}
-                  className="block bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-4">
-                        {offer.title.charAt(0).toUpperCase()}
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 px-6">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'overview'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('offers')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'offers'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Offers ({entityOffers.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'reviews'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Reviews ({entity.total_reviews || 0})
+              </button>
+            </nav>
+          </div>
+
+          <div className="p-6">
+            {activeTab === 'overview' && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">About {entity.name}</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Entity Details</h3>
+                    <dl className="space-y-2">
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Type</dt>
+                        <dd className="text-sm text-gray-900 capitalize">{entity.entity_type}</dd>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 mb-1">{offer.title}</h3>
-                        <div className="flex items-center space-x-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {offer.category}
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                            {offer.payout_type}
-                          </span>
-                        </div>
+                        <dt className="text-sm font-medium text-gray-500">Website</dt>
+                        <dd className="text-sm text-gray-900">
+                          {entity.website ? (
+                            <a 
+                              href={entity.website} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {entity.website}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </dd>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-blue-600">
-                        {offer.payout_value ? 
-                          (typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ? 
-                            offer.payout_value : 
-                            `$${offer.payout_value}`) : 
-                          'Contact'
-                        }
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Reputation Score</dt>
+                        <dd className="text-sm text-gray-900">
+                          {entity.reputation_score > 0 ? (
+                            <div className="flex items-center">
+                              <span className="text-yellow-500 mr-1">
+                                {'★'.repeat(Math.round(entity.reputation_score))}
+                                {'☆'.repeat(5 - Math.round(entity.reputation_score))}
+                              </span>
+                              <span>({entity.reputation_score}/5)</span>
+                            </div>
+                          ) : (
+                            'No ratings yet'
+                          )}
+                        </dd>
                       </div>
-                      <div className="text-sm text-gray-500">{offer.payout_type}</div>
-                    </div>
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Verification Status</dt>
+                        <dd className="text-sm">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            entity.verification_status === 'approved' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {entity.verification_status === 'approved' ? 'Verified' : 'Pending Verification'}
+                          </span>
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
-                </Link>
-              ))}
-            </div>
-          )}
+                  
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Description</h3>
+                    <p className="text-sm text-gray-700">
+                      {entity.description || 'No description available for this entity.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'offers' && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Available Offers</h2>
+                
+                {offersLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-3 text-gray-600">Loading offers...</span>
+                  </div>
+                ) : entityOffers.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <p className="text-gray-600">No offers available from this entity.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {entityOffers.map((offer, index) => (
+                      <Link 
+                        key={index}
+                        to={`/offer/${offer.offer_id}`}
+                        state={{ offer }}
+                        className="block bg-gray-50 hover:bg-gray-100 rounded-lg p-6 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">{offer.title}</h3>
+                            <p className="text-gray-600 text-sm mb-3">{offer.description}</p>
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                {offer.category}
+                              </span>
+                              <span>Geo: {Array.isArray(offer.target_geo) ? offer.target_geo.join(', ') : offer.target_geo}</span>
+                            </div>
+                          </div>
+                          <div className="text-right ml-6">
+                            <div className="text-2xl font-bold text-green-600 mb-1">
+                              {offer.payout_value ? 
+                                (typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ? 
+                                  offer.payout_value : 
+                                  `$${offer.payout_value}`) : 
+                                'Contact'
+                              }
+                            </div>
+                            <div className="text-sm text-gray-500">{offer.payout_type}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'reviews' && (
+              <EntityReviews entityId={entityId} entityName={entity.name} />
+            )}
+          </div>
         </div>
 
         {/* Entity Information */}

@@ -8,6 +8,7 @@ import AdvertisersWishlist from './pages/advertiserswishlist';
 import DataBase from './pages/database';
 import LogIn from './pages/login';
 import WriteReview from './pages/writereview';
+import WriteReviewNew from './pages/writeReviewNew';
 import Offers from './pages/offers';
 import SignupPage from './pages/signup';
 import RegisterEntityPage from './pages/registerEntity';
@@ -32,6 +33,7 @@ const App = () => {
       <Route path="/register-entity" element={<RegisterEntityPage />} />
       <Route path="/offers" element={<Offers />} />
       <Route path="/writereview" element={<WriteReview />} />
+      <Route path="/write-review" element={<WriteReviewNew />} />
       <Route path="/advertiser-dashboard" element={<AdvertiserDashboard />} />
       <Route path="/affiliate-dashboard" element={<AffiliateDashboard />} />
       <Route path="/network-dashboard" element={<NetworkDashboard />} />

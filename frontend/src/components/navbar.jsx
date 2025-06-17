@@ -133,7 +133,7 @@ const Navbar = () => {
               Wishlist
             </Link>
             <Link 
-              to="/writereview" 
+              to="/write-review" 
               className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
             >
               Reviews
@@ -293,7 +293,7 @@ const Navbar = () => {
                 Wishlist
               </Link>
               <Link
-                to="/writereview"
+                to="/write-review"
                 className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded-md font-medium transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
