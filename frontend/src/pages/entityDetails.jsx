@@ -94,25 +94,24 @@ export default function EntityDetailsPage() {
   }
 
   return (
-    <div className="bg-gray-50 text-gray-900 font-sans min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
       <Navbar />
-      <div className="pt-20 pb-16 px-6 max-w-6xl mx-auto">
+      <div className="pt-24 pb-16 px-4 sm:px-6 max-w-6xl mx-auto w-full">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
           <Link to="/" className="hover:text-blue-600">Home</Link>
           <span>/</span>
           <span className="text-gray-900">{entity.name}</span>
         </nav>
-
         {/* Entity Header */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl mr-6">
+        <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-8 mb-8 border border-blue-100 dark:border-gray-800">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg">
                 {entity.name?.charAt(0).toUpperCase() || 'E'}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{entity.name}</h1>
+                <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-300 mb-2 tracking-tight">{entity.name}</h1>
                 <div className="flex items-center space-x-4 mb-3">
                   <div className="flex items-center text-yellow-500">
                     <span className="text-lg">★★★★☆</span>
@@ -129,74 +128,68 @@ export default function EntityDetailsPage() {
             </div>
             <button 
               onClick={handleJoinNetwork}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition"
             >
               Join Network
             </button>
           </div>
         </div>
-
         {/* Entity Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+          <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-lg p-6 text-center border border-blue-100 dark:border-gray-800">
             <div className="text-3xl font-bold text-blue-600 mb-2">{entityOffers.length}</div>
             <div className="text-gray-600">Active Offers</div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+          <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-lg p-6 text-center border border-blue-100 dark:border-gray-800">
             <div className="text-3xl font-bold text-green-600 mb-2">
               {entity.reputation_score > 0 ? entity.reputation_score.toFixed(1) : 'N/A'}
             </div>
             <div className="text-gray-600">Rating</div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+          <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-lg p-6 text-center border border-blue-100 dark:border-gray-800">
             <div className="text-3xl font-bold text-purple-600 mb-2">{entity.total_reviews || 0}</div>
             <div className="text-gray-600">Reviews</div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+          <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-lg p-6 text-center border border-blue-100 dark:border-gray-800">
             <div className="text-3xl font-bold text-orange-600 mb-2">
               {entity.verification_status === 'approved' ? 'Verified' : 'Pending'}
             </div>
             <div className="text-gray-600">Status</div>
           </div>
         </div>
-
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="border-b border-gray-200">
+        <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-lg border border-blue-100 dark:border-gray-800">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="-mb-px flex space-x-8 px-6">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'overview'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`py-4 px-1 border-b-2 font-semibold text-lg transition-all ${activeTab === 'overview'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-300'
+                  : 'border-transparent text-gray-500 hover:text-blue-700 dark:hover:text-blue-200'
                 }`}
               >
                 Overview
               </button>
               <button
                 onClick={() => setActiveTab('offers')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'offers'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`py-4 px-1 border-b-2 font-semibold text-lg transition-all ${activeTab === 'offers'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-300'
+                  : 'border-transparent text-gray-500 hover:text-blue-700 dark:hover:text-blue-200'
                 }`}
               >
-                Offers ({entityOffers.length})
+                Offers <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{entityOffers.length}</span>
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'reviews'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`py-4 px-1 border-b-2 font-semibold text-lg transition-all ${activeTab === 'reviews'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-300'
+                  : 'border-transparent text-gray-500 hover:text-blue-700 dark:hover:text-blue-200'
                 }`}
               >
-                Reviews ({entity.total_reviews || 0})
+                Reviews <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{entity.total_reviews || 0}</span>
               </button>
             </nav>
           </div>
-
           <div className="p-6">
             {activeTab === 'overview' && (
               <div>
@@ -325,7 +318,6 @@ export default function EntityDetailsPage() {
             )}
           </div>
         </div>
-
         {/* Entity Information */}
         <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">About {entity.name}</h2>

@@ -82,18 +82,18 @@ export default function AdminReviewsModeration() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Review Moderation</h2>
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <h2 className="text-3xl font-extrabold drop-shadow-lg">Review Moderation</h2>
                 <div className="flex space-x-2">
                     {['pending', 'approved', 'rejected', 'flagged'].map(status => (
                         <button
                             key={status}
                             onClick={() => setSelectedStatus(status)}
-                            className={`px-4 py-2 rounded-md text-sm font-medium ${
+                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors duration-200 shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                                 selectedStatus === status
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                                    : 'bg-white/80 text-gray-700 hover:bg-blue-50'
                             }`}
                         >
                             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -101,24 +101,23 @@ export default function AdminReviewsModeration() {
                     ))}
                 </div>
             </div>
-
             {loading ? (
-                <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="flex justify-center items-center py-16">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
                 </div>
             ) : reviews.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600">No {selectedStatus} reviews found.</p>
+                <div className="text-center py-16 bg-white/80 rounded-2xl shadow">
+                    <p className="text-gray-600 text-lg">No {selectedStatus} reviews found.</p>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {reviews.map((review) => (
-                        <div key={review.review_id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                        <div key={review.review_id} className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl p-8 shadow-xl">
                             {/* Review Header */}
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 gap-4">
                                 <div>
-                                    <h3 className="font-semibold text-lg">{review.title}</h3>
-                                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                    <h3 className="font-bold text-xl mb-1">{review.title}</h3>
+                                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
                                         <span>By {review.reviewer_name}</span>
                                         <span>•</span>
                                         <span>{review.reviewer_email}</span>
@@ -133,7 +132,7 @@ export default function AdminReviewsModeration() {
                                         <span className="ml-2 text-sm text-gray-500 capitalize">({review.entity_type})</span>
                                     </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right min-w-[120px]">
                                     <div className="text-2xl text-yellow-500 mb-1">
                                         {renderStars(review.overall_rating)}
                                     </div>
@@ -145,15 +144,13 @@ export default function AdminReviewsModeration() {
                                     </span>
                                 </div>
                             </div>
-
                             {/* Review Content */}
                             <div className="mb-4">
-                                <p className="text-gray-700">{review.review_text}</p>
+                                <p className="text-gray-700 text-base leading-relaxed">{review.review_text}</p>
                             </div>
-
                             {/* Category Ratings */}
                             {review.category_ratings && (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-blue-50/60 rounded-xl">
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 mb-1">Quality</div>
                                         <div className="text-yellow-500">{renderStars(review.category_ratings.quality)}</div>
@@ -172,7 +169,6 @@ export default function AdminReviewsModeration() {
                                     </div>
                                 </div>
                             )}
-
                             {/* Admin Notes */}
                             {review.admin_notes && (
                                 <div className="mb-4 p-3 bg-blue-50 rounded-lg">
@@ -180,7 +176,6 @@ export default function AdminReviewsModeration() {
                                     <div className="text-sm text-blue-700">{review.admin_notes}</div>
                                 </div>
                             )}
-
                             {/* Anonymous Warning */}
                             {review.is_anonymous && (
                                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -189,26 +184,25 @@ export default function AdminReviewsModeration() {
                                     </div>
                                 </div>
                             )}
-
                             {/* Actions */}
-                            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                            <div className="flex flex-wrap justify-end gap-3 pt-4 border-t border-gray-100">
                                 {selectedStatus === 'pending' && (
                                     <>
                                         <button
                                             onClick={() => openModerationModal(review, 'approve')}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
+                                            className="px-5 py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl font-semibold shadow hover:from-green-600 hover:to-green-800 text-sm"
                                         >
                                             Approve
                                         </button>
                                         <button
                                             onClick={() => openModerationModal(review, 'reject')}
-                                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+                                            className="px-5 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl font-semibold shadow hover:from-red-600 hover:to-red-800 text-sm"
                                         >
                                             Reject
                                         </button>
                                         <button
                                             onClick={() => openModerationModal(review, 'flag')}
-                                            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+                                            className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-700 text-white rounded-xl font-semibold shadow hover:from-orange-600 hover:to-orange-800 text-sm"
                                         >
                                             Flag
                                         </button>
@@ -217,7 +211,7 @@ export default function AdminReviewsModeration() {
                                 {selectedStatus !== 'pending' && (
                                     <button
                                         onClick={() => openModerationModal(review, 'approve')}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                                        className="px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow hover:from-blue-700 hover:to-purple-700 text-sm"
                                     >
                                         Re-moderate
                                     </button>
@@ -227,38 +221,34 @@ export default function AdminReviewsModeration() {
                     ))}
                 </div>
             )}
-
             {/* Moderation Modal */}
             {showModerationModal && selectedReview && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <h3 className="text-lg font-semibold mb-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                        <h3 className="text-2xl font-bold mb-4">
                             {moderationData.action.charAt(0).toUpperCase() + moderationData.action.slice(1)} Review
                         </h3>
-                        
                         <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                             <div className="font-medium">{selectedReview.title}</div>
                             <div className="text-sm text-gray-600">By {selectedReview.reviewer_name}</div>
                             <div className="text-sm text-gray-600">Entity: {selectedReview.entity_name}</div>
                         </div>
-
-                        <form onSubmit={handleModeration}>
-                            <div className="mb-4">
+                        <form onSubmit={handleModeration} className="space-y-4">
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Action
                                 </label>
                                 <select
                                     value={moderationData.action}
                                     onChange={(e) => setModerationData(prev => ({ ...prev, action: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                                 >
                                     <option value="approve">Approve</option>
                                     <option value="reject">Reject</option>
                                     <option value="flag">Flag for Review</option>
                                 </select>
                             </div>
-
-                            <div className="mb-4">
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Admin Notes (Optional)
                                 </label>
@@ -266,11 +256,10 @@ export default function AdminReviewsModeration() {
                                     value={moderationData.admin_notes}
                                     onChange={(e) => setModerationData(prev => ({ ...prev, admin_notes: e.target.value }))}
                                     rows={3}
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                                     placeholder="Add notes about your moderation decision..."
                                 />
                             </div>
-
                             <div className="flex justify-end space-x-3">
                                 <button
                                     type="button"
@@ -279,16 +268,16 @@ export default function AdminReviewsModeration() {
                                         setSelectedReview(null);
                                         setModerationData({ action: 'approve', admin_notes: '' });
                                     }}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                                    className="px-5 py-2 text-gray-600 hover:text-gray-800 rounded-lg"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className={`px-4 py-2 text-white rounded-md ${
-                                        moderationData.action === 'approve' ? 'bg-green-600 hover:bg-green-700' :
-                                        moderationData.action === 'reject' ? 'bg-red-600 hover:bg-red-700' :
-                                        'bg-orange-600 hover:bg-orange-700'
+                                    className={`px-5 py-2 text-white rounded-xl font-semibold shadow ${
+                                        moderationData.action === 'approve' ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800' :
+                                        moderationData.action === 'reject' ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' :
+                                        'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
                                     }`}
                                 >
                                     {moderationData.action.charAt(0).toUpperCase() + moderationData.action.slice(1)} Review

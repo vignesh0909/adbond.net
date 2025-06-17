@@ -109,175 +109,65 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="bg-gray-50 text-gray-900 font-sans min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
       <Navbar />
-      <section className="pt-20 pb-16 px-6 max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          {/* Profile Header */}
-          <div className="flex items-center space-x-6 mb-8">
-            <div className="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold">
-              {getUserInitials()}
+      <main className="flex flex-1 items-center justify-center py-16 px-4">
+        <div className="w-full max-w-2xl bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-2xl p-8 backdrop-blur-md border border-blue-100 dark:border-gray-800">
+          <h2 className="text-3xl font-extrabold text-center text-blue-700 dark:text-blue-300 mb-6 tracking-tight">My Profile</h2>
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {getUserDisplayName()}
-              </h1>
-              <p className="text-gray-600 capitalize">
-                {currentUser?.role || 'User'} Account
-              </p>
-              <p className="text-sm text-gray-500">
-                Member since {new Date(currentUser?.created_at || Date.now()).toLocaleDateString()}
-              </p>
-            </div>
-            <button
-              onClick={handleEditToggle}
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                isEditing 
-                  ? 'bg-gray-300 hover:bg-gray-400 text-gray-700' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {isEditing ? 'Cancel' : 'Edit Profile'}
-            </button>
-          </div>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-              {error}
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold shadow-lg">
+                  {currentUser?.first_name?.[0]}{currentUser?.last_name?.[0]}
+                </div>
+                <div>
+                  <div className="text-xl font-semibold text-gray-800 dark:text-gray-100">{currentUser?.first_name} {currentUser?.last_name}</div>
+                  <div className="text-gray-500 dark:text-gray-400">{currentUser?.email}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">{currentUser?.role}</div>
+                </div>
+              </div>
+              <form className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">First Name</label>
+                    <input name="first_name" value={formData.first_name} onChange={handleInputChange} disabled={!isEditing} className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Last Name</label>
+                    <input name="last_name" value={formData.last_name} onChange={handleInputChange} disabled={!isEditing} className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 transition" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
+                  <input name="email" value={formData.email} onChange={handleInputChange} disabled className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 transition" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Phone</label>
+                  <input name="phone" value={formData.phone} onChange={handleInputChange} disabled={!isEditing} className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 transition" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Bio</label>
+                  <textarea name="bio" value={formData.bio} onChange={handleInputChange} disabled={!isEditing} className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 transition" />
+                </div>
+                <div className="flex gap-4 mt-4">
+                  {isEditing ? (
+                    <>
+                      <button type="button" onClick={handleSaveProfile} className="px-6 py-2 rounded-lg bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition">Save</button>
+                      <button type="button" onClick={handleEditToggle} className="px-6 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">Cancel</button>
+                    </>
+                  ) : (
+                    <button type="button" onClick={handleEditToggle} className="px-6 py-2 rounded-lg bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200 font-bold shadow hover:bg-blue-200 dark:hover:bg-blue-700 transition">Edit Profile</button>
+                  )}
+                </div>
+              </form>
             </div>
           )}
-
-          {/* Profile Form */}
-          <form onSubmit={handleSaveProfile}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    isEditing 
-                      ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    isEditing 
-                      ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    isEditing 
-                      ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    isEditing 
-                      ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                />
-              </div>
-            </div>
-            
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bio
-              </label>
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                rows="4"
-                className={`w-full px-3 py-2 border rounded-md ${
-                  isEditing 
-                    ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                    : 'border-gray-200 bg-gray-50'
-                }`}
-                placeholder="Tell us a bit about yourself..."
-              />
-            </div>
-
-            {isEditing && (
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md transition-colors disabled:opacity-50"
-                >
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            )}
-          </form>
-
-          {/* Account Information */}
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium text-gray-700">User ID:</span>
-                <span className="ml-2 text-gray-600">{currentUser?.user_id}</span>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Account Type:</span>
-                <span className="ml-2 text-gray-600 capitalize">{currentUser?.role}</span>
-              </div>
-              {currentUser?.entity_id && (
-                <div>
-                  <span className="font-medium text-gray-700">Entity ID:</span>
-                  <span className="ml-2 text-gray-600">{currentUser.entity_id}</span>
-                </div>
-              )}
-              <div>
-                <span className="font-medium text-gray-700">Status:</span>
-                <span className="ml-2 text-green-600">Active</span>
-              </div>
-            </div>
-          </div>
         </div>
-      </section>
+      </main>
     </div>
   );
 }

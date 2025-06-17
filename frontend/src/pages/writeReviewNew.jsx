@@ -202,12 +202,21 @@ export default function WriteReviewPage() {
 
     if (!currentUser) {
         return (
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <Navbar />
-                <div className="pt-20 px-6 max-w-4xl mx-auto">
-                    <div className="bg-white p-8 rounded-lg shadow-md text-center">
-                        <h2 className="text-2xl font-bold mb-4">Please Log In</h2>
-                        <p className="text-gray-600">You need to be logged in to write a review.</p>
+                <div className="pt-24 px-6 max-w-4xl mx-auto">
+                    <div className="card p-8 text-center animate-fade-in-scale">
+                        <div className="w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <h2 className="text-2xl font-bold mb-4 text-purple-700 dark:text-purple-300">Please Log In</h2>
+                        <p className="text-gray-600 dark:text-gray-400 mb-6">You need to be logged in to write a review and help the community.</p>
+                        <div className="flex gap-4 justify-center">
+                            <a href="/login" className="btn-primary">Log In</a>
+                            <a href="/signup" className="btn-secondary">Sign Up</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -215,33 +224,55 @@ export default function WriteReviewPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <div className="pt-20 px-6 max-w-4xl mx-auto">
-                <div className="bg-white p-8 rounded-lg shadow-md">
-                    <h1 className="text-3xl font-bold mb-2">Write a Review</h1>
-                    <p className="text-gray-600 mb-8">
-                        Share your experience with advertisers, networks, or affiliates to help the community.
-                    </p>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
+            {/* Animated Background */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200/30 dark:bg-purple-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 dark:bg-blue-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                <div className="absolute top-40 left-1/2 transform -translate-x-1/2 w-80 h-80 bg-pink-200/30 dark:bg-pink-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+            </div>
 
+            <Navbar />
+            <div className="relative pt-24 px-4 sm:px-6 max-w-4xl mx-auto w-full pb-16">
+                <div className="card p-8 animate-fade-in-scale">
+                    <div className="text-center mb-8">
+                        <div className="w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                        </div>
+                        <h1 className="text-4xl font-extrabold text-gradient-purple mb-2 tracking-tight">Write a Review</h1>
+                        <p className="text-gray-600 dark:text-gray-300 text-lg">
+                            Share your experience and help build a trusted community
+                        </p>
+                    </div>
                     {message && (
-                        <div className={`mb-6 p-4 rounded-lg ${
-                            messageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        <div className={`mb-6 p-4 rounded-xl shadow-md flex items-center animate-slide-in-up ${
+                            messageType === 'success' ? 'bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300'
                         }`}>
+                            <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                {messageType === 'success' ? (
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                ) : (
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                )}
+                            </svg>
                             {message}
                         </div>
                     )}
-
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Entity Selection */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                                </svg>
                                 Which entity are you reviewing? *
                             </label>
                             <select
                                 value={formData.is_new_entity ? 'new_entity' : formData.entity_id}
                                 onChange={handleEntitySelection}
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="input-field"
                                 required
                             >
                                 <option value="">Select an entity...</option>
@@ -250,7 +281,7 @@ export default function WriteReviewPage() {
                                         {entity.name} ({entity.entity_type})
                                     </option>
                                 ))}
-                                <option value="new_entity">Entity not in list (enter manually)</option>
+                                <option value="new_entity">🆕 Entity not in list (enter manually)</option>
                             </select>
                         </div>
 
@@ -376,10 +407,9 @@ export default function WriteReviewPage() {
                             </button>
                         </div>
                     </form>
-
-                    <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-                        <h3 className="font-semibold mb-2">Review Guidelines</h3>
-                        <ul className="text-sm text-gray-600 space-y-1">
+                    <div className="mt-8 p-4 bg-purple-50 dark:bg-purple-900/40 rounded-lg border border-purple-100 dark:border-purple-700">
+                        <h3 className="font-semibold mb-2 text-purple-700 dark:text-purple-200">Review Guidelines</h3>
+                        <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                             <li>• Be honest and constructive in your feedback</li>
                             <li>• Focus on your actual experience with the entity</li>
                             <li>• All reviews are moderated before publication</li>

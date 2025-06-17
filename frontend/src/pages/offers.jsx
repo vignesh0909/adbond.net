@@ -51,30 +51,40 @@ export default function OffersPage() {
   };
 
   return (
-    <div className="bg-gray-50 text-gray-900 font-sans min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/30 dark:bg-blue-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200/30 dark:bg-purple-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-1/2 transform -translate-x-1/2 w-80 h-80 bg-pink-200/30 dark:bg-pink-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+
       <Navbar />
-      <section className="pt-20 pb-16 px-6 max-w-6xl mx-auto">
+      <section className="relative pt-24 pb-16 px-4 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center mb-6">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center mr-3">
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <div className="flex items-center mb-8 animate-slide-in-down">
+          <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+            <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold">Top Offers</h2>
+          <div>
+            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-purple">Top Offers</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Discover the best offers from verified partners</p>
+          </div>
         </div>
 
         {/* Category Filter Chips */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
+        <div className="mb-8 animate-fade-in-scale">
+          <div className="flex flex-wrap gap-3">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transform hover:scale-105 ${
                   selectedCategory === category
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg border-transparent scale-105'
+                    : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700/80 hover:shadow-md'
                 }`}
               >
                 {category}
@@ -84,96 +94,140 @@ export default function OffersPage() {
         </div>
 
         {/* Search Filters */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-end">
+        <div className="mb-8 flex flex-col md:flex-row gap-6 items-start md:items-end animate-slide-in-up">
           <div className="flex flex-col w-full md:w-1/3">
-            <label className="font-semibold mb-1 text-gray-700">Search Offers</label>
+            <label className="font-semibold mb-2 text-gray-700 dark:text-gray-300 flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Search Offers
+            </label>
             <input
               type="text"
               placeholder="Search by title..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="input-field"
             />
           </div>
           <div className="flex flex-col w-full md:w-1/3">
-            <label className="font-semibold mb-1 text-gray-700">Search with GEO</label>
+            <label className="font-semibold mb-2 text-gray-700 dark:text-gray-300 flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              Filter by GEO
+            </label>
             <input
               type="text"
-              placeholder="e.g. US, CA"
+              placeholder="e.g. US, CA, UK"
               value={geoSearch}
               onChange={(e) => setGeoSearch(e.target.value)}
-              className="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="input-field"
             />
           </div>
           <div className="flex flex-col w-full md:w-1/3">
-            <label className="font-semibold mb-1 text-gray-700">Results</label>
-            <div className="text-gray-600 px-3 py-2">
-              {loading ? "Loading..." : `${offers.length} offers found`}
+            <label className="font-semibold mb-2 text-gray-700 dark:text-gray-300 flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+              </svg>
+              Results
+            </label>
+            <div className="bg-white/80 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 font-medium">
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  Loading...
+                </div>
+              ) : (
+                `${offers.length} offer${offers.length !== 1 ? 's' : ''} found`
+              )}
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading offers...</span>
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            <span className="ml-4 text-gray-600 text-lg">Loading offers...</span>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-red-700 shadow">
             {error}
           </div>
         ) : offers.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg">No offers found</div>
-            <p className="text-gray-400 mt-2">Try adjusting your search criteria</p>
+          <div className="text-center py-20 animate-fade-in-scale">
+            <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="text-gray-500 dark:text-gray-400 text-2xl font-semibold mb-2">No offers found</div>
+            <p className="text-gray-400 dark:text-gray-500 mb-6">Try adjusting your search criteria or browse different categories</p>
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setGeoSearch("");
+                setSelectedCategory("All");
+              }}
+              className="btn-primary"
+            >
+              Clear Filters
+            </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-in-scale">
             {offers.map((offer, index) => (
               <div 
                 key={index} 
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 cursor-pointer"
+                className="group relative card card-hover cursor-pointer transition-all duration-300"
                 onClick={() => handleOfferClick(offer)}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="flex items-center p-4">
+                {/* Hover Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <div className="relative flex items-start p-6">
                   {/* Offer Icon/Avatar */}
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-4 flex-shrink-0">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl mr-5 flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
                     {offer.title.charAt(0).toUpperCase()}
                   </div>
-
+                  
                   {/* Offer Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 pr-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {offer.title}
                         </h3>
                         
                         {/* Entity Name as Hyperlink */}
-                        <div className="mb-2">
+                        <div className="mb-3">
                           <button
                             onClick={(e) => handleEntityClick(e, offer.entity_id, offer.entity_name)}
-                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline font-semibold transition-colors flex items-center"
                           >
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                            </svg>
                             {offer.entity_name || 'Unknown Entity'}
                           </button>
                         </div>
-
+                        
                         {/* Tags/Badges */}
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="badge badge-info">
                             #{offer.payout_type}
                           </span>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                          <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                             #{offer.category}
                           </span>
                           {offer.entity_type && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                            <span className="badge badge-success">
                               #{offer.entity_type}
                             </span>
                           )}
                           {Array.isArray(offer.target_geo) && offer.target_geo.length > 0 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                            <span className="badge bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200">
                               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                               </svg>
@@ -182,10 +236,10 @@ export default function OffersPage() {
                           )}
                         </div>
                       </div>
-
+                      
                       {/* Payout Display */}
                       <div className="text-right flex-shrink-0">
-                        <div className="text-xl font-bold text-blue-600 mb-1">
+                        <div className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mb-1 group-hover:scale-110 transition-transform">
                           {offer.payout_value ? (
                             typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ? 
                             offer.payout_value : 
@@ -193,18 +247,19 @@ export default function OffersPage() {
                           ) : 'Contact'}
                         </div>
                         {offer.payout_type && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                             {offer.payout_type}
                           </div>
                         )}
                       </div>
-
-                      {/* Info Icon */}
-                      <div className="ml-4 flex-shrink-0">
-                        <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                      </div>
+                    </div>
+                    
+                    {/* Action Indicator */}
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Click to view details</span>
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
                 </div>

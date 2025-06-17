@@ -94,9 +94,9 @@ export default function OfferDetailsPage() {
   }
 
   return (
-    <div className="bg-gray-50 text-gray-900 font-sans min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
       <Navbar />
-      <div className="pt-20 pb-16 px-6 max-w-4xl mx-auto">
+      <div className="pt-24 pb-16 px-4 sm:px-6 max-w-4xl mx-auto w-full">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
           <Link to="/" className="hover:text-blue-600">Home</Link>
@@ -107,35 +107,32 @@ export default function OfferDetailsPage() {
           <span>/</span>
           <span className="text-gray-900">{offer.title}</span>
         </nav>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Offer Image/Icon */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <div className="w-full h-48 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white mb-4">
+            <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-6 sticky top-24 border border-blue-100 dark:border-gray-800">
+              <div className="w-full h-48 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white mb-4 shadow-lg">
                 <div className="text-6xl font-bold">
                   {offer.title.charAt(0).toUpperCase()}
                 </div>
               </div>
-              
               {/* Entity Info Card */}
               {entity && (
                 <div className="border-t pt-4">
                   <div className="flex items-center mb-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                      <span className="font-bold text-gray-600">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3">
+                      <span className="font-bold text-blue-600 dark:text-blue-200">
                         {entity.name?.charAt(0).toUpperCase() || 'E'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{entity.name}</h3>
+                      <h3 className="font-semibold text-blue-700 dark:text-blue-200">{entity.name}</h3>
                       <div className="flex items-center text-sm text-yellow-500">
                         <span>★★★★☆</span>
                         <span className="ml-1 text-gray-500">4.5</span>
                       </div>
                     </div>
                   </div>
-                  
                   <div className="text-sm text-gray-600 mb-3">
                     <span className="capitalize">{entity.entity_type}</span>
                     <span className="mx-2">•</span>
@@ -145,10 +142,9 @@ export default function OfferDetailsPage() {
                     <span className="mx-2">•</span>
                     <span>12 Offers</span>
                   </div>
-                  
                   <button 
                     onClick={handleJoinNetwork}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                    className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow transition"
                   >
                     Join Network
                   </button>
@@ -156,26 +152,19 @@ export default function OfferDetailsPage() {
               )}
             </div>
           </div>
-
           {/* Right Column - Offer Details */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl border border-blue-100 dark:border-gray-800">
               {/* Offer Header */}
-              <div className="p-6 border-b border-gray-100">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">{offer.title}</h1>
-                
+              <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+                <h1 className="text-2xl font-extrabold text-blue-700 dark:text-blue-300 mb-4 tracking-tight">{offer.title}</h1>
                 <div className="flex items-center space-x-4 mb-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                     Active
                   </span>
-                  <span className="text-sm text-gray-500">
-                    Created {new Date(offer.created_at).toLocaleDateString()}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    Updated {offer.updated_at ? new Date(offer.updated_at).toLocaleDateString() : 'a day ago'}
-                  </span>
+                  <span className="text-sm text-gray-500">Created {new Date(offer.created_at).toLocaleDateString()}</span>
+                  <span className="text-sm text-gray-500">Updated {offer.updated_at ? new Date(offer.updated_at).toLocaleDateString() : 'a day ago'}</span>
                 </div>
-
                 {/* Offer Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div>
@@ -203,7 +192,6 @@ export default function OfferDetailsPage() {
                     </div>
                   </div>
                 </div>
-
                 {/* Share & Action Buttons */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -224,10 +212,9 @@ export default function OfferDetailsPage() {
                       </svg>
                     </button>
                   </div>
-                  
                   <button 
                     onClick={handleRunOffer}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center space-x-2"
+                    className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-2 px-6 rounded-lg shadow flex items-center space-x-2 transition"
                   >
                     <span>Run This Offer</span>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +223,6 @@ export default function OfferDetailsPage() {
                   </button>
                 </div>
               </div>
-
               {/* Offer Description */}
               <div className="p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -245,7 +231,6 @@ export default function OfferDetailsPage() {
                   </svg>
                   DESCRIPTION
                 </h2>
-                
                 <div className="prose prose-sm max-w-none text-gray-700">
                   {offer.description ? (
                     <p>{offer.description}</p>
@@ -253,7 +238,6 @@ export default function OfferDetailsPage() {
                     <p className="text-gray-500 italic">No description available for this offer.</p>
                   )}
                 </div>
-
                 {/* Additional Details */}
                 {(offer.requirements || offer.landing_page_url) && (
                   <div className="mt-8 space-y-6">
@@ -263,7 +247,6 @@ export default function OfferDetailsPage() {
                         <p className="text-gray-700">{offer.requirements}</p>
                       </div>
                     )}
-                    
                     {offer.landing_page_url && (
                       <div>
                         <h3 className="text-md font-semibold text-gray-900 mb-2">Landing Page</h3>
