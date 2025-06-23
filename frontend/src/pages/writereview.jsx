@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from './components/navbar';
 import { Send } from 'lucide-react';
+import Navbar from '../components/navbar';
 
 const AdBondPage = () => {
   return (

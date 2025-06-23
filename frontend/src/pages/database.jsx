@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Database, Search, Filter, Building, Star, Users, Globe, Eye, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Navbar from '../components/navbar';
 import { authAPI } from '../services/auth';
-import { affiliateCompaniesAPI } from '../services/affiliateCompanies';
+import { affiliateCompaniesAPI } from '../services/affliateCompanies';
 import { http } from '../services/httpClient';
 
 export default function CompanyDatabasePage() {
