@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS users (
     identity_verified BOOLEAN DEFAULT FALSE,
     verification_method VARCHAR(50) CHECK (verification_method IN ('linkedin', 'business_email')),
     verification_date TIMESTAMP,
+    email_verified BOOLEAN DEFAULT FALSE,
+    email_verification_token TEXT,
+    email_verification_expires TIMESTAMP,
     password_reset_required BOOLEAN DEFAULT FALSE,
     temp_password_expires TIMESTAMP,
     last_login TIMESTAMP,
@@ -27,11 +30,15 @@ CREATE TABLE IF NOT EXISTS users (
 -- Add missing columns if they don't exist
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_required BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS temp_password_expires TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires TIMESTAMP;
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_verified ON users(identity_verified);
+CREATE INDEX IF NOT EXISTS idx_users_email_verification ON users(email_verification_token);
 `;
 
 client.query(createUsersTableQuery, (err, res) => {
@@ -245,7 +252,104 @@ const userModel = {
         } catch (error) {
             throw error;
         }
-    }
+    },
+
+    // Generate email verification token
+    async generateEmailVerificationToken(user_id) {
+        try {
+            const token = uuidv4();
+            const expires = new Date();
+            expires.setHours(expires.getHours() + 24); // 24 hours expiry
+
+            const query = `
+                UPDATE users 
+                SET email_verification_token = $1,
+                    email_verification_expires = $2,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $3
+                RETURNING email, first_name, last_name
+            `;
+
+            const result = await client.query(query, [token, expires, user_id]);
+            return { ...result.rows[0], token };
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Verify email token
+    async verifyEmailToken(token) {
+        try {
+            const query = `
+                SELECT user_id, email, email_verification_expires
+                FROM users 
+                WHERE email_verification_token = $1
+            `;
+            const result = await client.query(query, [token]);
+            const user = result.rows[0];
+
+            if (!user) {
+                return { valid: false, message: 'Invalid verification token' };
+            }
+
+            const now = new Date();
+            const expiryDate = new Date(user.email_verification_expires);
+
+            if (now > expiryDate) {
+                return { valid: false, message: 'Verification token has expired' };
+            }
+
+            // Mark email as verified
+            const updateQuery = `
+                UPDATE users 
+                SET email_verified = TRUE,
+                    email_verification_token = NULL,
+                    email_verification_expires = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $1
+                RETURNING user_id, email, first_name, last_name
+            `;
+
+            const updateResult = await client.query(updateQuery, [user.user_id]);
+            return { valid: true, user: updateResult.rows[0] };
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Update identity verification
+    async updateIdentityVerification(user_id, verification_method) {
+        try {
+            const query = `
+                UPDATE users 
+                SET identity_verified = TRUE,
+                    verification_method = $2,
+                    verification_date = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $1
+                RETURNING user_id, email, identity_verified, verification_method, verification_date
+            `;
+
+            const result = await client.query(query, [user_id, verification_method]);
+            return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Check user verification status
+    async getUserVerificationStatus(user_id) {
+        try {
+            const query = `
+                SELECT email_verified, identity_verified, verification_method, verification_date, entity_id
+                FROM users WHERE user_id = $1
+            `;
+            const result = await client.query(query, [user_id]);
+            return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
 };
 
 module.exports = { pool: client, userModel };

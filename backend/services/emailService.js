@@ -1,0 +1,270 @@
+const nodemailer = require('nodemailer');
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+    // Configure with your email service
+    // For development, you can use a service like Gmail or a testing service like Ethereal
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: process.env.EMAIL_PORT || 587,
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+const emailService = {
+    // Send email verification
+    async sendVerificationEmail(email, firstName, token) {
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
+        
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || 'AdBond <noreply@adbond.com>',
+            to: email,
+            subject: 'Verify your AdBond account',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to AdBond!</h1>
+                    </div>
+                    
+                    <div style="padding: 30px; background: #f8f9fa;">
+                        <h2 style="color: #333; margin-bottom: 20px;">Hi ${firstName},</h2>
+                        
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                            Thanks for signing up with AdBond! To complete your account setup, please verify your email address by clicking the button below:
+                        </p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${verificationUrl}" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block;">
+                                Verify Email Address
+                            </a>
+                        </div>
+                        
+                        <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                            If the button doesn't work, you can also copy and paste this link into your browser:
+                            <br>
+                            <a href="${verificationUrl}" style="color: #667eea; word-break: break-all;">${verificationUrl}</a>
+                        </p>
+                        
+                        <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                            This verification link will expire in 24 hours. If you didn't create an account with AdBond, please ignore this email.
+                        </p>
+                    </div>
+                    
+                    <div style="background: #333; padding: 20px; text-align: center;">
+                        <p style="color: #999; margin: 0; font-size: 12px;">
+                            © ${new Date().getFullYear()} AdBond. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`Verification email sent to ${email}`);
+        } catch (error) {
+            console.error('Error sending verification email:', error);
+            throw new Error('Failed to send verification email');
+        }
+    },
+
+    // Send identity verification success email
+    async sendIdentityVerificationSuccess(email, firstName, verificationMethod) {
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || 'AdBond <noreply@adbond.com>',
+            to: email,
+            subject: 'Identity Verification Successful - AdBond',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 28px;">Identity Verified!</h1>
+                    </div>
+                    
+                    <div style="padding: 30px; background: #f8f9fa;">
+                        <h2 style="color: #333; margin-bottom: 20px;">Hi ${firstName},</h2>
+                        
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                            Great news! Your identity has been successfully verified via ${verificationMethod === 'linkedin' ? 'LinkedIn profile' : 'business domain email'}.
+                        </p>
+                        
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                            You now have access to:
+                        </p>
+                        
+                        <ul style="color: #666; font-size: 16px; line-height: 1.6;">
+                            <li>Full contact details in the affiliate company database</li>
+                            <li>Direct communication with verified partners</li>
+                            <li>Enhanced networking opportunities</li>
+                        </ul>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/database" 
+                               style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block;">
+                                Explore Database
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`Identity verification success email sent to ${email}`);
+        } catch (error) {
+            console.error('Error sending identity verification email:', error);
+            // Don't throw error here as it's not critical
+        }
+    },
+
+    // Send affiliate contact email
+    async sendAffiliateContactEmail(contactData) {
+        const {
+            senderName,
+            senderEmail,
+            senderCompany,
+            recipientName,
+            recipientEmail,
+            offerRequestTitle,
+            messageContent,
+            offerRequestDetails
+        } = contactData;
+
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || 'AdBond <noreply@adbond.com>',
+            to: recipientEmail,
+            subject: `New Contact Request for "${offerRequestTitle}" - AdBond`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 28px;">New Contact Request</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Someone is interested in your offer request</p>
+                    </div>
+                    
+                    <!-- Main Content -->
+                    <div style="padding: 30px; background: #f8f9fa;">
+                        <h2 style="color: #333; margin-bottom: 20px;">Hi ${recipientName},</h2>
+                        
+                        <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                            Great news! <strong>${senderName}</strong> from <strong>${senderCompany}</strong> is interested in your offer request and would like to connect with you.
+                        </p>
+                        
+                        <!-- Offer Request Details -->
+                        <div style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                            <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                                📋 Your Offer Request
+                            </h3>
+                            <p style="color: #333; font-weight: bold; margin: 5px 0;">${offerRequestTitle}</p>
+                            ${offerRequestDetails ? `
+                                <div style="margin-top: 15px;">
+                                    <p style="color: #666; font-size: 14px; margin: 5px 0;"><strong>Vertical:</strong> ${offerRequestDetails.vertical || 'Not specified'}</p>
+                                    <p style="color: #666; font-size: 14px; margin: 5px 0;"><strong>Traffic Volume:</strong> ${offerRequestDetails.traffic_volume ? (offerRequestDetails.traffic_volume / 1000).toFixed(0) + 'K/day' : 'Not specified'}</p>
+                                    <p style="color: #666; font-size: 14px; margin: 5px 0;"><strong>Payout Type:</strong> ${offerRequestDetails.desired_payout_type || 'Not specified'}</p>
+                                    ${offerRequestDetails.geos_targeting && offerRequestDetails.geos_targeting.length > 0 ? `
+                                        <p style="color: #666; font-size: 14px; margin: 5px 0;"><strong>Target GEOs:</strong> ${offerRequestDetails.geos_targeting.join(', ')}</p>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        <div style="background: #e8f5e8; border: 1px solid #d4edda; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                            <h3 style="color: #155724; margin: 0 0 15px 0; font-size: 18px;">
+                                👤 Contact Information
+                            </h3>
+                            <p style="color: #155724; margin: 5px 0;"><strong>Name:</strong> ${senderName}</p>
+                            <p style="color: #155724; margin: 5px 0;"><strong>Company:</strong> ${senderCompany}</p>
+                            <p style="color: #155724; margin: 5px 0;"><strong>Email:</strong> ${senderEmail}</p>
+                        </div>
+                        
+                        ${messageContent ? `
+                            <!-- Message -->
+                            <div style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                                <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 18px;">
+                                    💬 Personal Message
+                                </h3>
+                                <p style="color: #333; font-size: 16px; line-height: 1.6; margin: 0; font-style: italic;">
+                                    "${messageContent}"
+                                </p>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Call to Action -->
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="mailto:${senderEmail}?subject=Re: ${offerRequestTitle}&body=Hi ${senderName},%0D%0A%0D%0AThank you for your interest in my offer request. I'd be happy to discuss this opportunity further.%0D%0A%0D%0ABest regards,%0D%0A${recipientName}" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block;
+                                      margin-right: 15px;">
+                                Reply via Email
+                            </a>
+                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard" 
+                               style="background: #28a745; 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block;">
+                                View in Dashboard
+                            </a>
+                        </div>
+                        
+                        <!-- Additional Info -->
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                            <p style="color: #856404; margin: 0; font-size: 14px;">
+                                💡 <strong>Tip:</strong> This contact was made through AdBond's secure platform. All communications are tracked for quality and security purposes.
+                            </p>
+                        </div>
+                        
+                        <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                            This email was sent through AdBond's affiliate marketplace. If you believe this is spam or you want to unsubscribe from these notifications, please contact our support team.
+                        </p>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="background: #333; padding: 20px; text-align: center;">
+                        <p style="color: #999; margin: 0; font-size: 12px;">
+                            © ${new Date().getFullYear()} AdBond. All rights reserved.
+                        </p>
+                        <p style="color: #666; margin: 10px 0 0 0; font-size: 12px;">
+                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="color: #667eea; text-decoration: none;">Visit AdBond</a> | 
+                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/support" style="color: #667eea; text-decoration: none;">Support</a>
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`Affiliate contact email sent to ${recipientEmail}`);
+            return { success: true, message: 'Email sent successfully' };
+        } catch (error) {
+            console.error('Error sending affiliate contact email:', error);
+            throw new Error('Failed to send contact email');
+        }
+    }
+};
+
+module.exports = emailService;

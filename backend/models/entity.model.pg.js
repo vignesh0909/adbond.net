@@ -219,9 +219,10 @@ const entityModel = {
             const query = `
                 INSERT INTO entities (
                     entity_id, entity_type, name, email, secondary_email, website, 
-                    contact_info, description, additional_notes, how_you_heard, entity_metadata
+                    contact_info, description, additional_notes, how_you_heard, entity_metadata,
+                    verification_status
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
                 RETURNING entity_id, entity_type, name, email, secondary_email, website, 
                          contact_info, description, additional_notes, how_you_heard, 
                          verification_status, approved_by, entity_metadata, reputation_score, 
@@ -269,42 +270,20 @@ const entityModel = {
         }
     },
 
-    // Get all entities with filters
-    async getAllEntities(filters = {}) {
+    // Get only verified entities
+    async getVerifiedEntities() {
         try {
-            let query = `
+            const query = `
                 SELECT entity_id, entity_type, name, email, secondary_email, website, 
                        contact_info, description, additional_notes, how_you_heard,
                        verification_status, approved_by, entity_metadata, reputation_score, 
                        total_reviews, is_public, created_at, updated_at
                 FROM entities 
-                WHERE 1=1
+                WHERE verification_status = 'approved'
+                ORDER BY created_at DESC
             `;
-            const values = [];
-            let paramCount = 0;
 
-            // Add filters
-            if (filters.entity_type) {
-                paramCount++;
-                query += ` AND entity_type = $${paramCount}`;
-                values.push(filters.entity_type);
-            }
-
-            if (filters.verification_status) {
-                paramCount++;
-                query += ` AND verification_status = $${paramCount}`;
-                values.push(filters.verification_status);
-            }
-
-            if (filters.is_public !== undefined) {
-                paramCount++;
-                query += ` AND is_public = $${paramCount}`;
-                values.push(filters.is_public);
-            }
-
-            query += ' ORDER BY created_at DESC';
-
-            const result = await client.query(query, values);
+            const result = await client.query(query);
             return result.rows;
         } catch (error) {
             throw error;

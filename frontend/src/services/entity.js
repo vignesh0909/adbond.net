@@ -1,94 +1,54 @@
-// API service for backend integration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4100/api';
-
-// Generic fetch wrapper with error handling
-const fetchAPI = async (endpoint, options = {}) => {
-    const url = `${API_BASE_URL}${endpoint}`;
-
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        },
-        ...options,
-    };
-
-    // Add auth token if available
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    try {
-        const response = await fetch(url, config);
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || `HTTP error! status: ${response.status}`);
-        }
-
-        return data;
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-    }
-};
+import { http } from './httpClient';
 
 // Entity Management APIs
 export const entityAPI = {
-    // Register new entity (public endpoint)
-    register: async (entityData) => {
-        return await fetchAPI('/entities/register', {
-            method: 'POST',
-            body: JSON.stringify(entityData),
-        });
-    },
+  // Register new entity (public endpoint)
+  register: async (entityData) => {
+    return await http.post('/entities/register', entityData);
+  },
 
-    // Get all public entities
-    getPublicEntities: async (entityType = '') => {
-        const queryParam = entityType ? `?entity_type=${entityType}` : '';
-        return await fetchAPI(`/entities/public${queryParam}`);
-    },
+  // Get all public entities
+  getPublicEntities: async (entityType = '') => {
+    const queryParam = entityType ? `?entity_type=${entityType}` : '';
+    return await http.get(`/entities/public${queryParam}`);
+  },
 
-    // Get entities by type with pagination
-    getEntitiesByType: async (type, page = 1, limit = 10) => {
-        return await fetchAPI(`/entities/type/${type}?page=${page}&limit=${limit}`);
-    },
+  // Get entities by type with pagination
+  getEntitiesByType: async (type, page = 1, limit = 10) => {
+    return await http.get(`/entities/type/${type}?page=${page}&limit=${limit}`);
+  },
 
-    // Get all entities (authenticated)
-    getAllEntities: async (filters = {}) => {
-        const queryParams = new URLSearchParams(filters).toString();
-        const queryString = queryParams ? `?${queryParams}` : '';
-        return await fetchAPI(`/entities${queryString}`);
-    },
+  // Get all entities (authenticated)
+  getAllEntities: async (filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
+    const queryString = queryParams ? `?${queryParams}` : '';
+    return await http.get(`/entities${queryString}`);
+  },
 
-    // Get entity by ID
-    getEntityById: async (entityId) => {
-        return await fetchAPI(`/entities/${entityId}`);
-    },
+  // Get entity by ID
+  getEntityById: async (entityId) => {
+    return await http.get(`/entities/${entityId}`);
+  },
 
-    // Update entity
-    updateEntity: async (entityId, entityData) => {
-        return await fetchAPI(`/entities/${entityId}`, {
-            method: 'PUT',
-            body: JSON.stringify(entityData),
-        });
-    },
+  // Get public entity by ID (no authentication required)
+  getPublicEntityById: async (entityId) => {
+    return await http.get(`/entities/public/${entityId}`);
+  },
 
-    // Update verification status (admin only)
-    updateVerificationStatus: async (entityId, status) => {
-        return await fetchAPI(`/entities/${entityId}/verification`, {
-            method: 'PUT',
-            body: JSON.stringify({ verification_status: status }),
-        });
-    },
+  // Update entity
+  updateEntity: async (entityId, entityData) => {
+    return await http.put(`/entities/${entityId}`, entityData);
+  },
 
-    // Delete entity (admin only)
-    deleteEntity: async (entityId) => {
-        return await fetchAPI(`/entities/${entityId}`, {
-            method: 'DELETE',
-        });
-    },
+  // Update verification status (admin only)
+  updateVerificationStatus: async (entityId, status) => {
+    return await http.put(`/entities/${entityId}/verification`, { verification_status: status });
+  },
+
+  // Delete entity (admin only)
+  deleteEntity: async (entityId) => {
+    return await http.delete(`/entities/${entityId}`);
+  },
 };
 
-export default { entityAPI };
+export default entityAPI;

@@ -5,6 +5,10 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "test-db": "node scripts/test-db-connection.js",
+    "validate-data": "node scripts/validate-excel-data.js",
+    "transform-data": "node scripts/run-transformation.js",
+    "setup-db": "psql -d $DB_NAME -U $DB_USER -h $DB_HOST -f sql/setup-database.sql",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -22,7 +26,8 @@
     "morgan": "^1.10.0",
     "nodemailer": "^7.0.3",
     "pg": "^8.10.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

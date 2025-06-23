@@ -77,32 +77,39 @@ CREATE TABLE IF NOT EXISTS offer_request_bids (
     CREATE INDEX IF NOT EXISTS idx_offer_request_bids_status ON offer_request_bids(bid_status);
 `;
 
-const createOfferClicksTableQuery = `
-CREATE TABLE IF NOT EXISTS offer_clicks (
-    click_id TEXT PRIMARY KEY,
-    offer_id TEXT NOT NULL REFERENCES offers(offer_id) ON DELETE CASCADE,
-    clicker_entity_id TEXT REFERENCES entities(entity_id) ON DELETE SET NULL,
-    user_id TEXT REFERENCES users(user_id) ON DELETE SET NULL,
-    ip_address INET,
-    user_agent TEXT,
-    referrer_url TEXT,
-    click_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_conversion BOOLEAN DEFAULT FALSE,
-    conversion_value NUMERIC(12, 2),
-    conversion_timestamp TIMESTAMP
+const createEmailTrackingTableQuery = `
+CREATE TABLE IF NOT EXISTS email_tracking (
+    email_id TEXT PRIMARY KEY,
+    sender_user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    sender_entity_id TEXT REFERENCES entities(entity_id) ON DELETE SET NULL,
+    recipient_user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    recipient_entity_id TEXT REFERENCES entities(entity_id) ON DELETE SET NULL,
+    offer_request_id TEXT REFERENCES offer_requests(offer_request_id) ON DELETE SET NULL,
+    email_type VARCHAR(50) NOT NULL DEFAULT 'contact_request',
+    recipient_email VARCHAR(255) NOT NULL,
+    subject TEXT NOT NULL,
+    message_content TEXT,
+    email_status VARCHAR(20) DEFAULT 'sent' CHECK (email_status IN ('sent', 'delivered', 'failed', 'bounced')),
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delivered_at TIMESTAMP,
+    opened_at TIMESTAMP,
+    replied_at TIMESTAMP,
+    metadata JSONB
 );
- -- Indexes for offer clicks
-    CREATE INDEX IF NOT EXISTS idx_offer_clicks_offer ON offer_clicks(offer_id);
-    CREATE INDEX IF NOT EXISTS idx_offer_clicks_entity ON offer_clicks(clicker_entity_id);
-    CREATE INDEX IF NOT EXISTS idx_offer_clicks_timestamp ON offer_clicks(click_timestamp);
-    CREATE INDEX IF NOT EXISTS idx_offer_clicks_conversion ON offer_clicks(is_conversion);
+-- Indexes for email tracking
+    CREATE INDEX IF NOT EXISTS idx_email_tracking_sender_user ON email_tracking(sender_user_id);
+    CREATE INDEX IF NOT EXISTS idx_email_tracking_recipient_user ON email_tracking(recipient_user_id);
+    CREATE INDEX IF NOT EXISTS idx_email_tracking_offer_request ON email_tracking(offer_request_id);
+    CREATE INDEX IF NOT EXISTS idx_email_tracking_type ON email_tracking(email_type);
+    CREATE INDEX IF NOT EXISTS idx_email_tracking_status ON email_tracking(email_status);
+    CREATE INDEX IF NOT EXISTS idx_email_tracking_sent_at ON email_tracking(sent_at);
 `;
 
 const tables = [
     { name: 'offers', query: createOffersTableQuery },
     { name: 'offer_requests', query: createOfferRequestsTableQuery },
     { name: 'offer_request_bids', query: offerRequestsBidsTableQuery },
-    { name: 'offer_clicks', query: createOfferClicksTableQuery }
+    { name: 'email_tracking', query: createEmailTrackingTableQuery },
 ];
 
 tables.forEach(table => {
@@ -491,6 +498,124 @@ class OffersModel {
         try {
             const result = await client.query(query, values);
             return { success: true, requests: result.rows };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Email tracking methods
+    static async trackEmailSent(emailData) {
+        const {
+            sender_user_id,
+            sender_entity_id,
+            recipient_user_id,
+            recipient_entity_id,
+            offer_request_id,
+            email_type,
+            recipient_email,
+            subject,
+            message_content,
+            metadata
+        } = emailData;
+
+        const email_id = uuidv4();
+        
+        const query = `
+            INSERT INTO email_tracking (
+                email_id, sender_user_id, sender_entity_id, recipient_user_id,
+                recipient_entity_id, offer_request_id, email_type, recipient_email,
+                subject, message_content, metadata
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING *
+        `;
+
+        const values = [
+            email_id, sender_user_id, sender_entity_id, recipient_user_id,
+            recipient_entity_id, offer_request_id, email_type, recipient_email,
+            subject, message_content, metadata ? JSON.stringify(metadata) : null
+        ];
+
+        try {
+            const result = await client.query(query, values);
+            return { success: true, email: result.rows[0] };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    static async getEmailHistory(filters = {}, limit = 20, offset = 0) {
+        let query = `
+            SELECT et.*, 
+                   CONCAT(su.first_name, ' ', su.last_name) as sender_name,
+                   CONCAT(ru.first_name, ' ', ru.last_name) as recipient_name,
+                   se.name as sender_entity_name,
+                   re.name as recipient_entity_name,
+                   req.title as offer_request_title
+            FROM email_tracking et
+            LEFT JOIN users su ON et.sender_user_id = su.user_id
+            LEFT JOIN users ru ON et.recipient_user_id = ru.user_id
+            LEFT JOIN entities se ON et.sender_entity_id = se.entity_id
+            LEFT JOIN entities re ON et.recipient_entity_id = re.entity_id
+            LEFT JOIN offer_requests req ON et.offer_request_id = req.offer_request_id
+            WHERE 1=1
+        `;
+        
+        const values = [];
+        let paramCount = 0;
+
+        if (filters.sender_user_id) {
+            paramCount++;
+            query += ` AND et.sender_user_id = $${paramCount}`;
+            values.push(filters.sender_user_id);
+        }
+
+        if (filters.recipient_user_id) {
+            paramCount++;
+            query += ` AND et.recipient_user_id = $${paramCount}`;
+            values.push(filters.recipient_user_id);
+        }
+
+        if (filters.offer_request_id) {
+            paramCount++;
+            query += ` AND et.offer_request_id = $${paramCount}`;
+            values.push(filters.offer_request_id);
+        }
+
+        if (filters.email_type) {
+            paramCount++;
+            query += ` AND et.email_type = $${paramCount}`;
+            values.push(filters.email_type);
+        }
+
+        query += ` ORDER BY et.sent_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+        values.push(limit, offset);
+
+        try {
+            const result = await client.query(query, values);
+            return { success: true, emails: result.rows };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    static async updateEmailStatus(email_id, status, timestamp_field = null) {
+        let query = `UPDATE email_tracking SET email_status = $1`;
+        const values = [status];
+        let paramCount = 1;
+
+        if (timestamp_field) {
+            paramCount++;
+            query += `, ${timestamp_field} = $${paramCount}`;
+            values.push(new Date());
+        }
+
+        paramCount++;
+        query += ` WHERE email_id = $${paramCount} RETURNING *`;
+        values.push(email_id);
+
+        try {
+            const result = await client.query(query, values);
+            return { success: true, email: result.rows[0] };
         } catch (error) {
             return { success: false, error: error.message };
         }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/navbar';
 import EntityReviewsDashboard from '../components/EntityReviewsDashboard';
-import { authAPI, offersAPI } from '../services/api';
+import { authAPI } from '../services/auth';
+import { offersAPI } from '../services/offers';
 
 export default function AdvertiserDashboard() {
   const [currentUser, setCurrentUser] = useState(null);

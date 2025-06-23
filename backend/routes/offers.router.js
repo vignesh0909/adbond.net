@@ -1,8 +1,9 @@
 const express = require('express');
-const { OffersModel } = require('../models/offers.model.pg.js');
+const { OffersModel, client } = require('../models/offers.model.pg.js');
 const { authenticateToken } = require('../middleware/auth.js');
 const { validateEntity } = require('../middleware/validation.js');
 const { entityModel } = require('../models/entity.model.pg.js');
+const emailService = require('../services/emailService.js');
 
 const router = express.Router();
 
@@ -576,6 +577,181 @@ router.get('/offer-requests/user/:user_id', authenticateToken, async (req, res) 
             res.status(500).json({ success: false, error: result.error });
         }
     } catch (error) {
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Send contact email to affiliate
+router.post('/offer-requests/:offer_request_id/contact', authenticateToken, async (req, res) => {
+    try {
+        const { offer_request_id } = req.params;
+        const { message } = req.body;
+        const sender_user_id = req.user.user_id;
+
+        // Get the offer request details
+        const offerRequestQuery = `
+            SELECT req.*, e.name as entity_name, u.email as recipient_email,
+                   CONCAT(u.first_name, ' ', u.last_name) as recipient_name
+            FROM offer_requests req
+            LEFT JOIN entities e ON req.entity_id = e.entity_id
+            LEFT JOIN users u ON req.user_id = u.user_id
+            WHERE req.offer_request_id = $1 AND req.request_status = 'active'
+        `;
+        
+        const offerRequestResult = await client.query(offerRequestQuery, [offer_request_id]);
+        
+        if (offerRequestResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Offer request not found or no longer active'
+            });
+        }
+
+        const offerRequest = offerRequestResult.rows[0];
+
+        // Get sender details
+        const senderQuery = `
+            SELECT u.*, e.name as entity_name
+            FROM users u
+            LEFT JOIN entities e ON u.entity_id = e.entity_id
+            WHERE u.user_id = $1
+        `;
+        
+        const senderResult = await client.query(senderQuery, [sender_user_id]);
+        
+        if (senderResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Sender not found'
+            });
+        }
+
+        const sender = senderResult.rows[0];
+
+        // Prepare email data
+        const contactData = {
+            senderName: `${sender.first_name} ${sender.last_name}`,
+            senderEmail: sender.email,
+            senderCompany: sender.entity_name || 'Independent',
+            recipientName: offerRequest.recipient_name,
+            recipientEmail: offerRequest.recipient_email,
+            offerRequestTitle: offerRequest.title,
+            messageContent: message,
+            offerRequestDetails: {
+                vertical: offerRequest.vertical,
+                traffic_volume: offerRequest.traffic_volume,
+                desired_payout_type: offerRequest.desired_payout_type,
+                geos_targeting: offerRequest.geos_targeting
+            }
+        };
+
+        // Send the email
+        const emailResult = await emailService.sendAffiliateContactEmail(contactData);
+
+        if (emailResult.success) {
+            // Track the email in the database
+            const emailTrackingData = {
+                sender_user_id: sender_user_id,
+                sender_entity_id: sender.entity_id,
+                recipient_user_id: offerRequest.user_id,
+                recipient_entity_id: offerRequest.entity_id,
+                offer_request_id: offer_request_id,
+                email_type: 'contact_request',
+                recipient_email: offerRequest.recipient_email,
+                subject: `New Contact Request for "${offerRequest.title}" - AdBond`,
+                message_content: message,
+                metadata: {
+                    sender_company: contactData.senderCompany,
+                    offer_request_title: offerRequest.title,
+                    contact_method: 'platform_email'
+                }
+            };
+
+            const trackingResult = await OffersModel.trackEmailSent(emailTrackingData);
+
+            res.json({
+                success: true,
+                message: 'Contact email sent successfully',
+                email_id: trackingResult.success ? trackingResult.email.email_id : null
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: 'Failed to send contact email'
+            });
+        }
+
+    } catch (error) {
+        console.error('Error sending contact email:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
+
+// Get email history for user
+router.get('/email-history', authenticateToken, async (req, res) => {
+    try {
+        const { limit = 20, offset = 0, type = 'all' } = req.query;
+        const user_id = req.user.user_id;
+
+        const filters = {};
+        
+        if (type === 'sent') {
+            filters.sender_user_id = user_id;
+        } else if (type === 'received') {
+            filters.recipient_user_id = user_id;
+        } else {
+            // For 'all', we need a custom query
+        }
+
+        let result;
+        if (type === 'all') {
+            // Custom query for both sent and received emails
+            const query = `
+                SELECT et.*, 
+                       CONCAT(su.first_name, ' ', su.last_name) as sender_name,
+                       CONCAT(ru.first_name, ' ', ru.last_name) as recipient_name,
+                       se.name as sender_entity_name,
+                       re.name as recipient_entity_name,
+                       req.title as offer_request_title,
+                       CASE 
+                           WHEN et.sender_user_id = $1 THEN 'sent'
+                           WHEN et.recipient_user_id = $1 THEN 'received'
+                       END as direction
+                FROM email_tracking et
+                LEFT JOIN users su ON et.sender_user_id = su.user_id
+                LEFT JOIN users ru ON et.recipient_user_id = ru.user_id
+                LEFT JOIN entities se ON et.sender_entity_id = se.entity_id
+                LEFT JOIN entities re ON et.recipient_entity_id = re.entity_id
+                LEFT JOIN offer_requests req ON et.offer_request_id = req.offer_request_id
+                WHERE et.sender_user_id = $1 OR et.recipient_user_id = $1
+                ORDER BY et.sent_at DESC
+                LIMIT $2 OFFSET $3
+            `;
+            
+            const queryResult = await client.query(query, [user_id, parseInt(limit), parseInt(offset)]);
+            result = { success: true, emails: queryResult.rows };
+        } else {
+            result = await OffersModel.getEmailHistory(filters, parseInt(limit), parseInt(offset));
+        }
+
+        if (result.success) {
+            res.json({
+                success: true,
+                emails: result.emails,
+                pagination: {
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    count: result.emails.length
+                }
+            });
+        } else {
+            res.status(500).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        console.error('Error fetching email history:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

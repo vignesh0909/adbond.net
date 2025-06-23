@@ -59,6 +59,19 @@
   .glass-dark {
     @apply bg-gray-900/80 backdrop-blur-md border border-gray-700/20;
   }
+
+  .glass-card {
+    @apply backdrop-blur-sm;
+  }
+
+  /* Additional scale utilities */
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
+  }
+
+  .hover\:scale-103:hover {
+    transform: scale(1.03);
+  }
 }
 
 /* Custom keyframe animations */
@@ -128,6 +141,37 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes modalIn {
+  from {
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
 /* Animation classes */
 .animate-blob {
   animation: blob 7s infinite;
@@ -139,6 +183,14 @@
 
 .animation-delay-4000 {
   animation-delay: 4s;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
 }
 
 .animate-float {
@@ -161,6 +213,31 @@
 
 .animate-fade-in-scale {
   animation: fadeInScale 0.5s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+.animate-modal-in {
+  animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Staggered animation delays for modal content */
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-300 {
+  animation-delay: 0.3s;
 }
 
 /* Hover effects */

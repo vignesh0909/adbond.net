@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { reviewsAPI } from '../services/reviews';
-import { authAPI } from '../services/api';
+import { authAPI } from '../services/auth';
 
 export default function EntityReviews({ entityId, entityName }) {
     const [reviews, setReviews] = useState([]);
@@ -33,7 +34,10 @@ export default function EntityReviews({ entityId, entityName }) {
 
     const handleVote = async (reviewId, voteType) => {
         if (!currentUser) {
-            alert('Please log in to vote on reviews');
+            toast.warning('Please log in to vote on reviews', {
+                position: "top-right",
+                autoClose: 3000,
+            });
             return;
         }
 
@@ -41,21 +45,34 @@ export default function EntityReviews({ entityId, entityName }) {
             await reviewsAPI.voteOnReview(reviewId, voteType);
             // Refresh reviews to show updated vote counts
             fetchReviews(pagination.current_page);
+            toast.success(`Vote recorded successfully!`, {
+                position: "top-right",
+                autoClose: 2000,
+            });
         } catch (error) {
             console.error('Failed to vote:', error);
-            alert('Failed to record vote');
+            toast.error('Failed to record vote. Please try again.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         }
     };
 
     const handleReply = async (e) => {
         e.preventDefault();
         if (!currentUser) {
-            alert('Please log in to reply');
+            toast.warning('Please log in to reply', {
+                position: "top-right",
+                autoClose: 3000,
+            });
             return;
         }
 
         if (!replyText.trim()) {
-            alert('Please enter a reply');
+            toast.warning('Please enter a reply', {
+                position: "top-right",
+                autoClose: 3000,
+            });
             return;
         }
 
@@ -69,10 +86,16 @@ export default function EntityReviews({ entityId, entityName }) {
             setShowReplyForm(false);
             setSelectedReview(null);
             fetchReviews(pagination.current_page);
-            alert('Reply submitted successfully');
+            toast.success('Reply submitted successfully!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         } catch (error) {
             console.error('Failed to submit reply:', error);
-            alert('Failed to submit reply');
+            toast.error('Failed to submit reply. Please try again.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         }
     };
 

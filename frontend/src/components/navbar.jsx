@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { 
+  Bell, 
+  ChevronDown, 
+  Menu, 
+  X, 
+  LayoutDashboard, 
+  User, 
+  Settings, 
+  LogOut,
+  Moon,
+  Sun
+} from 'lucide-react';
+import { authAPI } from '../services/auth';
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -72,7 +84,7 @@ const Navbar = () => {
   };
 
   const getDashboardRoute = () => {
-    if (!currentUser?.role) return '/';
+    if (!currentUser?.role) return '/user-dashboard';
 
     switch (currentUser.role) {
       case 'advertiser':
@@ -84,7 +96,7 @@ const Navbar = () => {
       case 'admin':
         return '/admin';
       default:
-        return '/';
+        return '/user-dashboard';
     }
   };
 
@@ -111,26 +123,26 @@ const Navbar = () => {
 
   return (
     <header className="fixed top-0 left-0 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 z-50 transition-all duration-300">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <div className="relative">
               <img
                 src="/assets/Favicon-dark-mode.png"
-                alt="Linkin Logo"
+                alt="AdBond Logo"
                 className="h-12 w-auto sm:h-16 drop-shadow-lg transition-transform group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
             <div className="hidden sm:block">
-              <span className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">AdBond</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 block -mt-1 font-medium">Connect • Trust • Grow</span>
+              <span className="font-black text-xl xl:text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight whitespace-nowrap">AdBond</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 block -mt-1 font-medium whitespace-nowrap">Connect • Trust • Grow</span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav className="hidden lg:flex items-center space-x-1 flex-shrink-0">
             <Link
               to="/register-entity"
               className="group relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-all duration-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
@@ -160,7 +172,7 @@ const Navbar = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-300"></div>
             </Link>
             <Link
-              to="/database"
+              to="/affliate-industry"
               className="group relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-all duration-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
               <span className="relative z-10">Database</span>
@@ -169,56 +181,50 @@ const Navbar = () => {
           </nav>
 
           {/* User Section */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             {/* Theme Toggle */}
-            {/* <button
+            <button
               aria-label="Toggle theme"
               onClick={toggleTheme}
               className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group"
             >
               {theme === 'light' ? (
-                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
+                <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" />
               ) : (
-                <svg className="w-5 h-5 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71-.71" />
-                </svg>
+                <Sun className="w-5 h-5 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" />
               )}
-            </button> */}
-            
+            </button>
+
             {/* Notification Bell */}
-            <button 
-              aria-label="Notifications" 
+            <button
+              aria-label="Notifications"
               className="relative p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group"
             >
-              <svg className="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
+              <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:scale-110 transition-transform duration-300" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse">
                 <span className="absolute inset-0 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-ping"></span>
               </span>
             </button>
             {!isLoggedIn ? (
               // Show login/signup buttons when not logged in
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 <Link to="/login">
-                  <button className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold px-6 py-2.5 rounded-xl transition-all duration-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                  <button className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 whitespace-nowrap">
                     Log in
                   </button>
                 </Link>
                 <Link to="/signup">
-                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap">
                     Sign up
                   </button>
                 </Link>
               </div>
             ) : (
               // Show user menu when logged in
-              <div className="relative" ref={userMenuRef}>
+              <div className="relative flex-shrink-0" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group"
+                  className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group"
                 >
                   {/* User Avatar */}
                   <div className="relative">
@@ -236,14 +242,9 @@ const Navbar = () => {
                     </div>
                   </div>
                   {/* Dropdown Arrow */}
-                  <svg
+                  <ChevronDown
                     className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  />
                 </button>
 
                 {/* User Dropdown Menu */}
@@ -254,19 +255,21 @@ const Navbar = () => {
                       <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{getUserDisplayName()}</div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{currentUser?.role || 'User'}</div>
                     </div>
-                    
-                    {/* Dashboard Link */}
+
+                    {/* Dashboard/Admin Panel Link */}
                     <Link
                       to={getDashboardRoute()}
                       className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
                       onClick={() => setShowUserMenu(false)}
                     >
                       <div className="w-8 h-8 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
+                        {currentUser?.role === 'admin' ? (
+                          <Settings className="w-4 h-4 text-white" />
+                        ) : (
+                          <LayoutDashboard className="w-4 h-4 text-white" />
+                        )}
                       </div>
-                      <span className="font-medium">Admin Panel</span>
+                      <span className="font-medium">{currentUser?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}</span>
                     </Link>
 
                     {/* Profile Link */}
@@ -276,9 +279,7 @@ const Navbar = () => {
                       onClick={() => setShowUserMenu(false)}
                     >
                       <div className="w-8 h-8 bg-gradient-to-tr from-green-500 to-teal-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                        <User className="w-4 h-4 text-white" />
                       </div>
                       <span className="font-medium">Profile</span>
                     </Link>
@@ -308,9 +309,7 @@ const Navbar = () => {
                       className="flex items-center w-full px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group"
                     >
                       <div className="w-8 h-8 bg-gradient-to-tr from-red-500 to-pink-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                        <LogOut className="w-4 h-4 text-white" />
                       </div>
                       <span className="font-medium">Logout</span>
                     </button>
@@ -324,13 +323,11 @@ const Navbar = () => {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
             >
-              <svg className="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              ) : (
+                <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              )}
             </button>
           </div>
         </div>
@@ -368,7 +365,7 @@ const Navbar = () => {
                 Reviews
               </Link>
               <Link
-                to="/database"
+                to="/affliate-industry"
                 className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -395,7 +392,7 @@ const Navbar = () => {
                     className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Admin Panel
+                    {currentUser?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
                   </Link>
                   <Link
                     to="/profile"
@@ -404,15 +401,6 @@ const Navbar = () => {
                   >
                     Profile
                   </Link>
-                  {currentUser?.role === 'admin' && (
-                    <Link
-                      to="/admin"
-                      className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Admin Panel
-                    </Link>
-                  )}
                   <button
                     onClick={() => {
                       handleLogout();

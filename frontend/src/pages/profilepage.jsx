@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
-import { authAPI } from '../services/api';
+import { authAPI } from '../services/auth';
 
 export default function ProfilePage() {
   const [currentUser, setCurrentUser] = useState(null);

@@ -1,24 +1,21 @@
 import React, { useState } from 'react';
 import Navbar from '../components/navbar';
-import { authAPI } from '../services/api';
+import { authAPI } from '../services/auth';
+import { customToast } from '../components/ToastProvider';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState(''); // Added confirm password state
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      customToast.error('Passwords do not match.');
       return;
     }
 
@@ -31,16 +28,16 @@ export default function SignupPage() {
         email,
         password,
       });
-      setSuccess('Signup successful! You can now log in.');
+      customToast.success('Account created successfully! Please check your email to verify your account before logging in.');
       console.log('Signup response:', response);
-      // Optionally, clear form fields after successful signup
+      // Clear form fields after successful signup
       setFirstName('');
       setLastName('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError(err.message || 'Signup failed. Please try again.');
+      customToast.error(err.message || 'Signup failed. Please try again.');
       console.error('Signup error:', err);
     } finally {
       setLoading(false);
@@ -55,8 +52,6 @@ export default function SignupPage() {
           <h2 className="text-3xl font-extrabold text-center text-pink-700 dark:text-pink-300 mb-6 tracking-tight">
             Create your account
           </h2>
-          {error && <p className="text-red-500 mt-4">{error}</p>}
-          {success && <p className="text-green-500 mt-4">{success}</p>}
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -67,7 +62,7 @@ export default function SignupPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="First Name"
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
               />
             </div>
             <div>
@@ -79,7 +74,7 @@ export default function SignupPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Last Name"
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
               />
             </div>
             <div>
@@ -91,7 +86,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
               />
             </div>
             <div>
@@ -103,7 +98,7 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
               />
             </div>
             <div>
@@ -115,7 +110,7 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm Password"
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600 focus:border-pink-400 dark:focus:border-pink-600 transition"
               />
             </div>
             <button

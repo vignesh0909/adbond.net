@@ -1,36 +1,184 @@
 import React, { useEffect, useState } from 'react';
+import { Database, Search, Filter, Building, Star, Users, Globe, Eye, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Navbar from '../components/navbar';
-import { entityAPI } from '../services/entity';
+import { authAPI } from '../services/auth';
+import { affiliateCompaniesAPI } from '../services/affiliateCompanies';
+import { http } from '../services/httpClient';
 
 export default function CompanyDatabasePage() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("");
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [userVerificationStatus, setUserVerificationStatus] = useState(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [contactsModalOpen, setContactsModalOpen] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
+  const [searchDebounce, setSearchDebounce] = useState("");
 
+  // Check if user is logged in
   useEffect(() => {
-    const fetchEntities = async () => {
+    const loggedIn = authAPI.isLoggedIn();
+    setIsLoggedIn(loggedIn);
+
+    if (loggedIn) {
+      fetchUserVerificationStatus();
+    }
+  }, []);
+
+  const fetchUserVerificationStatus = async () => {
+    try {
+      const response = await http.get('/users/verification-status');
+      setUserVerificationStatus(response.status);
+    } catch (err) {
+      console.error('Error fetching verification status:', err);
+    }
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounce(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset pagination when search or filter changes
+  useEffect(() => {
+    if (isLoggedIn) {
+      setCompanies([]);
+      setPagination(prev => ({ ...prev, page: 1 }));
+      fetchCompanies(1, true);
+    }
+  }, [filterType, searchDebounce, isLoggedIn]);
+
+  const fetchCompanies = async (page = 1, reset = false) => {
+    if (!isLoggedIn) {
+      setError("Please log in to access the company database.");
+      return;
+    }
+
+    if (reset) {
       setLoading(true);
-      setError("");
+    } else {
+      setLoadingMore(true);
+    }
+    setError("");
 
-      try {
-        const response = await entityAPI.getPublicEntities(filterType);
-        setCompanies(response.entities);
-      } catch (err) {
-        setError("Failed to fetch entities. Please try again later.");
-        console.error(err);
-      } finally {
-        setLoading(false);
+    try {
+      const params = {
+        page,
+        limit: pagination.limit,
+        ...(filterType && { type: filterType }),
+        ...(searchDebounce && { search: searchDebounce })
+      };
+
+      const response = await affiliateCompaniesAPI.getCompanies(params);
+
+      if (reset) {
+        setCompanies(response.data || []);
+      } else {
+        setCompanies(prev => [...prev, ...(response.data || [])]);
       }
-    };
 
-    fetchEntities();
-  }, [filterType]);
+      setPagination(response.pagination || pagination);
+    } catch (err) {
+      setError("Failed to fetch companies. Please try again later.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
-  const filteredCompanies = companies.filter(
-    (c) => c.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const loadMoreCompanies = () => {
+    if (pagination.hasNextPage && !loadingMore) {
+      fetchCompanies(pagination.page + 1, false);
+    }
+  };
+
+  const handleRequestAccess = async (company) => {
+    setSelectedCompany(company);
+
+    if (!userVerificationStatus?.identity_verified && !userVerificationStatus?.entity_id) {
+      setShowVerificationModal(true);
+      return;
+    }
+
+    // User is verified, fetch contacts directly
+    await fetchCompanyContacts(company.affliate_id);
+  };
+
+  const fetchCompanyContacts = async (companyId) => {
+    try {
+      setLoading(true);
+      const response = await http.get(`/affiliate-companies/${companyId}/contacts`);
+      setContacts(response.data || []);
+      setContactsModalOpen(true);
+    } catch (err) {
+      setError("Failed to fetch company contacts.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }; const handleIdentityVerification = async (method, data) => {
+    try {
+      setLoading(true);
+      await http.post('/users/verify-identity', {
+        verification_method: method,
+        ...data
+      });
+
+      // Refresh verification status
+      await fetchUserVerificationStatus();
+      setShowVerificationModal(false);
+
+      // Now fetch contacts for the selected company
+      if (selectedCompany) {
+        await fetchCompanyContacts(selectedCompany.affliate_id);
+      }
+    } catch (err) {
+      setError("Identity verification failed. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans">
+        <Navbar />
+        <section className="relative pt-24 pb-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
+          <div className="text-center py-20">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Shield className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Access Restricted</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Please log in to access the affiliate company database.
+            </p>
+            <a href="/login" className="btn-primary">
+              Log In
+            </a>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans">
@@ -46,19 +194,36 @@ export default function CompanyDatabasePage() {
         {/* Header */}
         <div className="flex items-center mb-8 animate-slide-in-down">
           <div className="w-12 h-12 bg-gradient-to-tr from-emerald-600 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-            <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 12a1 1 0 001-1v-3a1 1 0 10-2 0v3a1 1 0 001 1zm0 4a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-6a6 6 0 100 12 6 6 0 000-12z" clipRule="evenodd" />
-            </svg>
+            <Database className="w-7 h-7 text-white" />
           </div>
-          <div>
-            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-emerald">Company Database</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Browse the affiliate marketing industry directory</p>
+          <div className="flex-1">
+            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-emerald">Affiliate Company Database</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Browse verified affiliate marketing companies</p>
           </div>
+
+          {/* Verification Status Badge */}
+          {userVerificationStatus && (
+            <div className="flex items-center space-x-2">
+              {userVerificationStatus.identity_verified || userVerificationStatus.entity_id ? (
+                <div className="flex items-center px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+                  <span className="text-green-700 dark:text-green-300 font-medium">Verified Access</span>
+                </div>
+              ) : (
+                <div className="flex items-center px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" />
+                  <span className="text-yellow-700 dark:text-yellow-300 font-medium">Limited Access</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <p className="mb-8 text-gray-600 dark:text-gray-300 text-lg animate-fade-in-up">
-          Contact details are protected and available only on request. Build connections with verified partners.
+          {userVerificationStatus?.identity_verified || userVerificationStatus?.entity_id
+            ? "You have verified access to view contact details and connect with partners."
+            : "Verify your identity via LinkedIn or business email to access full contact details."
+          }
         </p>
 
         {/* Search and Filter Section */}
@@ -66,9 +231,7 @@ export default function CompanyDatabasePage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="font-semibold mb-2 block text-gray-700 dark:text-gray-200 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <Search className="w-4 h-4 mr-2" />
                 Search by Company Name
               </label>
               <input
@@ -81,9 +244,7 @@ export default function CompanyDatabasePage() {
             </div>
             <div>
               <label className="font-semibold mb-2 block text-gray-700 dark:text-gray-200 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
+                <Filter className="w-4 h-4 mr-2" />
                 Filter by Type
               </label>
               <select
@@ -98,7 +259,7 @@ export default function CompanyDatabasePage() {
               </select>
             </div>
           </div>
-          
+
           {/* Results Counter */}
           <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg border border-emerald-100 dark:border-emerald-700">
             <div className="flex items-center text-emerald-700 dark:text-emerald-300">
@@ -106,7 +267,8 @@ export default function CompanyDatabasePage() {
                 <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
               </svg>
               <span className="font-medium">
-                {loading ? 'Loading...' : `${filteredCompanies.length} companies found`}
+                {loading ? 'Loading...' : `${companies.length} of ${pagination.total} companies found`}
+                {searchDebounce && ` for "${searchDebounce}"`}
               </span>
             </div>
           </div>
@@ -125,7 +287,7 @@ export default function CompanyDatabasePage() {
               {error}
             </div>
           </div>
-        ) : filteredCompanies.length === 0 ? (
+        ) : companies.length === 0 ? (
           <div className="text-center py-20 animate-fade-in-scale">
             <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -133,7 +295,9 @@ export default function CompanyDatabasePage() {
               </svg>
             </div>
             <div className="text-gray-500 dark:text-gray-400 text-2xl font-semibold mb-2">No companies found</div>
-            <p className="text-gray-400 dark:text-gray-500 mb-6">Try adjusting your search criteria or browse different types</p>
+            <p className="text-gray-400 dark:text-gray-500 mb-6">
+              {searchDebounce ? `No results for "${searchDebounce}"` : 'Try adjusting your search criteria or browse different types'}
+            </p>
             <button
               onClick={() => {
                 setSearch("");
@@ -177,41 +341,45 @@ export default function CompanyDatabasePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCompanies.map((company, idx) => (
-                    <tr 
-                      key={idx} 
+                  {companies.map((company, idx) => (
+                    <tr
+                      key={idx}
                       className="border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-colors group"
                       style={{ animationDelay: `${idx * 0.1}s` }}
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-3 group-hover:scale-110 transition-transform">
-                            {company.name.charAt(0).toUpperCase()}
+                            {company.company_name?.charAt(0).toUpperCase() || 'C'}
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                              {company.name}
+                              {company.company_name || 'Unknown Company'}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Verified Partner</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {company.website || 'No website'}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          company.entity_type === 'Advertiser' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${company.entity_type === 'Advertiser' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
                           company.entity_type === 'Affiliate' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                        }`}>
-                          {company.entity_type === 'Advertiser' ? '🎯' : company.entity_type === 'Affiliate' ? '👥' : '🌐'} {company.entity_type}
+                            'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                          }`}>
+                          {company.entity_type === 'Advertiser' ? '🎯' : company.entity_type === 'Affiliate' ? '👥' : '🌐'} {company.entity_type || 'Affiliate'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <button className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg flex items-center">
-                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                          </svg>
-                          Request Access
+                        <button
+                          onClick={() => handleRequestAccess(company)}
+                          className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg flex items-center"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          {userVerificationStatus?.identity_verified || userVerificationStatus?.entity_id
+                            ? 'View Contacts'
+                            : 'Request Access'
+                          }
                         </button>
                       </td>
                     </tr>
@@ -219,9 +387,208 @@ export default function CompanyDatabasePage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Load More Button */}
+            {pagination.hasNextPage && (
+              <div className="p-6 text-center border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={loadMoreCompanies}
+                  disabled={loadingMore}
+                  className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-emerald-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center mx-auto"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Loading More...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      Load More Companies ({pagination.total - companies.length} remaining)
+                    </>
+                  )}
+                </button>
+
+                <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                  Showing {companies.length} of {pagination.total} companies
+                  {pagination.totalPages > 1 && (
+                    <span> • Page {pagination.page} of {pagination.totalPages}</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
+
+      {/* Identity Verification Modal */}
+      {showVerificationModal && (
+        <VerificationModal
+          onClose={() => setShowVerificationModal(false)}
+          onVerify={handleIdentityVerification}
+          loading={loading}
+        />
+      )}
+
+      {/* Contacts Modal */}
+      {contactsModalOpen && (
+        <ContactsModal
+          company={selectedCompany}
+          contacts={contacts}
+          onClose={() => setContactsModalOpen(false)}
+          hasFullAccess={userVerificationStatus?.identity_verified || userVerificationStatus?.entity_id}
+        />
+      )}
+    </div>
+  );
+}
+
+// Verification Modal Component
+function VerificationModal({ onClose, onVerify, loading }) {
+  const [verificationType, setVerificationType] = useState('');
+  const [linkedinProfile, setLinkedinProfile] = useState('');
+  const [businessEmail, setBusinessEmail] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (verificationType === 'linkedin') {
+      onVerify('linkedin', { linkedin_profile: linkedinProfile });
+    } else if (verificationType === 'business_email') {
+      onVerify('business_email', { business_email: businessEmail });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6">
+        <h3 className="text-xl font-bold mb-4">Verify Your Identity</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          To access contact details, please verify your identity through one of these methods:
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              <input
+                type="radio"
+                name="verification"
+                value="linkedin"
+                checked={verificationType === 'linkedin'}
+                onChange={(e) => setVerificationType(e.target.value)}
+                className="mr-2"
+              />
+              LinkedIn Profile Verification
+            </label>
+            {verificationType === 'linkedin' && (
+              <input
+                type="url"
+                placeholder="https://linkedin.com/in/yourprofile"
+                value={linkedinProfile}
+                onChange={(e) => setLinkedinProfile(e.target.value)}
+                className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              <input
+                type="radio"
+                name="verification"
+                value="business_email"
+                checked={verificationType === 'business_email'}
+                onChange={(e) => setVerificationType(e.target.value)}
+                className="mr-2"
+              />
+              Business Domain Email
+            </label>
+            {verificationType === 'business_email' && (
+              <input
+                type="email"
+                placeholder="your.email@company.com"
+                value={businessEmail}
+                onChange={(e) => setBusinessEmail(e.target.value)}
+                className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            )}
+          </div>
+
+          <div className="flex space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!verificationType || loading}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Verifying...' : 'Verify'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Contacts Modal Component
+function ContactsModal({ company, contacts, onClose, hasFullAccess }) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold">{company?.company_name} - Contacts</h3>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
+          {contacts.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No contacts available</p>
+          ) : (
+            <div className="space-y-4">
+              {contacts.map((contact, idx) => (
+                <div key={idx} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold">{contact.full_name || `${contact.first_name} ${contact.last_name}`}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{contact.designation}</p>
+                      {hasFullAccess ? (
+                        <div className="mt-2 space-y-1">
+                          {contact.email && (
+                            <p className="text-sm">📧 {contact.email}</p>
+                          )}
+                          {contact.phone && (
+                            <p className="text-sm">📞 {contact.phone}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
+                          Contact details hidden - verify identity to access
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

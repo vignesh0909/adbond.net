@@ -50,20 +50,11 @@ router.get('/entity/:entity_id', async (req, res) => {
         const { page = 1, limit = 10, sort = 'created_at', order = 'desc' } = req.query;
 
         const offset = (page - 1) * limit;
-        
+
         const query = `
             SELECT 
-                r.review_id,
-                r.title,
-                r.overall_rating,
-                r.review_text,
-                r.category_ratings,
-                r.tags,
-                r.is_anonymous,
-                r.is_verified,
-                r.helpful_votes,
-                r.unhelpful_votes,
-                r.created_at,
+                r.review_id, r.title, r.overall_rating, r.review_text, r.category_ratings, r.tags, r.is_anonymous, r.is_verified,
+                r.helpful_votes, r.unhelpful_votes, r.created_at,
                 CASE 
                     WHEN r.is_anonymous = true THEN 'Anonymous'
                     ELSE CONCAT(u.first_name, ' ', COALESCE(u.last_name, ''))
@@ -115,13 +106,7 @@ router.get('/:review_id/replies', async (req, res) => {
         const { review_id } = req.params;
 
         const query = `
-            SELECT 
-                rr.reply_id,
-                rr.reply_text,
-                rr.reply_type,
-                rr.is_official,
-                rr.created_at,
-                CONCAT(u.first_name, ' ', COALESCE(u.last_name, '')) as replier_name,
+            SELECT rr.reply_id, rr.reply_text, rr.reply_type, rr.is_official,rr.created_at, CONCAT(u.first_name, ' ', COALESCE(u.last_name, '')) as replier_name,
                 u.role as replier_role
             FROM review_replies rr
             JOIN users u ON rr.user_id = u.user_id
@@ -146,17 +131,7 @@ router.get('/:review_id/replies', async (req, res) => {
 // Submit a new review
 router.post('/', authenticateToken, validateReviewData, async (req, res) => {
     try {
-        const {
-            entity_id,
-            entity_name,
-            title,
-            overall_rating,
-            review_text,
-            category_ratings,
-            proof_attachments = [],
-            tags = [],
-            is_anonymous = false
-        } = req.body;
+        const { entity_id, entity_name, title, overall_rating, review_text, category_ratings, proof_attachments = [], tags = [], is_anonymous = false } = req.body;
 
         const review_id = uuidv4();
         const user_id = req.user.user_id;
@@ -165,8 +140,11 @@ router.post('/', authenticateToken, validateReviewData, async (req, res) => {
         const user = await userModel.getUserById(user_id);
         const reviewer_type = user.role;
 
-        // Check if entity exists, if not create a placeholder
+        // Check entity status and determine review workflow
         let target_entity_id = entity_id;
+        let review_status = 'pending'; // Default to pending (admin review required)
+        let message = 'Review submitted for moderation';
+
         if (!entity_id && entity_name) {
             // Create placeholder entity for non-existing entities
             const placeholder_entity_id = uuidv4();
@@ -182,19 +160,47 @@ router.post('/', authenticateToken, validateReviewData, async (req, res) => {
                 )
                 RETURNING entity_id
             `;
-            
+
             const placeholderResult = await client.query(placeholderQuery, [placeholder_entity_id, entity_name]);
             target_entity_id = placeholderResult.rows[0].entity_id;
+            // Review for unregistered entity goes to admin
+            review_status = 'pending';
+            message = 'Review submitted successfully. It will be reviewed by our admin team.';
+        } else if (entity_id) {
+            // Check if entity is registered and approved
+            const entityCheckQuery = `
+                SELECT verification_status, name 
+                FROM entities 
+                WHERE entity_id = $1
+            `;
+            const entityResult = await client.query(entityCheckQuery, [entity_id]);
+
+            if (entityResult.rows.length > 0) {
+                const entity = entityResult.rows[0];
+                if (entity.verification_status === 'approved') {
+                    // Auto-approve review for registered/approved entities
+                    review_status = 'approved';
+                    message = 'Review published successfully!';
+                } else {
+                    // Entity exists but not approved yet
+                    review_status = 'pending';
+                    message = 'Review submitted for moderation. This entity is pending verification, so your review will be reviewed by our admin team.';
+                }
+            } else {
+                // Entity ID provided but doesn't exist - shouldn't happen with proper frontend validation
+                review_status = 'pending';
+                message = 'Review submitted for moderation';
+            }
         }
 
-        // Insert review
+        // Insert review with determined status
         const insertQuery = `
             INSERT INTO reviews (
                 review_id, entity_id, user_id, reviewer_type, title, overall_rating,
                 review_text, category_ratings, proof_attachments, tags, is_anonymous,
                 review_status, created_at, updated_at
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', NOW(), NOW()
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
             )
             RETURNING *
         `;
@@ -202,15 +208,21 @@ router.post('/', authenticateToken, validateReviewData, async (req, res) => {
         const values = [
             review_id, target_entity_id, user_id, reviewer_type, title, overall_rating,
             review_text, JSON.stringify(category_ratings), JSON.stringify(proof_attachments),
-            JSON.stringify(tags), is_anonymous
+            JSON.stringify(tags), is_anonymous, review_status
         ];
 
         const result = await client.query(insertQuery, values);
 
+        // If review was auto-approved, update entity reputation
+        if (review_status === 'approved') {
+            await updateEntityReputation(target_entity_id);
+        }
+
         res.status(201).json({
             success: true,
-            message: 'Review submitted for moderation',
-            review: result.rows[0]
+            message: message,
+            review: result.rows[0],
+            auto_approved: review_status === 'approved'
         });
     } catch (error) {
         console.error('Submit review error:', error);
@@ -243,7 +255,7 @@ router.post('/:review_id/reply', authenticateToken, async (req, res) => {
         // Check if review exists and is approved
         const reviewQuery = 'SELECT * FROM reviews WHERE review_id = $1';
         const reviewResult = await client.query(reviewQuery, [review_id]);
-        
+
         if (reviewResult.rows.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -252,7 +264,7 @@ router.post('/:review_id/reply', authenticateToken, async (req, res) => {
         }
 
         const review = reviewResult.rows[0];
-        
+
         // Determine if this is an official reply (entity owner or admin)
         const user = await userModel.getUserById(user_id);
         const isOfficial = user.role === 'admin' || user.entity_id === review.entity_id;
@@ -294,7 +306,7 @@ router.post('/:review_id/vote', authenticateToken, async (req, res) => {
         }
 
         const column = vote_type === 'helpful' ? 'helpful_votes' : 'unhelpful_votes';
-        
+
         const updateQuery = `
             UPDATE reviews 
             SET ${column} = ${column} + 1, updated_at = NOW()
@@ -303,7 +315,7 @@ router.post('/:review_id/vote', authenticateToken, async (req, res) => {
         `;
 
         const result = await client.query(updateQuery, [review_id]);
-        
+
         if (result.rows.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -331,7 +343,7 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
 
         let statusFilter = '';
         let queryParams = [user_id, limit, offset];
-        
+
         if (status) {
             statusFilter = 'AND r.review_status = $4';
             queryParams.push(status);
@@ -343,6 +355,7 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
                 r.title,
                 r.overall_rating,
                 r.review_text,
+                r.category_ratings,
                 r.review_status,
                 r.admin_notes,
                 r.created_at,
@@ -497,8 +510,8 @@ router.put('/:review_id/moderate', authenticateToken, requireRole(['admin']), as
             });
         }
 
-        const status = action === 'approve' ? 'approved' : 
-                      action === 'reject' ? 'rejected' : 'flagged';
+        const status = action === 'approve' ? 'approved' :
+            action === 'reject' ? 'rejected' : 'flagged';
 
         // Update review status
         const updateQuery = `

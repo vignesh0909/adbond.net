@@ -9,11 +9,6 @@ const {
     handleValidationErrors
 } = require('../middleware/validation');
 
-// Test route
-router.get('/test', (req, res) => {
-    res.json({ message: 'Entity router is working!' });
-});
-
 // Public routes (no authentication required)
 router.get('/public', async (req, res, next) => {
     try {
@@ -171,6 +166,14 @@ router.post('/register',
                 how_you_heard,
                 entity_metadata
             });
+
+            // IMPORTANT: Ensure entity is created with 'pending' status and NO emails are sent during registration
+            console.log(`Entity registration completed: ${entity.name} (${entity.entity_id}) - Status: ${entity.verification_status}`);
+            
+            // Verification: Ensure the entity is pending and no email logic is triggered here
+            if (entity.verification_status !== 'pending') {
+                console.warn(`WARNING: Entity ${entity.entity_id} was not created with 'pending' status. Current status: ${entity.verification_status}`);
+            }
 
             res.status(201).json({
                 message: 'Entity registered successfully. Pending verification.',
@@ -504,8 +507,19 @@ router.put('/:id/verification',
             // Create user account only when entity is being approved
             if (verification_status === 'approved') {
                 try {
+                    // IMPORTANT: Check if entity was already approved to prevent duplicate emails
+                    if (entity.verification_status === 'approved') {
+                        console.log(`Entity ${entity.entity_id} is already approved. Skipping email sending to prevent duplicates.`);
+                        return res.json({
+                            message: 'Entity verification status updated successfully',
+                            entity: updatedEntity
+                        });
+                    }
+
                     // Import the mailer service
                     const { sendWelcomeEmail } = require('../utilities/mailerService');
+                    
+                    console.log(`Entity ${entity.entity_id} being approved. Current status: ${entity.verification_status} -> ${verification_status}`);
                     
                     // Create user account for approved entity
                     const { user, tempPassword } = await entityModel.createUserAccountForEntity(entity);
@@ -602,6 +616,21 @@ router.put('/admin/bulk-verification',
                 // Process accounts sequentially to avoid race conditions
                 for (const entity of updatedEntities) {
                     try {
+                        // IMPORTANT: Check if entity was already approved to prevent duplicate emails
+                        console.log(`Processing entity ${entity.entity_id} for approval. Previous status: ${entity.verification_status}`);
+                        
+                        // Skip if entity was already approved (to prevent duplicate emails)
+                        if (entity.verification_status === 'approved' && entity.user_account_created) {
+                            console.log(`Entity ${entity.entity_id} already has user account created. Skipping email.`);
+                            accountCreationResults.push({
+                                entity_id: entity.entity_id,
+                                success: true,
+                                email_sent: false,
+                                message: 'Already approved and has user account'
+                            });
+                            continue;
+                        }
+
                         // Create user account for entity
                         const { user, tempPassword } = await entityModel.createUserAccountForEntity(entity);
                         
@@ -828,6 +857,32 @@ router.get('/email/:email', authenticateToken, async (req, res, next) => {
     } catch (error) {
         console.error('Get entity by email error:', error);
         next(error);
+    }
+});
+
+// Debug route to check entity status (can be removed in production)
+router.get('/debug/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const entity = await entityModel.getEntityById(id);
+        
+        if (!entity) {
+            return res.status(404).json({ message: 'Entity not found' });
+        }
+
+        res.json({
+            entity_id: entity.entity_id,
+            name: entity.name,
+            email: entity.email,
+            verification_status: entity.verification_status,
+            user_account_created: entity.user_account_created,
+            created_at: entity.created_at,
+            updated_at: entity.updated_at,
+            message: `Entity status: ${entity.verification_status}. User account created: ${entity.user_account_created}. Emails should only be sent when status is 'approved' and user_account_created is false.`
+        });
+    } catch (error) {
+        console.error('Debug route error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 

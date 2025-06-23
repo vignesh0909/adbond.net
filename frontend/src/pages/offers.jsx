@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
-import { offersAPI } from '../services/api';
+import { offersAPI } from '../services/offers';
+import { User, IdCard } from 'lucide-react';
 
 export default function OffersPage() {
   const [offers, setOffers] = useState([]);
@@ -13,33 +14,77 @@ export default function OffersPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
+  // Ref to track the current API call
+  const abortControllerRef = useRef(null);
+
   // Category filter options
   const categories = [
     "All", "Nutra", "Crypto", "Dating", "Gambling", "Game", "COD", "Sweepstakes", "Finance", "Health"
   ];
 
-  useEffect(() => {
-    const fetchOffers = async () => {
-      setLoading(true);
-      setError("");
+  // Debounced fetch function to prevent multiple rapid calls
+  const fetchOffers = useCallback(async (filters) => {
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
-      try {
-        const response = await offersAPI.getAllOffers({
-          title: searchTerm,
-          geo: geoSearch,
-          category: selectedCategory === "All" ? "" : selectedCategory,
-        });
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
+    // Only proceed if component is still mounted
+    if (!isMountedRef.current) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await offersAPI.getAllOffers(filters);
+
+      // Only update state if component is still mounted and request wasn't aborted
+      if (isMountedRef.current && !abortControllerRef.current.signal.aborted) {
         setOffers(response.offers || []);
-      } catch (err) {
+      }
+    } catch (err) {
+      // Only handle error if component is still mounted and request wasn't aborted
+      if (isMountedRef.current && !abortControllerRef.current.signal.aborted) {
         setError("Failed to fetch offers. Please try again later.");
         console.error(err);
-      } finally {
+      }
+    } finally {
+      // Only update loading state if component is still mounted
+      if (isMountedRef.current) {
         setLoading(false);
       }
-    };
+    }
+  }, []);
 
-    fetchOffers();
-  }, [searchTerm, geoSearch, selectedCategory]);
+  useEffect(() => {
+    // Debounce API calls to prevent multiple requests
+    const timeoutId = setTimeout(() => {
+      fetchOffers({
+        title: searchTerm,
+        geo: geoSearch,
+        category: selectedCategory === "All" ? "" : selectedCategory,
+      });
+    }, 300); // 300ms debounce delay
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [searchTerm, geoSearch, selectedCategory, fetchOffers]);
+
+  // Cleanup function to prevent memory leaks and cancel ongoing requests
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleOfferClick = (offer) => {
     navigate(`/offer/${offer.offer_id}`, { state: { offer } });
@@ -69,7 +114,7 @@ export default function OffersPage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-purple">Top Offers</h2>
+            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-purple">Explore Offers</h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Discover the best offers from verified partners</p>
           </div>
         </div>
@@ -81,11 +126,10 @@ export default function OffersPage() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transform hover:scale-105 ${
-                  selectedCategory === category
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg border-transparent scale-105'
-                    : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700/80 hover:shadow-md'
-                }`}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transform hover:scale-105 ${selectedCategory === category
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg border-transparent scale-105'
+                  : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700/80 hover:shadow-md'
+                  }`}
               >
                 {category}
               </button>
@@ -177,21 +221,21 @@ export default function OffersPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-in-scale">
             {offers.map((offer, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="group relative card card-hover cursor-pointer transition-all duration-300"
                 onClick={() => handleOfferClick(offer)}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {/* Hover Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
+
                 <div className="relative flex items-start p-6">
                   {/* Offer Icon/Avatar */}
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl mr-5 flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
                     {offer.title.charAt(0).toUpperCase()}
                   </div>
-                  
+
                   {/* Offer Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
@@ -199,51 +243,17 @@ export default function OffersPage() {
                         <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {offer.title}
                         </h3>
-                        
-                        {/* Entity Name as Hyperlink */}
-                        <div className="mb-3">
-                          <button
-                            onClick={(e) => handleEntityClick(e, offer.entity_id, offer.entity_name)}
-                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline font-semibold transition-colors flex items-center"
-                          >
-                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                            </svg>
-                            {offer.entity_name || 'Unknown Entity'}
-                          </button>
-                        </div>
-                        
-                        {/* Tags/Badges */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          <span className="badge badge-info">
-                            #{offer.payout_type}
-                          </span>
-                          <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                            #{offer.category}
-                          </span>
-                          {offer.entity_type && (
-                            <span className="badge badge-success">
-                              #{offer.entity_type}
-                            </span>
-                          )}
-                          {Array.isArray(offer.target_geo) && offer.target_geo.length > 0 && (
-                            <span className="badge bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                              </svg>
-                              {offer.target_geo.slice(0, 2).join(', ')}{offer.target_geo.length > 2 ? '...' : ''}
-                            </span>
-                          )}
-                        </div>
+
+
                       </div>
-                      
+
                       {/* Payout Display */}
                       <div className="text-right flex-shrink-0">
                         <div className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mb-1 group-hover:scale-110 transition-transform">
                           {offer.payout_value ? (
-                            typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ? 
-                            offer.payout_value : 
-                            `$${offer.payout_value}`
+                            typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ?
+                              offer.payout_value :
+                              `$${offer.payout_value}`
                           ) : 'Contact'}
                         </div>
                         {offer.payout_type && (
@@ -253,7 +263,45 @@ export default function OffersPage() {
                         )}
                       </div>
                     </div>
-                    
+
+                    {/* Entity Name as Hyperlink */}
+                    <div className="mb-3">
+                      <button
+                        onClick={(e) => handleEntityClick(e, offer.entity_id, offer.entity_name)}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline font-semibold transition-colors flex items-center"
+                      >
+                        {/* <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                            </svg> */}
+                        {/* <User className="w-3 h-3 mr-1" /> */}
+                        <IdCard className="mr-2" />
+                        {offer.entity_name || 'Unknown Entity'}
+                      </button>
+                    </div>
+
+                    {/* Tags/Badges */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="badge badge-info">
+                        #{offer.payout_type}
+                      </span>
+                      <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                        #{offer.category}
+                      </span>
+                      {offer.entity_type && (
+                        <span className="badge badge-success">
+                          #{offer.entity_type}
+                        </span>
+                      )}
+                      {Array.isArray(offer.target_geo) && offer.target_geo.length > 0 && (
+                        <span className="badge bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          {offer.target_geo.slice(0, 2).join(', ')}{offer.target_geo.length > 2 ? '...' : ''}
+                        </span>
+                      )}
+                    </div>
+
                     {/* Action Indicator */}
                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Click to view details</span>

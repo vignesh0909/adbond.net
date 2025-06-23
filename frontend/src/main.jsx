@@ -4,10 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
+// Note: React.StrictMode is disabled to prevent duplicate API calls in development
+// Enable it back for detecting side effects when needed
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
 );

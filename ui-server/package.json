@@ -1,7 +1,7 @@
 {
-  "name": "linkindin-ui-server",
+  "name": "adbond-ui-server",
   "version": "1.0.0",
-  "description": "Static file server for LinkinDin frontend",
+  "description": "Static file server for AdBond frontend",
   "main": "server.js",
   "scripts": {
     "start": "node app.js",

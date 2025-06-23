@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/navbar';
 import { reviewsAPI } from '../services/reviews';
 import { entityAPI } from '../services/entity';
-import { authAPI } from '../services/api';
+import { authAPI } from '../services/auth';
 
 export default function WriteReviewPage() {
     const [currentUser, setCurrentUser] = useState(null);
@@ -148,9 +148,10 @@ export default function WriteReviewPage() {
                 delete reviewData.entity_name;
             }
 
-            await reviewsAPI.submitReview(reviewData);
+            const response = await reviewsAPI.submitReview(reviewData);
             
-            setMessage('Review submitted successfully! It will be reviewed by our admin team before being published.');
+            // Handle different response messages based on entity status
+            setMessage(response.message || 'Review submitted successfully!');
             setMessageType('success');
             
             // Reset form
@@ -300,7 +301,7 @@ export default function WriteReviewPage() {
                                     required={formData.is_new_entity}
                                 />
                                 <p className="text-sm text-gray-500 mt-1">
-                                    This entity will be added to our database and reviewed by admins.
+                                    This entity will be added to our database. Your review will require admin approval before publication.
                                 </p>
                             </div>
                         )}
@@ -412,7 +413,8 @@ export default function WriteReviewPage() {
                         <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                             <li>• Be honest and constructive in your feedback</li>
                             <li>• Focus on your actual experience with the entity</li>
-                            <li>• All reviews are moderated before publication</li>
+                            <li>• Reviews for registered entities are published immediately</li>
+                            <li>• Reviews for unregistered entities require admin approval</li>
                             <li>• Spam or fake reviews will be rejected</li>
                             <li>• You can review entities even if they're not in our database yet</li>
                         </ul>

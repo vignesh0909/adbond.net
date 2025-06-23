@@ -22,6 +22,7 @@ const userRoutes = require('./routes/user.router');
 const entityRoutes = require('./routes/entity.router');
 const offersRoutes = require('./routes/offers.router');
 const reviewsRoutes = require('./routes/reviews.router');
+const affliateDBRoutes = require('./routes/affliate_db.router');
 const { authenticateToken } = require('./middleware/auth');
 
 // Use routes
@@ -29,6 +30,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/entities', entityRoutes);
 app.use('/api/offers', offersRoutes);
 app.use('/api/reviews', reviewsRoutes);
+app.use('/api/affliates', affliateDBRoutes);
+app.use('/api/affiliate-companies', affliateDBRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

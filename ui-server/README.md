@@ -1,6 +1,6 @@
-# LinkinDin UI Server
+# Adbond UI Server
 
-A Node.js Express server for serving the LinkinDin frontend application.
+A Node.js Express server for serving the AdBond frontend application.
 
 ## Features
 
@@ -37,8 +37,8 @@ npm run dev
 2. **On EC2 Instance:**
    ```bash
    # Clone the repository
-   git clone https://github.com/yourusername/linkindin.us.git
-   cd linkindin.us/ui-server
+   git clone https://github.com/yourusername/adbond.net.git
+   cd adbond.net/ui-server
    
    # Run deployment script
    npm run deploy
@@ -70,13 +70,13 @@ npm run dev
 pm2 status
 
 # View logs
-pm2 logs linkindin-ui
+pm2 logs adbond-ui
 
 # Restart application
-pm2 restart linkindin-ui
+pm2 restart adbond-ui
 
 # Stop application
-pm2 stop linkindin-ui
+pm2 stop adbond-ui
 ```
 
 ## Nginx Configuration (Optional)

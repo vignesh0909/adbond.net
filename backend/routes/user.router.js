@@ -9,6 +9,7 @@ const {
     handleValidationErrors
 } = require('../middleware/validation');
 const { userModel } = require('../models/user.model.pg');
+const emailService = require('../services/emailService');
 
 // JWT secret from environment
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
@@ -32,20 +33,17 @@ router.post('/register', validateRegistration, handleValidationErrors, async (re
 
         const user = await userModel.createUser({ first_name, last_name, email, password, role });
 
-        // Generate JWT token
-        const token = jwt.sign(
-            {
-                user_id: user.user_id,
-                email: user.email,
-                role: user.role
-            },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-        );
+        // Generate and send email verification
+        try {
+            const verificationData = await userModel.generateEmailVerificationToken(user.user_id);
+            await emailService.sendVerificationEmail(email, first_name, verificationData.token);
+        } catch (emailError) {
+            console.error('Email verification error:', emailError);
+            // Continue with registration even if email fails
+        }
 
         res.status(201).json({
-            message: 'User registered successfully',
-            token,
+            message: 'User registered successfully. Please check your email to verify your account.',
             user: {
                 user_id: user.user_id,
                 entity_id: user.entity_id,
@@ -53,7 +51,8 @@ router.post('/register', validateRegistration, handleValidationErrors, async (re
                 last_name: user.last_name,
                 email: user.email,
                 role: user.role,
-                status: user.status
+                status: user.status,
+                email_verified: false
             }
         });
     } catch (error) {
@@ -81,6 +80,14 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
             return res.status(401).json({ message: 'Account is not active. Please contact support.' });
         }
 
+        // Check if email is verified
+        if (!user.email_verified) {
+            return res.status(401).json({ 
+                message: 'Please verify your email address before logging in. Check your inbox for a verification link.',
+                email_not_verified: true 
+            });
+        }
+
         const isValidPassword = await userModel.verifyPassword(password, user.password);
         if (!isValidPassword) {
             return res.status(401).json({ message: 'Invalid email or password' });
@@ -90,9 +97,9 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
         if (user.password_reset_required && user.temp_password_expires) {
             const now = new Date();
             const expiryDate = new Date(user.temp_password_expires);
-            
+
             if (now > expiryDate) {
-                return res.status(401).json({ 
+                return res.status(401).json({
                     message: 'Your temporary password has expired. Please contact support to reset your password.'
                 });
             }
@@ -127,6 +134,7 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
                 password_reset_required: user.password_reset_required,
                 linkedin_profile: user.linkedin_profile,
                 identity_verified: user.identity_verified,
+                email_verified: user.email_verified,
                 last_login: user.last_login
             }
         });
@@ -179,9 +187,9 @@ router.post('/reset-password', authenticateToken, async (req, res, next) => {
         if (new_password.length < 6) {
             return res.status(400).json({ message: 'New password must be at least 6 characters long' });
         }
-        
+
         const user = await userModel.getUserByEmail(req.user.email);
-        
+
         // If not a password reset required case, verify the current password
         if (!user.password_reset_required && current_password) {
             const isValidPassword = await userModel.verifyPassword(current_password, user.password);
@@ -194,17 +202,17 @@ router.post('/reset-password', authenticateToken, async (req, res, next) => {
         if (user.password_reset_required && user.temp_password_expires) {
             const now = new Date();
             const expiryDate = new Date(user.temp_password_expires);
-            
+
             if (now > expiryDate) {
-                return res.status(400).json({ 
-                    message: 'Temporary password has expired. Please contact support.' 
+                return res.status(400).json({
+                    message: 'Temporary password has expired. Please contact support.'
                 });
             }
         }
 
         // Update the password
         await userModel.updatePassword(req.user.user_id, new_password);
-        
+
         res.json({
             message: 'Password updated successfully',
             password_reset_required: false
@@ -251,6 +259,18 @@ router.put('/profile/:id', authenticateToken, validateProfileUpdate, handleValid
     }
 });
 
+// Get user verification status
+router.get('/verification-status', authenticateToken, async (req, res, next) => {
+    try {
+        const status = await userModel.getUserVerificationStatus(req.user.user_id);
+        console.log('User verification status:', status);
+        res.json({ data: status });
+    } catch (error) {
+        console.error('Get verification status error:', error);
+        next(error);
+    }
+});
+
 // Admin routes (admin role required)
 router.get('/', authenticateToken, requireRole(['admin']), async (req, res, next) => {
     try {
@@ -291,27 +311,98 @@ router.delete('/:id', authenticateToken, requireRole(['admin']), async (req, res
     }
 });
 
-// TEMPORARY: Fix test user entity_id
-router.post('/fix-test-user', async (req, res, next) => {
+// Email verification endpoint
+router.get('/verify-email/:token', async (req, res, next) => {
+    console.log('Email verification token received:', req.params.token);
     try {
-        const { pool } = require('../models/db_connection');
+        const { token } = req.params;
+        const result = await userModel.verifyEmailToken(token);
+        console.log('Email verification result:', result);
 
-        // Update user entity_id to existing entity
-        const updateUserQuery = `
-            UPDATE users 
-            SET entity_id = $1 
-            WHERE email = $2 
-            RETURNING user_id, entity_id, email, first_name, last_name;
-        `;
+        if (!result.valid) {
+            return res.status(400).json({ message: result.message });
+        }
 
-        const result = await pool.query(updateUserQuery, ['e9e18836-9c0b-4b13-a4c8-715cf2470d39', 'testuser@example.com']);
-        
         res.json({
-            message: 'Test user fixed',
-            user: result.rows[0]
+            message: 'Email verified successfully',
+            user: result.user
         });
     } catch (error) {
-        console.error('Fix test user error:', error);
+        console.error('Email verification error:', error);
+        next(error);
+    }
+});
+
+// Resend email verification
+router.post('/resend-verification', async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const user = await userModel.getUserByEmail(email);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.email_verified) {
+            return res.status(400).json({ message: 'Email is already verified' });
+        }
+
+        const verificationData = await userModel.generateEmailVerificationToken(user.user_id);
+        await emailService.sendVerificationEmail(email, user.first_name, verificationData.token);
+
+        res.json({ message: 'Verification email sent successfully' });
+    } catch (error) {
+        console.error('Resend verification error:', error);
+        next(error);
+    }
+});
+
+// Identity verification endpoints
+router.post('/verify-identity', authenticateToken, async (req, res, next) => {
+    try {
+        const { verification_method, linkedin_profile, business_email } = req.body;
+        const user_id = req.user.user_id;
+
+        if (!verification_method || !['linkedin', 'business_email'].includes(verification_method)) {
+            return res.status(400).json({ message: 'Valid verification method is required' });
+        }
+
+        // Basic validation for now - in production, you'd implement actual verification logic
+        let isValid = false;
+        if (verification_method === 'linkedin' && linkedin_profile) {
+            // Validate LinkedIn profile URL format
+            isValid = linkedin_profile.includes('linkedin.com/in/');
+        } else if (verification_method === 'business_email' && business_email) {
+            // Check if business email domain matches a known business domain
+            const businessDomains = ['company.com', 'business.org', 'corp.com']; // Example domains
+            const domain = business_email.split('@')[1];
+            isValid = businessDomains.includes(domain) || !['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'].includes(domain);
+        }
+
+        if (!isValid) {
+            return res.status(400).json({ message: 'Invalid verification data provided' });
+        }
+
+        const result = await userModel.updateIdentityVerification(user_id, verification_method);
+
+        // Send success email
+        try {
+            const user = await userModel.getUserById(user_id);
+            await emailService.sendIdentityVerificationSuccess(user.email, user.first_name, verification_method);
+        } catch (emailError) {
+            console.error('Error sending verification success email:', emailError);
+        }
+
+        res.json({
+            message: 'Identity verified successfully',
+            verification: result
+        });
+    } catch (error) {
+        console.error('Identity verification error:', error);
         next(error);
     }
 });

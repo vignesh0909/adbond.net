@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { reviewsAPI } from '../services/reviews';
 
 export default function AdminReviewsModeration() {
@@ -44,10 +45,17 @@ export default function AdminReviewsModeration() {
             setSelectedReview(null);
             setModerationData({ action: 'approve', admin_notes: '' });
             fetchReviews(); // Refresh the list
-            alert(`Review ${moderationData.action}d successfully`);
+            
+            toast.success(`Review ${moderationData.action}d successfully!`, {
+                position: "top-right",
+                autoClose: 3000,
+            });
         } catch (error) {
             console.error('Failed to moderate review:', error);
-            alert('Failed to moderate review');
+            toast.error('Failed to moderate review. Please try again.', {
+                position: "top-right",
+                autoClose: 5000,
+            });
         }
     };
 

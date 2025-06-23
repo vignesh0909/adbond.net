@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'react-toastify';
 import Navbar from '../components/navbar';
 
 export default function AdvertisersShowcasePage() {
@@ -12,8 +13,15 @@ export default function AdvertisersShowcasePage() {
       try {
         const json = JSON.parse(event.target.result);
         setOffers(json);
+        toast.success('Offers file uploaded successfully!', {
+          position: "top-right",
+          autoClose: 3000,
+        });
       } catch {
-        alert("Invalid JSON format. Please upload a valid offer file.");
+        toast.error("Invalid JSON format. Please upload a valid offer file.", {
+          position: "top-right",
+          autoClose: 5000,
+        });
       }
     };
     if (file) reader.readAsText(file);

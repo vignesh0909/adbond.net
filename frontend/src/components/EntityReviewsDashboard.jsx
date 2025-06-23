@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { reviewsAPI } from '../services/reviews';
-import { authAPI } from '../services/api';
 
 export default function EntityReviewsDashboard({ entityId }) {
     const [reviews, setReviews] = useState([]);
@@ -44,10 +44,16 @@ export default function EntityReviewsDashboard({ entityId }) {
             setSelectedReview(null);
             setReplyData({ reply_text: '', reply_type: 'response' });
             fetchReviews(); // Refresh reviews
-            alert('Reply submitted successfully');
+            toast.success('Reply submitted successfully!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         } catch (error) {
             console.error('Failed to submit reply:', error);
-            alert('Failed to submit reply');
+            toast.error('Failed to submit reply. Please try again.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         }
     };
 

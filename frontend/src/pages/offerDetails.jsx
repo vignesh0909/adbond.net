@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Navbar from '../components/navbar';
-import { offersAPI } from '../services/api';
-import { entityAPI } from '../services/api';
+import { offersAPI } from '../services/offers';
+import { entityAPI } from '../services/entity';
 
 export default function OfferDetailsPage() {
   const { offerId } = useParams();
@@ -61,11 +62,19 @@ export default function OfferDetailsPage() {
   const handleRunOffer = () => {
     // Handle offer application logic here
     console.log('Running offer:', offer.offer_id);
+    toast.info('Feature coming soon! Offer application functionality will be available shortly.', {
+      position: "top-right",
+      autoClose: 4000,
+    });
   };
 
   const handleJoinNetwork = () => {
     // Handle join network logic here
     console.log('Joining network:', entity?.entity_id);
+    toast.info('Join network functionality coming soon! Please contact us directly for now.', {
+      position: "top-right",
+      autoClose: 4000,
+    });
   };
 
   if (loading) {
@@ -142,7 +151,7 @@ export default function OfferDetailsPage() {
                     <span className="mx-2">•</span>
                     <span>12 Offers</span>
                   </div>
-                  <button 
+                  <button
                     onClick={handleJoinNetwork}
                     className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow transition"
                   >
@@ -170,10 +179,10 @@ export default function OfferDetailsPage() {
                   <div>
                     <div className="text-sm text-gray-500 mb-1">PAYOUT</div>
                     <div className="text-xl font-bold text-blue-600">
-                      {offer.payout_value ? 
-                        (typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ? 
-                          offer.payout_value : 
-                          `Up to $${offer.payout_value}`) : 
+                      {offer.payout_value ?
+                        (typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ?
+                          offer.payout_value :
+                          `Up to $${offer.payout_value}`) :
                         'Contact'
                       }
                     </div>
@@ -185,8 +194,8 @@ export default function OfferDetailsPage() {
                   <div>
                     <div className="text-sm text-gray-500 mb-1">GEO</div>
                     <div className="font-semibold">
-                      {Array.isArray(offer.target_geo) ? 
-                        offer.target_geo.join(', ') : 
+                      {Array.isArray(offer.target_geo) ?
+                        offer.target_geo.join(', ') :
                         offer.target_geo || 'Worldwide'
                       }
                     </div>
@@ -212,7 +221,7 @@ export default function OfferDetailsPage() {
                       </svg>
                     </button>
                   </div>
-                  <button 
+                  <button
                     onClick={handleRunOffer}
                     className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-2 px-6 rounded-lg shadow flex items-center space-x-2 transition"
                   >
@@ -250,9 +259,9 @@ export default function OfferDetailsPage() {
                     {offer.landing_page_url && (
                       <div>
                         <h3 className="text-md font-semibold text-gray-900 mb-2">Landing Page</h3>
-                        <a 
-                          href={offer.landing_page_url} 
-                          target="_blank" 
+                        <a
+                          href={offer.landing_page_url}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800 hover:underline break-all"
                         >

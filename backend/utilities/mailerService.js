@@ -38,6 +38,21 @@ if (!process.env.EMAIL_HOST || process.env.EMAIL_HOST === 'smtp.gmail.com') {
 
 async function sendWelcomeEmail(entity, user, tempPassword) {
     try {
+        // IMPORTANT: This function should ONLY be called when an entity is approved by admin
+        // It should NEVER be called during entity registration
+        console.log(`[MAILER] Sending welcome email for approved entity: ${entity.name} (${entity.entity_id})`);
+        
+        // Audit log for debugging
+        const auditLog = {
+            timestamp: new Date().toISOString(),
+            event: 'WELCOME_EMAIL_TRIGGERED',
+            entity_id: entity.entity_id,
+            entity_name: entity.name,
+            recipient_email: user.email,
+            stack_trace: new Error().stack
+        };
+        console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(auditLog));
+        
         // Verify email configuration before sending
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
             console.error('EMAIL_USER and EMAIL_PASS environment variables must be set');
@@ -73,7 +88,7 @@ async function sendWelcomeEmail(entity, user, tempPassword) {
         `;
 
         // Email sender address
-        const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@linkindin.us';
+        const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@adbond.net';
 
         // Email options
         const mailOptions = {
@@ -97,7 +112,19 @@ async function sendWelcomeEmail(entity, user, tempPassword) {
 
         // Send email
         const info = await transporter.sendMail(mailOptions);
-        console.log('Welcome email sent: %s', info.messageId);
+        console.log(`[MAILER SUCCESS] Welcome email sent to ${user.email} for entity ${entity.name}: %s`, info.messageId);
+        
+        // Log the event with timestamp for debugging
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            event: 'WELCOME_EMAIL_SENT',
+            entity_id: entity.entity_id,
+            entity_name: entity.name,
+            recipient_email: user.email,
+            message_id: info.messageId
+        };
+        console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(logEntry));
+        
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('Error sending welcome email:', error);
