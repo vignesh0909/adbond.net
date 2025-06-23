@@ -21,7 +21,7 @@ router.get('/public', async (req, res, next) => {
 
         if (entity_type) filters.entity_type = entity_type;
 
-        const entities = await entityModel.getAllEntities(filters);
+        const entities = await entityModel.getVerifiedEntities(filters);
 
         // Remove sensitive information for public view
         const publicEntities = entities.map(entity => ({
@@ -211,7 +211,7 @@ router.get('/', authenticateToken, async (req, res, next) => {
         if (verification_status) filters.verification_status = verification_status;
         if (is_public !== undefined) filters.is_public = is_public === 'true';
 
-        const entities = await entityModel.getAllEntities(filters);
+        const entities = await entityModel.getVerifiedEntities(filters);
 
         res.json({
             entities,
