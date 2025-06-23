@@ -476,7 +476,7 @@ const AdBondPage = () => {
           {/* View All Button */}
           <div className="text-center mt-12">
             <Link
-              to="/write-review"
+              to="/review"
               className="inline-flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-2 border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 px-8 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
             >
               Write a Review
@@ -770,7 +770,7 @@ const AdBondPage = () => {
               <ul className="space-y-2 text-gray-300">
                 <li><Link to="/offers" className="hover:text-white transition-colors">Browse Offers</Link></li>
                 <li><Link to="/affiliatedwishlist" className="hover:text-white transition-colors">Wishlist</Link></li>
-                <li><Link to="/write-review" className="hover:text-white transition-colors">Write Review</Link></li>
+                <li><Link to="/review" className="hover:text-white transition-colors">Write Review</Link></li>
                 <li><Link to="/database" className="hover:text-white transition-colors">Database</Link></li>
               </ul>
             </div>

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Database, Search, Filter, Building, Star, Users, Globe, Eye, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Navbar from '../components/navbar';
 import { authAPI } from '../services/auth';
-import { affiliateCompaniesAPI } from '../services/affliateCompanies';
 import { http } from '../services/httpClient';
+import { affiliateCompaniesAPI } from '../services/affliateCompanies';
 
 export default function CompanyDatabasePage() {
   const [search, setSearch] = useState("");
@@ -41,7 +41,8 @@ export default function CompanyDatabasePage() {
   const fetchUserVerificationStatus = async () => {
     try {
       const response = await http.get('/users/verification-status');
-      setUserVerificationStatus(response.status);
+      console.log('Verification status response:', response);
+      setUserVerificationStatus(response.data || response.status);
     } catch (err) {
       console.error('Error fetching verification status:', err);
     }
@@ -126,6 +127,7 @@ export default function CompanyDatabasePage() {
     try {
       setLoading(true);
       const response = await http.get(`/affiliate-companies/${companyId}/contacts`);
+      console.log('Contacts response:', response);
       setContacts(response.data || []);
       setContactsModalOpen(true);
     } catch (err) {
@@ -134,13 +136,15 @@ export default function CompanyDatabasePage() {
     } finally {
       setLoading(false);
     }
-  }; const handleIdentityVerification = async (method, data) => {
+  };  const handleIdentityVerification = async (method, data) => {
     try {
       setLoading(true);
-      await http.post('/users/verify-identity', {
+      const response = await http.post('/users/verify-identity', {
         verification_method: method,
         ...data
       });
+
+      console.log('Verification response:', response);
 
       // Refresh verification status
       await fetchUserVerificationStatus();
@@ -541,6 +545,8 @@ function VerificationModal({ onClose, onVerify, loading }) {
 
 // Contacts Modal Component
 function ContactsModal({ company, contacts, onClose, hasFullAccess }) {
+  console.log('ContactsModal props:', { company, contacts, hasFullAccess });
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
@@ -554,6 +560,9 @@ function ContactsModal({ company, contacts, onClose, hasFullAccess }) {
               ✕
             </button>
           </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            Access Level: {hasFullAccess ? 'Full Access' : 'Limited Access'}
+          </p>
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[60vh]">
@@ -565,8 +574,10 @@ function ContactsModal({ company, contacts, onClose, hasFullAccess }) {
                 <div key={idx} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-semibold">{contact.full_name || `${contact.first_name} ${contact.last_name}`}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{contact.designation}</p>
+                      <h4 className="font-semibold">{contact.full_name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim()}</h4>
+                      {contact.designation && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{contact.designation}</p>
+                      )}
                       {hasFullAccess ? (
                         <div className="mt-2 space-y-1">
                           {contact.email && (
@@ -575,10 +586,13 @@ function ContactsModal({ company, contacts, onClose, hasFullAccess }) {
                           {contact.phone && (
                             <p className="text-sm">📞 {contact.phone}</p>
                           )}
+                          {!contact.email && !contact.phone && (
+                            <p className="text-sm text-gray-500">No contact details available</p>
+                          )}
                         </div>
                       ) : (
                         <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
-                          Contact details hidden - verify identity to access
+                          🔒 Contact details hidden - verify identity to access
                         </p>
                       )}
                     </div>

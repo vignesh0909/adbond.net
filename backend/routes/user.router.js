@@ -264,7 +264,11 @@ router.get('/verification-status', authenticateToken, async (req, res, next) => 
     try {
         const status = await userModel.getUserVerificationStatus(req.user.user_id);
         console.log('User verification status:', status);
-        res.json({ data: status });
+        res.json({ 
+            success: true,
+            data: status,
+            status: status // Also include in the status field for backward compatibility
+        });
     } catch (error) {
         console.error('Get verification status error:', error);
         next(error);
@@ -371,23 +375,27 @@ router.post('/verify-identity', authenticateToken, async (req, res, next) => {
             return res.status(400).json({ message: 'Valid verification method is required' });
         }
 
-        // Basic validation for now - in production, you'd implement actual verification logic
+        // Prepare verification data
+        let verificationData = {};
         let isValid = false;
+
         if (verification_method === 'linkedin' && linkedin_profile) {
             // Validate LinkedIn profile URL format
             isValid = linkedin_profile.includes('linkedin.com/in/');
+            verificationData.linkedin_profile = linkedin_profile;
         } else if (verification_method === 'business_email' && business_email) {
             // Check if business email domain matches a known business domain
             const businessDomains = ['company.com', 'business.org', 'corp.com']; // Example domains
             const domain = business_email.split('@')[1];
             isValid = businessDomains.includes(domain) || !['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'].includes(domain);
+            verificationData.business_email = business_email;
         }
 
         if (!isValid) {
             return res.status(400).json({ message: 'Invalid verification data provided' });
         }
 
-        const result = await userModel.updateIdentityVerification(user_id, verification_method);
+        const result = await userModel.updateIdentityVerification(user_id, verification_method, verificationData);
 
         // Send success email
         try {
@@ -398,6 +406,7 @@ router.post('/verify-identity', authenticateToken, async (req, res, next) => {
         }
 
         res.json({
+            success: true,
             message: 'Identity verified successfully',
             verification: result
         });

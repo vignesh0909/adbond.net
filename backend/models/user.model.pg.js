@@ -13,10 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'advertiser', 'affiliate', 'network', 'admin')),
     status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended', 'banned')),
     profile_image_url VARCHAR(500),
-    linkedin_profile VARCHAR(500),
-    identity_verified BOOLEAN DEFAULT FALSE,
-    verification_method VARCHAR(50) CHECK (verification_method IN ('linkedin', 'business_email')),
-    verification_date TIMESTAMP,
+    verification_data JSONB DEFAULT '{}',
     email_verified BOOLEAN DEFAULT FALSE,
     email_verification_token TEXT,
     email_verification_expires TIMESTAMP,
@@ -33,11 +30,46 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS temp_password_expires TIMESTAMP;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_data JSONB DEFAULT '{}';
+
+-- Migrate existing data to new JSONB column if old columns exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'linkedin_profile') THEN
+        UPDATE users 
+        SET verification_data = CASE 
+            WHEN identity_verified = TRUE THEN 
+                CASE verification_method
+                    WHEN 'linkedin' THEN jsonb_build_object(
+                        'identity_verified', TRUE,
+                        'verification_method', 'linkedin',
+                        'linkedin_profile', COALESCE(linkedin_profile, ''),
+                        'verification_date', verification_date::text
+                    )
+                    WHEN 'business_email' THEN jsonb_build_object(
+                        'identity_verified', TRUE,
+                        'verification_method', 'business_email',
+                        'business_email', email,
+                        'verification_date', verification_date::text
+                    )
+                    ELSE jsonb_build_object('identity_verified', FALSE)
+                END
+            ELSE jsonb_build_object('identity_verified', FALSE)
+        END
+        WHERE verification_data = '{}' OR verification_data IS NULL;
+        
+        -- Drop old columns after migration
+        ALTER TABLE users DROP COLUMN IF EXISTS linkedin_profile;
+        ALTER TABLE users DROP COLUMN IF EXISTS identity_verified;
+        ALTER TABLE users DROP COLUMN IF EXISTS verification_method;
+        ALTER TABLE users DROP COLUMN IF EXISTS verification_date;
+    END IF;
+END $$;
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_users_verified ON users(identity_verified);
+CREATE INDEX IF NOT EXISTS idx_users_verification_data ON users USING GIN(verification_data);
 CREATE INDEX IF NOT EXISTS idx_users_email_verification ON users(email_verification_token);
 `;
 
@@ -101,7 +133,21 @@ const userModel = {
         try {
             const query = 'SELECT * FROM users WHERE email = $1';
             const result = await client.query(query, [email]);
-            return result.rows[0];
+            const user = result.rows[0];
+            
+            if (!user) {
+                return null;
+            }
+
+            // Extract verification data for backward compatibility
+            const verificationData = user.verification_data || {};
+            return {
+                ...user,
+                identity_verified: verificationData.identity_verified || false,
+                verification_method: verificationData.verification_method || null,
+                linkedin_profile: verificationData.linkedin_profile || null,
+                business_email: verificationData.business_email || null
+            };
         } catch (error) {
             throw error;
         }
@@ -112,13 +158,27 @@ const userModel = {
         try {
             const query = `
                 SELECT user_id, entity_id, first_name, last_name, email, role, status, 
-                       profile_image_url, linkedin_profile, identity_verified, 
+                       profile_image_url, verification_data, email_verified,
                        password_reset_required, last_login, created_at, updated_at
                 FROM users 
                 WHERE user_id = $1
             `;
             const result = await client.query(query, [user_id]);
-            return result.rows[0];
+            const user = result.rows[0];
+            
+            if (!user) {
+                return null;
+            }
+
+            // Extract verification data for backward compatibility
+            const verificationData = user.verification_data || {};
+            return {
+                ...user,
+                identity_verified: verificationData.identity_verified || false,
+                verification_method: verificationData.verification_method || null,
+                linkedin_profile: verificationData.linkedin_profile || null,
+                business_email: verificationData.business_email || null
+            };
         } catch (error) {
             throw error;
         }
@@ -318,19 +378,24 @@ const userModel = {
     },
 
     // Update identity verification
-    async updateIdentityVerification(user_id, verification_method) {
+    async updateIdentityVerification(user_id, verification_method, verification_data) {
         try {
+            const verificationRecord = {
+                identity_verified: true,
+                verification_method,
+                verification_date: new Date().toISOString(),
+                ...verification_data
+            };
+
             const query = `
                 UPDATE users 
-                SET identity_verified = TRUE,
-                    verification_method = $2,
-                    verification_date = CURRENT_TIMESTAMP,
+                SET verification_data = $2,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = $1
-                RETURNING user_id, email, identity_verified, verification_method, verification_date
+                RETURNING user_id, email, verification_data
             `;
 
-            const result = await client.query(query, [user_id, verification_method]);
+            const result = await client.query(query, [user_id, JSON.stringify(verificationRecord)]);
             return result.rows[0];
         } catch (error) {
             throw error;
@@ -341,11 +406,30 @@ const userModel = {
     async getUserVerificationStatus(user_id) {
         try {
             const query = `
-                SELECT email_verified, identity_verified, verification_method, verification_date, entity_id
+                SELECT 
+                    email_verified, 
+                    verification_data,
+                    entity_id
                 FROM users WHERE user_id = $1
             `;
             const result = await client.query(query, [user_id]);
-            return result.rows[0];
+            const user = result.rows[0];
+            
+            if (!user) {
+                return null;
+            }
+
+            // Extract verification status from JSONB
+            const verificationData = user.verification_data || {};
+            return {
+                email_verified: user.email_verified,
+                identity_verified: verificationData.identity_verified || false,
+                verification_method: verificationData.verification_method || null,
+                verification_date: verificationData.verification_date || null,
+                linkedin_profile: verificationData.linkedin_profile || null,
+                business_email: verificationData.business_email || null,
+                entity_id: user.entity_id
+            };
         } catch (error) {
             throw error;
         }

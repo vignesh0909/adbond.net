@@ -187,7 +187,7 @@ const employeeModel = {
 
     // Get affliate_contacts by company (with access control)
     async getEmployeesByCompany(affliate_id, user_has_access = false) {
-        const query = `
+        const query = user_has_access ? `
             SELECT 
                 contact_id,
                 affliate_id,
@@ -195,20 +195,38 @@ const employeeModel = {
                 last_name,
                 full_name,
                 designation,
-                ${user_has_access ? 'email, phone,' : ''} 
+                email,
+                phone,
+                created_at,
+                updated_at
+            FROM affliate_contacts 
+            WHERE affliate_id = $1
+            ORDER BY designation, last_name, first_name
+        ` : `
+            SELECT 
+                contact_id,
+                affliate_id,
+                first_name,
+                last_name,
+                full_name,
+                designation,
                 created_at,
                 updated_at
             FROM affliate_contacts 
             WHERE affliate_id = $1
             ORDER BY designation, last_name, first_name
         `;
+        
+        console.log('getEmployeesByCompany query:', query);
+        console.log('user_has_access:', user_has_access);
         const result = await client.query(query, [affliate_id]);
+        console.log('Query result rows:', result.rows);
         return result.rows;
     },
 
     // Search affliate_contacts
     async searchEmployees(searchTerm, affliate_id = null, user_has_access = false) {
-        let query = `
+        let query = user_has_access ? `
             SELECT 
                 e.contact_id,
                 e.affliate_id,
@@ -216,7 +234,20 @@ const employeeModel = {
                 e.last_name,
                 e.full_name,
                 e.designation,
-                ${user_has_access ? 'e.email, e.phone,' : ''} 
+                e.email,
+                e.phone,
+                c.company_name
+            FROM affliate_contacts e
+            JOIN affliates c ON e.affliate_id = c.affliate_id
+            WHERE (e.first_name ILIKE $1 OR e.last_name ILIKE $1 OR e.designation ILIKE $1)
+        ` : `
+            SELECT 
+                e.contact_id,
+                e.affliate_id,
+                e.first_name,
+                e.last_name,
+                e.full_name,
+                e.designation,
                 c.company_name
             FROM affliate_contacts e
             JOIN affliates c ON e.affliate_id = c.affliate_id
