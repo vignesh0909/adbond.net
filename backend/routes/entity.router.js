@@ -211,7 +211,7 @@ router.get('/', authenticateToken, async (req, res, next) => {
         if (verification_status) filters.verification_status = verification_status;
         if (is_public !== undefined) filters.is_public = is_public === 'true';
 
-        const entities = await entityModel.getVerifiedEntities(filters);
+        const entities = await entityModel.getAllEntities(filters);
 
         res.json({
             entities,

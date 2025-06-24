@@ -290,6 +290,25 @@ const entityModel = {
         }
     },
 
+    // Get only verified entities
+    async getAllEntities() {
+        try {
+            const query = `
+                SELECT entity_id, entity_type, name, email, secondary_email, website, 
+                       contact_info, description, additional_notes, how_you_heard,
+                       verification_status, approved_by, entity_metadata, reputation_score, 
+                       total_reviews, is_public, created_at, updated_at
+                FROM entities 
+                ORDER BY created_at DESC
+            `;
+
+            const result = await client.query(query);
+            return result.rows;
+        } catch (error) {
+            throw error;
+        }
+    },
+
     // Update entity
     async updateEntity(entity_id, entityData) {
         try {
