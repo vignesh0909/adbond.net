@@ -51,16 +51,16 @@ const emailService = {
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
                     <!-- Header -->
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-                        <img src="${process.env.FRONTEND_URL || 'http://localhost:3000'}/assets/AdBond.svg" alt="AdBond Logo" style="max-width: 150px; margin-bottom: 10px;">
+                        <img src="https://adbond.net/assets/AdBond-Logo-1.png" alt="AdBond Logo" style="max-width: 150px; margin-bottom: 10px;">
                         <h1 style="color: white; margin: 0; font-size: 24px;">Welcome to AdBond.net!</h1>
                     </div>
 
                     <!-- Main Content -->
                     <div style="padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: -20px;">
-                        <h2 style="color: #333; margin-bottom: 20px;">Hi ${user.firstName || 'User'},</h2>
+                        <h2 style="color: #333; margin-bottom: 20px;">Hi ${entity.name || 'User'},</h2>
 
                         <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                            Congratulations! Your entity <strong>"${entity.name}"</strong> has been approved and is now live on AdBond.net.
+                            Congratulations! Your entity <strong>"${entity.entity_metadata.company_name}"</strong> has been approved and is now live on AdBond.net.
                         </p>
 
                         <h3 style="color: #333; margin-top: 30px;">Your Login Details:</h3>
