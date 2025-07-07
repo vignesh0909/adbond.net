@@ -60,7 +60,7 @@ const emailService = {
                         <h2 style="color: #333; margin-bottom: 20px;">Hi ${entity.name || 'User'},</h2>
 
                         <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                            Congratulations! Your entity <strong>"${entity.entity_metadata.company_name}"</strong> has been approved and is now live on AdBond.net.
+                            Congratulations! Your entity <strong>"${entity.entity_metadata.company_name || ''}"</strong> has been approved and is now live on AdBond.net.
                         </p>
 
                         <h3 style="color: #333; margin-top: 30px;">Your Login Details:</h3>
