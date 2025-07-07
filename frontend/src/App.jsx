@@ -1,7 +1,10 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ToastProvider from './components/ToastProvider';
+import TokenExpirationWarning from './components/TokenExpirationWarning';
+import { AuthProvider } from './contexts/AuthContext';
 import AdBondPage from './AdBondPage';
+// Import test utilities for development
 import Showcase from './pages/showcase';
 import AdminPanel from './pages/adminpanel';
 import AffiliatedWishlist from './pages/affiliatedwishlist';
@@ -24,31 +27,34 @@ import EmailVerificationPage from './pages/emailVerification';
 
 const App = () => {
   return (
-    <ToastProvider>
-      <Routes>
-        <Route path="/" element={<AdBondPage />} />
-        <Route path="/showcase" element={<Showcase />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/affiliatedwishlist" element={<AffiliatedWishlist />} />
-        <Route path="/advertiserswishlist" element={<AdvertisersWishlist />} />
-        <Route path="/affliate-industry" element={<DataBase />} />
-        <Route path="/login" element={<LogIn />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/verify-email" element={<EmailVerificationPage />} />
-        <Route path="/register-entity" element={<RegisterEntityPage />} />
-        <Route path="/offers" element={<Offers />} />
-        <Route path="/writereview" element={<WriteReview />} />
-        <Route path="/review" element={<WriteReviewNew />} />
-        <Route path="/advertiser-dashboard" element={<AdvertiserDashboard />} />
-        <Route path="/affiliate-dashboard" element={<AffiliateDashboard />} />
-        <Route path="/network-dashboard" element={<NetworkDashboard />} />
-        <Route path="/user-dashboard" element={<UserDashboardPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/offer/:offerId" element={<OfferDetails />} />
-        <Route path="/entity/:entityId" element={<EntityDetails />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <TokenExpirationWarning />
+        <Routes>
+          <Route path="/" element={<AdBondPage />} />
+          <Route path="/showcase" element={<Showcase />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/affiliatedwishlist" element={<AffiliatedWishlist />} />
+          <Route path="/advertiserswishlist" element={<AdvertisersWishlist />} />
+          <Route path="/affliate-industry" element={<DataBase />} />
+          <Route path="/login" element={<LogIn />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-email" element={<EmailVerificationPage />} />
+          <Route path="/register-entity" element={<RegisterEntityPage />} />
+          <Route path="/offers" element={<Offers />} />
+          <Route path="/writereview" element={<WriteReview />} />
+          <Route path="/write-review" element={<WriteReviewNew />} />
+          <Route path="/advertiser-dashboard" element={<AdvertiserDashboard />} />
+          <Route path="/affiliate-dashboard" element={<AffiliateDashboard />} />
+          <Route path="/network-dashboard" element={<NetworkDashboard />} />
+          <Route path="/user-dashboard" element={<UserDashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/offer/:offerId" element={<OfferDetails />} />
+          <Route path="/entity/:entityId" element={<EntityDetails />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </ToastProvider>
+    </AuthProvider>
   );
 };
 

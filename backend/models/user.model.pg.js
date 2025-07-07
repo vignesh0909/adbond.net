@@ -98,7 +98,8 @@ const userModel = {
                 role = 'user', 
                 entity_id = null,
                 password_reset_required = false,
-                temp_password_expires = null
+                temp_password_expires = null,
+                email_verified = false
             } = userData;
             const user_id = uuidv4();
             
@@ -109,16 +110,16 @@ const userModel = {
             const query = `
                 INSERT INTO users (
                     user_id, entity_id, first_name, last_name, email, password, role,
-                    password_reset_required, temp_password_expires
+                    password_reset_required, temp_password_expires, email_verified
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING user_id, entity_id, first_name, last_name, email, role, status, 
-                         password_reset_required, created_at
+                         password_reset_required, email_verified, created_at
             `;
             
             const values = [
                 user_id, entity_id, first_name, last_name, email, hashedPassword, role,
-                password_reset_required, temp_password_expires
+                password_reset_required, temp_password_expires, email_verified
             ];
             const result = await client.query(query, values);
             

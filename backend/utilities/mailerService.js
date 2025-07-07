@@ -68,7 +68,7 @@ async function sendWelcomeEmail(entity, user, tempPassword) {
 
         // Create email content
         const emailContent = `
-            <h2>Welcome to LinkedIn.us!</h2>
+            <h2>Welcome to Adbond.net!</h2>
             
             <p>Congratulations! Your entity <strong>"${entity.name}"</strong> has been approved!</p>
             
@@ -84,7 +84,7 @@ async function sendWelcomeEmail(entity, user, tempPassword) {
             <p>If you have any questions, please don't hesitate to contact us.</p>
             
             <p>Best regards,<br>
-            LinkedIn.us Team</p>
+            Adbond.net Team</p>
         `;
 
         // Email sender address
@@ -94,7 +94,7 @@ async function sendWelcomeEmail(entity, user, tempPassword) {
         const mailOptions = {
             from: fromEmail,
             to: user.email,
-            subject: 'Welcome to LinkedIn.us - Your Account is Ready',
+            subject: 'Welcome to Adbond.net - Your Account is Ready',
             html: emailContent
         };
 
@@ -148,4 +148,122 @@ async function sendWelcomeEmail(entity, user, tempPassword) {
     }
 }
 
-module.exports = { sendWelcomeEmail };
+async function sendAdminNotificationEmail(entity) {
+    try {
+        console.log(`[MAILER] Sending admin notification for new entity registration: ${entity.name} (${entity.entity_id})`);
+        
+        // Verify admin email configuration before sending
+        if (!process.env.ADMIN_EMAIL_USER || !process.env.ADMIN_EMAIL_FROM) {
+            console.error('ADMIN_EMAIL_USER and ADMIN_EMAIL_FROM environment variables must be set');
+            return { 
+                success: false, 
+                error: 'Admin email configuration incomplete. Check ADMIN_EMAIL_USER and ADMIN_EMAIL_FROM environment variables.' 
+            };
+        }
+
+        // Default frontend URL if not set in environment
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        console.log(`Sending admin notification to ${process.env.ADMIN_EMAIL_USER} for new entity registration: ${entity.name}`);
+
+        // Create email content
+        const emailContent = `
+            <h2>New Entity Registration - ${entity.entity_type.toUpperCase()}</h2>
+            
+            <p>A new entity has registered and is pending verification:</p>
+            
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>Entity Details:</h3>
+                <p><strong>Name:</strong> ${entity.name}</p>
+                <p><strong>Type:</strong> ${entity.entity_type}</p>
+                <p><strong>Email:</strong> ${entity.email}</p>
+                <p><strong>Website:</strong> ${entity.website}</p>
+                <p><strong>Description:</strong> ${entity.description}</p>
+                <p><strong>Contact Info:</strong></p>
+                <ul>
+                    ${entity.contact_info.phone ? `<li>Phone: ${entity.contact_info.phone}</li>` : ''}
+                    ${entity.contact_info.teams ? `<li>Microsoft Teams: ${entity.contact_info.teams}</li>` : ''}
+                    ${entity.contact_info.linkedin ? `<li>LinkedIn: ${entity.contact_info.linkedin}</li>` : ''}
+                    ${entity.contact_info.telegram ? `<li>Telegram: ${entity.contact_info.telegram}</li>` : ''}
+                    ${entity.contact_info.address ? `<li>Address: ${entity.contact_info.address}</li>` : ''}
+                </ul>
+                ${entity.secondary_email ? `<p><strong>Secondary Email:</strong> ${entity.secondary_email}</p>` : ''}
+                ${entity.additional_notes ? `<p><strong>Additional Notes:</strong> ${entity.additional_notes}</p>` : ''}
+                ${entity.how_you_heard ? `<p><strong>How they heard about us:</strong> ${entity.how_you_heard}</p>` : ''}
+                <p><strong>Registration Date:</strong> ${new Date(entity.created_at).toLocaleString()}</p>
+                <p><strong>Entity ID:</strong> ${entity.entity_id}</p>
+                <p><strong>Verification Status:</strong> ${entity.verification_status}</p>
+            </div>
+            
+            <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h4>Entity Metadata:</h4>
+                <pre style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(entity.entity_metadata, null, 2)}</pre>
+            </div>
+            
+            <p><a href="${frontendUrl}/adminpanel" style="background-color: #2196F3; color: white; padding: 12px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 5px; margin: 10px 5px;">Review in Admin Panel</a></p>
+            
+            <p style="color: #666; font-size: 14px;">Please review this entity and update their verification status accordingly.</p>
+            
+            <p>Best regards,<br>
+            AdBond System</p>
+        `;
+
+        // Email options
+        const mailOptions = {
+            from: process.env.ADMIN_EMAIL_FROM,
+            to: process.env.ADMIN_EMAIL_USER,
+            subject: `New ${entity.entity_type} Registration: ${entity.name}`,
+            html: emailContent
+        };
+
+        // Verify the SMTP connection before sending
+        try {
+            await transporter.verify();
+            console.log('SMTP connection verified successfully for admin notification');
+        } catch (verifyError) {
+            console.error('SMTP connection verification failed for admin notification:', verifyError);
+            return { 
+                success: false, 
+                error: `SMTP connection failed: ${verifyError.message}. Check your email provider settings.` 
+            };
+        }
+
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[MAILER SUCCESS] Admin notification email sent to ${process.env.ADMIN_EMAIL_USER} for entity ${entity.name}: %s`, info.messageId);
+        
+        // Log the event with timestamp for debugging
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            event: 'ADMIN_NOTIFICATION_EMAIL_SENT',
+            entity_id: entity.entity_id,
+            entity_name: entity.name,
+            entity_type: entity.entity_type,
+            recipient_email: process.env.ADMIN_EMAIL_USER,
+            message_id: info.messageId
+        };
+        console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(logEntry));
+        
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('Error sending admin notification email:', error);
+        
+        // Provide more detailed error information
+        let errorMsg = error.message;
+        if (error.code === 'EAUTH') {
+            errorMsg = 'Authentication failed. Check your email username and password.';
+        } else if (error.code === 'ESOCKET') {
+            errorMsg = 'Connection failed. Check host and port settings.';
+        } else if (error.code === 'ECONNECTION') {
+            errorMsg = 'Connection error. Check network settings and email provider status.';
+        }
+        
+        return { 
+            success: false, 
+            error: errorMsg,
+            details: error.message, 
+            code: error.code || 'UNKNOWN'
+        };
+    }
+}
+
+module.exports = { sendWelcomeEmail, sendAdminNotificationEmail };

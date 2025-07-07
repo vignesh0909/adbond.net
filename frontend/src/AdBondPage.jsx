@@ -17,14 +17,8 @@ const AdBondPage = () => {
       </div>
 
       {/* Hero Section */}
-      <section className="relative text-center py-32 px-4 mt-20">
+      <section className="relative text-center pt-16 px-4 mt-20">
         <div className="max-w-6xl mx-auto">
-          {/* Hero Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50 rounded-full px-6 py-2 mb-8 shadow-lg">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Platform Live & Growing</span>
-          </div>
-
           {/* Main Hero Content */}
           <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black mb-8 leading-tight">
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm">
@@ -32,16 +26,16 @@ const AdBondPage = () => {
             </span>
             <br />
             <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent drop-shadow-sm">
-              Links Us All
+              Binds the affliate world
             </span>
           </h1>
 
           <p className="mb-12 text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-xl sm:text-2xl leading-relaxed font-medium">
-            The next-generation platform where <span className="text-blue-600 dark:text-blue-400 font-semibold">advertisers</span>, <span className="text-purple-600 dark:text-purple-400 font-semibold">networks</span>, and <span className="text-indigo-600 dark:text-indigo-400 font-semibold">affiliates</span> unite to build transparent partnerships and drive exceptional results.
+            Built for <span className="text-blue-600 dark:text-blue-400 font-semibold">advertisers</span>, <span className="text-purple-600 dark:text-purple-400 font-semibold">networks</span>, and <span className="text-indigo-600 dark:text-indigo-400 font-semibold">affiliates</span> unite to build transparent partnerships and drive exceptional results.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center gap-6 mb-16">
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
             <a
               href="/writereview"
               className="group relative w-full sm:w-72 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-center whitespace-nowrap"
@@ -63,139 +57,9 @@ const AdBondPage = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 to-cyan-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </div>
-
-          {/* Stats Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              { number: "70K+", label: "Verified Companies", icon: "🏢" },
-              { number: "500K+", label: "Active Connections", icon: "🤝" },
-              { number: "99.9%", label: "Trust Score", icon: "⭐" }
-            ].map((stat, i) => (
-              <div key={i} className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-200/50 dark:border-gray-700/50">
-                <div className="text-3xl mb-2">{stat.icon}</div>
-                <div className="text-3xl font-black text-blue-600 dark:text-blue-400 mb-1">{stat.number}</div>
-                <div className="text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
-      {/* Top Performing Offers */}
-      <section className="relative px-4 sm:px-6 lg:px-20 py-20" id="offers">
-        <div className="max-w-7xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50 rounded-full px-4 py-2 mb-6">
-              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">Hot Offers</span>
-            </div>
-            <h2 className="text-4xl sm:text-5xl font-black mb-6">
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Top Performing Offers
-              </span>
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Discover high-converting offers from trusted advertisers with proven track records
-            </p>
-          </div>
 
-          {/* Offers Grid */}
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                title: 'Keto CPA Offer',
-                payout: '$ 45/lead',
-                geo: 'US, CA',
-                category: 'Health & Wellness',
-                conversion: '12.5%',
-                tier: 'Premium'
-              },
-              {
-                title: 'Finance CPL',
-                payout: '$ 25/lead',
-                geo: 'UK',
-                category: 'Finance',
-                conversion: '8.2%',
-                tier: 'Gold'
-              },
-              {
-                title: 'Sweepstakes Offer',
-                payout: '$ 1.2/click',
-                geo: 'IN, PK',
-                category: 'Entertainment',
-                conversion: '15.7%',
-                tier: 'Premium'
-              }
-            ].map((offer, i) => (
-              <div
-                key={i}
-                className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-xl rounded-3xl p-8 hover:shadow-2xl transition-all duration-500 border border-gray-200/50 dark:border-gray-700/50 transform hover:-translate-y-2"
-              >
-                {/* Tier Badge */}
-                <div className={`absolute top-6 right-6 px-3 py-1 rounded-full text-xs font-bold ${offer.tier === 'Premium'
-                  ? 'bg-gradient-to-r from-gold-400 to-yellow-500 text-white'
-                  : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
-                  }`}>
-                  {offer.tier}
-                </div>
-
-                {/* Offer Content */}
-                <div className="mb-6">
-                  <h3 className="font-black text-2xl mb-3 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {offer.title}
-                  </h3>
-                  <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                      <span className="font-semibold">Category:</span> {offer.category}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="font-semibold">Payout:</span>
-                      <span className="text-green-600 dark:text-green-400 font-bold">{offer.payout}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                      <span className="font-semibold">Target GEO:</span> {offer.geo}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                      <span className="font-semibold">Conversion:</span>
-                      <span className="text-orange-600 dark:text-orange-400 font-bold">{offer.conversion}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-2xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  Apply Now
-                  <svg className="inline-block ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
-
-                {/* Hover Effect Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-              </div>
-            ))}
-          </div>
-
-          {/* View All Button */}
-          <div className="text-center mt-12">
-            <Link
-              to="/offers"
-              className="inline-flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-2 border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-8 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
-            >
-              View All Offers
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      </section>
       {/* Affiliate Offer Requests */}
       <section className="relative px-4 sm:px-6 lg:px-20 py-20">
         <div className="max-w-7xl mx-auto">
@@ -318,7 +182,7 @@ const AdBondPage = () => {
 
                   {/* Action Button */}
                   <button className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-2xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                    Submit Offer
+                    I have this Offer
                     <svg className="inline-block ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -664,18 +528,18 @@ const AdBondPage = () => {
               <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Join the Movement</span>
             </div>
 
-            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+            <h2 className="text-4xl sm:text-3xl font-black mb-6">
               <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Ready to Transform
+                This platform belongs to you — every voice matters.
               </span>
               <br />
               <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                Your Partnerships?
+                Share the features that will make it better, fairer, and more useful for everyone.
               </span>
             </h2>
 
-            <p className="mb-12 text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              Get early access to the platform and help shape the future of transparent affiliate marketing. Join thousands of industry leaders building the next generation of partnerships.
+            <p className="mb-12 text-sm text-gray-600 dark:text-gray-300 mx-auto leading-relaxed">
+              <strong>A Non-Profit Initiative by Fission Inc.</strong> After serving 80+ affiliate marketing clients over the past 15 years, we repeatedly heard one thing: the need for a transparent, fraud-free, and community-owned platform. AdBond was born from those requests — a non-profit initiative by Fission Inc. to give back to the industry that shaped us. Built to eliminate fake traffic, foster trust, and showcase proof-backed reviews, AdBond stands as a decentralized, free alternative to commercial listing sites — driven by real needs, not monetization.
             </p>
 
             {/* CTA Buttons */}
@@ -703,28 +567,6 @@ const AdBondPage = () => {
                 </span>
               </Link>
             </div>
-
-            {/* Trust Indicators */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-              <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
-                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="font-semibold">Free to Join</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
-                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="font-semibold">No Setup Fees</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
-                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="font-semibold">24/7 Support</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -732,7 +574,7 @@ const AdBondPage = () => {
       {/* Footer */}
       <footer className="relative px-4 sm:px-6 lg:px-20 py-16 bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 text-white">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Company Info */}
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-3 mb-6">
@@ -746,22 +588,6 @@ const AdBondPage = () => {
                   <span className="text-xs text-gray-300 block -mt-1 font-medium">Connect • Trust • Grow</span>
                 </div> */}
               </div>
-              <p className="text-gray-300 mb-6 max-w-md">
-                The next-generation platform where advertisers, networks, and affiliates unite to build transparent partnerships and drive exceptional results.
-              </p>
-              <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
-                  <svg className="w-5 h-5" fill="#ffffff" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M20.445 5h-8.891A6.559 6.559 0 0 0 5 11.554v8.891A6.559 6.559 0 0 0 11.554 27h8.891a6.56 6.56 0 0 0 6.554-6.555v-8.891A6.557 6.557 0 0 0 20.445 5zm4.342 15.445a4.343 4.343 0 0 1-4.342 4.342h-8.891a4.341 4.341 0 0 1-4.341-4.342v-8.891a4.34 4.34 0 0 1 4.341-4.341h8.891a4.342 4.342 0 0 1 4.341 4.341l.001 8.891z"></path><path d="M16 10.312c-3.138 0-5.688 2.551-5.688 5.688s2.551 5.688 5.688 5.688 5.688-2.551 5.688-5.688-2.55-5.688-5.688-5.688zm0 9.163a3.475 3.475 0 1 1-.001-6.95 3.475 3.475 0 0 1 .001 6.95zM21.7 8.991a1.363 1.363 0 1 1-1.364 1.364c0-.752.51-1.364 1.364-1.364z"></path></g></svg>
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
-                  <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 462.799"><path fill-rule="nonzero" d="M403.229 0h78.506L310.219 196.04 512 462.799H354.002L230.261 301.007 88.669 462.799h-78.56l183.455-209.683L0 0h161.999l111.856 147.88L403.229 0zm-27.556 415.805h43.505L138.363 44.527h-46.68l283.99 371.278z" /></svg>
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                  </svg>
-                </a>
-              </div>
             </div>
 
             {/* Quick Links */}
@@ -770,7 +596,7 @@ const AdBondPage = () => {
               <ul className="space-y-2 text-gray-300">
                 <li><Link to="/offers" className="hover:text-white transition-colors">Browse Offers</Link></li>
                 <li><Link to="/affiliatedwishlist" className="hover:text-white transition-colors">Wishlist</Link></li>
-                <li><Link to="/write-review" className="hover:text-white transition-colors">Write Review</Link></li>
+                <li><Link to="/write-r  eview" className="hover:text-white transition-colors">Write Review</Link></li>
                 <li><Link to="/database" className="hover:text-white transition-colors">Database</Link></li>
               </ul>
             </div>
@@ -787,19 +613,33 @@ const AdBondPage = () => {
             </div>
           </div>
 
+          <p className="text-gray-300 mb-6">
+            <strong>A Non-Profit Initiative by Fission Inc.</strong> After serving 80+ affiliate marketing clients over the past 15 years, we repeatedly heard one thing: the need for a transparent, fraud-free, and community-owned platform. AdBond was born from those requests — a non-profit initiative by Fission Inc. to give back to the industry that shaped us. Built to eliminate fake traffic, foster trust, and showcase proof-backed reviews, AdBond stands as a decentralized, free alternative to commercial listing sites — driven by real needs, not monetization.
+          </p>
+
+          <div className="flex gap-4 mb-6">
+            <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
+              <svg className="w-5 h-5" fill="#ffffff" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M20.445 5h-8.891A6.559 6.559 0 0 0 5 11.554v8.891A6.559 6.559 0 0 0 11.554 27h8.891a6.56 6.56 0 0 0 6.554-6.555v-8.891A6.557 6.557 0 0 0 20.445 5zm4.342 15.445a4.343 4.343 0 0 1-4.342 4.342h-8.891a4.341 4.341 0 0 1-4.341-4.342v-8.891a4.34 4.34 0 0 1 4.341-4.341h8.891a4.342 4.342 0 0 1 4.341 4.341l.001 8.891z"></path><path d="M16 10.312c-3.138 0-5.688 2.551-5.688 5.688s2.551 5.688 5.688 5.688 5.688-2.551 5.688-5.688-2.55-5.688-5.688-5.688zm0 9.163a3.475 3.475 0 1 1-.001-6.95 3.475 3.475 0 0 1 .001 6.95zM21.7 8.991a1.363 1.363 0 1 1-1.364 1.364c0-.752.51-1.364 1.364-1.364z"></path></g></svg>
+            </a>
+            <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
+              <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 462.799"><path fill-rule="nonzero" d="M403.229 0h78.506L310.219 196.04 512 462.799H354.002L230.261 301.007 88.669 462.799h-78.56l183.455-209.683L0 0h161.999l111.856 147.88L403.229 0zm-27.556 415.805h43.505L138.363 44.527h-46.68l283.99 371.278z" /></svg>
+            </a>
+            <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+              </svg>
+            </a>
+            <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+              </svg>
+            </a>
+          </div>
+
           {/* Bottom Footer */}
           <div className="border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm">
               © 2025 AdBond All rights reserved. Built with transparency and trust.
-            </div>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <span className="text-sm text-gray-400">Secured by</span>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm text-gray-400">SSL Encrypted</span>
-              </div>
             </div>
           </div>
         </div>

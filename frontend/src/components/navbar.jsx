@@ -1,55 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Bell, 
-  ChevronDown, 
-  Menu, 
-  X, 
-  LayoutDashboard, 
-  User, 
-  Settings, 
-  LogOut,
-  Moon,
-  Sun
-} from 'lucide-react';
-import { authAPI } from '../services/auth';
+import { Bell, ChevronDown, Menu, X, LayoutDashboard, User, Settings, LogOut, Moon, Sun } from 'lucide-react';
+import { useAuthContext } from '../contexts/AuthContext';
 
 const Navbar = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const { isAuthenticated, user: currentUser, logout } = useAuthContext();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState('light');
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
 
-  // Check authentication status
+  // Debug logging to track auth state changes
   useEffect(() => {
-    const checkAuthStatus = () => {
-      const loggedIn = authAPI.isLoggedIn();
-      const user = authAPI.getCurrentUser();
-
-      setIsLoggedIn(loggedIn);
-      setCurrentUser(user);
-    };
-
-    // Check on mount
-    checkAuthStatus();
-
-    // Listen for storage changes (e.g., login/logout in another tab)
-    const handleStorageChange = (e) => {
-      if (e.key === 'authToken' || e.key === 'currentUser') {
-        checkAuthStatus();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+    console.log('Navbar auth state changed:', { isAuthenticated, currentUser: currentUser?.email });
+  }, [isAuthenticated, currentUser]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -75,9 +40,7 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
-    authAPI.logout();
-    setIsLoggedIn(false);
-    setCurrentUser(null);
+    logout();
     setShowUserMenu(false);
     // Redirect to home page after logout
     navigate('/');
@@ -143,13 +106,24 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1 flex-shrink-0">
-            <Link
-              to="/register-entity"
-              className="group relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-all duration-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            >
-              <span className="relative z-10">Add Network</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-300"></div>
-            </Link>
+            {!isAuthenticated && (
+              <Link
+                to="/register-entity"
+                className="group relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-all duration-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <span className="relative z-10">Add Network</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-300"></div>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                to={getDashboardRoute()}
+                className="group relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-all duration-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <span className="relative z-10">Dashboard</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-300"></div>
+              </Link>
+            )}
             <Link
               to="/offers"
               className="group relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-all duration-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
@@ -165,7 +139,7 @@ const Navbar = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-300"></div>
             </Link>
             <Link
-              to="/review"
+              to="/write-review"
               className="group relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-all duration-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
               <span className="relative z-10">Reviews</span>
@@ -183,7 +157,7 @@ const Navbar = () => {
           {/* User Section */}
           <div className="flex items-center space-x-2 flex-shrink-0">
             {/* Theme Toggle */}
-            <button
+            {/* <button
               aria-label="Toggle theme"
               onClick={toggleTheme}
               className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group"
@@ -193,10 +167,10 @@ const Navbar = () => {
               ) : (
                 <Sun className="w-5 h-5 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" />
               )}
-            </button>
+            </button> */}
 
             {/* Notification Bell */}
-            <button
+            {/* <button
               aria-label="Notifications"
               className="relative p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group"
             >
@@ -204,8 +178,8 @@ const Navbar = () => {
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse">
                 <span className="absolute inset-0 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-ping"></span>
               </span>
-            </button>
-            {!isLoggedIn ? (
+            </button> */}
+            {!isAuthenticated ? (
               // Show login/signup buttons when not logged in
               <div className="flex items-center space-x-2 flex-shrink-0">
                 <Link to="/login">
@@ -255,22 +229,6 @@ const Navbar = () => {
                       <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{getUserDisplayName()}</div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{currentUser?.role || 'User'}</div>
                     </div>
-
-                    {/* Dashboard/Admin Panel Link */}
-                    <Link
-                      to={getDashboardRoute()}
-                      className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      <div className="w-8 h-8 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
-                        {currentUser?.role === 'admin' ? (
-                          <Settings className="w-4 h-4 text-white" />
-                        ) : (
-                          <LayoutDashboard className="w-4 h-4 text-white" />
-                        )}
-                      </div>
-                      <span className="font-medium">{currentUser?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}</span>
-                    </Link>
 
                     {/* Profile Link */}
                     <Link
@@ -336,13 +294,24 @@ const Navbar = () => {
         {isMobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl">
             <div className="px-4 pt-4 pb-6 space-y-2">
-              <Link
-                to="/register-entity"
-                className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Add Network
-              </Link>
+              {!isAuthenticated && (
+                <Link
+                  to="/register-entity"
+                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Add Network
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link
+                  to={getDashboardRoute()}
+                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
               <Link
                 to="/offers"
                 className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
@@ -358,7 +327,7 @@ const Navbar = () => {
                 Wishlist
               </Link>
               <Link
-                to="/review"
+                to="/write-review"
                 className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -373,7 +342,7 @@ const Navbar = () => {
               </Link>
 
               {/* Mobile User Menu (when logged in) */}
-              {isLoggedIn && (
+              {isAuthenticated && (
                 <>
                   <hr className="my-4 border-gray-200 dark:border-gray-700" />
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 mb-4">
@@ -387,13 +356,6 @@ const Navbar = () => {
                       </div>
                     </div>
                   </div>
-                  <Link
-                    to={getDashboardRoute()}
-                    className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {currentUser?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
-                  </Link>
                   <Link
                     to="/profile"
                     className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all duration-300"

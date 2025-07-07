@@ -264,6 +264,134 @@ const emailService = {
             console.error('Error sending affiliate contact email:', error);
             throw new Error('Failed to send contact email');
         }
+    },
+
+    // Send admin notification when entity registers
+    async sendAdminNotificationEmail(entity) {
+        try {
+            console.log(`[EMAIL SERVICE] Sending admin notification for new entity registration: ${entity.name} (${entity.entity_id})`);
+            
+            // Verify admin email configuration before sending
+            if (!process.env.ADMIN_EMAIL_USER || !process.env.ADMIN_EMAIL_FROM) {
+                console.error('ADMIN_EMAIL_USER and ADMIN_EMAIL_FROM environment variables must be set');
+                return { 
+                    success: false, 
+                    error: 'Admin email configuration incomplete. Check ADMIN_EMAIL_USER and ADMIN_EMAIL_FROM environment variables.' 
+                };
+            }
+
+            // Default frontend URL if not set in environment
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+            // Create email content with improved styling
+            const emailContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; background: #f8f9fa;">
+                    <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); padding: 30px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 28px;">🚨 New Entity Registration</h1>
+                        <p style="color: #ffebee; margin: 10px 0 0 0; font-size: 16px;">Requires Admin Review</p>
+                    </div>
+                    
+                    <div style="padding: 30px; background: white; margin: 0;">
+                        <h2 style="color: #333; margin-bottom: 20px; border-bottom: 2px solid #dc3545; padding-bottom: 10px;">
+                            New ${entity.entity_type.charAt(0).toUpperCase() + entity.entity_type.slice(1)} Registration
+                        </h2>
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;">
+                            <h3 style="color: #dc3545; margin-top: 0;">Entity Details</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr><td style="padding: 8px 0; font-weight: bold; color: #555; width: 150px;">Name:</td><td style="padding: 8px 0;">${entity.name}</td></tr>
+                                <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Type:</td><td style="padding: 8px 0;"><span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${entity.entity_type.toUpperCase()}</span></td></tr>
+                                <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${entity.email}" style="color: #dc3545;">${entity.email}</a></td></tr>
+                                <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Website:</td><td style="padding: 8px 0;"><a href="${entity.website}" target="_blank" style="color: #dc3545;">${entity.website}</a></td></tr>
+                                <tr><td style="padding: 8px 0; font-weight: bold; color: #555; vertical-align: top;">Description:</td><td style="padding: 8px 0;">${entity.description}</td></tr>
+                                <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Registration:</td><td style="padding: 8px 0;">${new Date(entity.created_at).toLocaleString()}</td></tr>
+                                <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Entity ID:</td><td style="padding: 8px 0; font-family: monospace; font-size: 12px;">${entity.entity_id}</td></tr>
+                            </table>
+                        </div>
+                        
+                        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
+                            <h4 style="color: #1976d2; margin-top: 0;">Contact Information</h4>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                ${entity.contact_info.phone ? `<li><strong>Phone:</strong> ${entity.contact_info.phone}</li>` : ''}
+                                ${entity.contact_info.teams ? `<li><strong>Microsoft Teams:</strong> ${entity.contact_info.teams}</li>` : ''}
+                                ${entity.contact_info.linkedin ? `<li><strong>LinkedIn:</strong> <a href="${entity.contact_info.linkedin}" target="_blank" style="color: #1976d2;">${entity.contact_info.linkedin}</a></li>` : ''}
+                                ${entity.contact_info.telegram ? `<li><strong>Telegram:</strong> ${entity.contact_info.telegram}</li>` : ''}
+                                ${entity.contact_info.address ? `<li><strong>Address:</strong> ${entity.contact_info.address}</li>` : ''}
+                            </ul>
+                            ${entity.secondary_email ? `<p><strong>Secondary Email:</strong> <a href="mailto:${entity.secondary_email}" style="color: #1976d2;">${entity.secondary_email}</a></p>` : ''}
+                        </div>
+                        
+                        ${entity.additional_notes ? `
+                        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                            <h4 style="color: #856404; margin-top: 0;">Additional Notes</h4>
+                            <p style="margin: 0; color: #856404;">${entity.additional_notes}</p>
+                        </div>` : ''}
+                        
+                        ${entity.how_you_heard ? `
+                        <div style="background: #d1ecf1; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #17a2b8;">
+                            <h4 style="color: #0c5460; margin-top: 0;">How They Found Us</h4>
+                            <p style="margin: 0; color: #0c5460;">${entity.how_you_heard}</p>
+                        </div>` : ''}
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
+                            <h4 style="color: #495057; margin-top: 0;">Entity Metadata</h4>
+                            <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; border: 1px solid #dee2e6; font-size: 12px; color: #495057;">${JSON.stringify(entity.entity_metadata, null, 2)}</pre>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${frontendUrl}/adminpanel" 
+                               style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block; 
+                                      margin: 10px;">
+                                Review in Admin Panel
+                            </a>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                            <p style="color: #6c757d; margin: 0; font-style: italic;">
+                                Please review this entity registration and update their verification status accordingly.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #343a40; padding: 20px; text-align: center; color: #6c757d;">
+                        <p style="margin: 0; font-size: 14px;">
+                            This is an automated notification from the AdBond System
+                        </p>
+                        <p style="color: #6c757d; margin: 10px 0 0 0; font-size: 12px;">
+                            <a href="${frontendUrl}" style="color: #dc3545; text-decoration: none;">Visit AdBond</a> | 
+                            <a href="${frontendUrl}/adminpanel" style="color: #dc3545; text-decoration: none;">Admin Panel</a>
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Email options
+            const mailOptions = {
+                from: process.env.ADMIN_EMAIL_FROM || process.env.EMAIL_FROM || 'AdBond System <admin@adbond.net>',
+                to: process.env.ADMIN_EMAIL_USER,
+                subject: `🚨 New ${entity.entity_type.charAt(0).toUpperCase() + entity.entity_type.slice(1)} Registration: ${entity.name}`,
+                html: emailContent
+            };
+
+            // Send email
+            await transporter.sendMail(mailOptions);
+            console.log(`Admin notification email sent successfully to ${process.env.ADMIN_EMAIL_USER} for entity: ${entity.name}`);
+            
+            return { success: true, message: 'Admin notification email sent successfully' };
+            
+        } catch (error) {
+            console.error('Error sending admin notification email:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Failed to send admin notification email' 
+            };
+        }
     }
 };
 

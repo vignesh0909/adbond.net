@@ -28,7 +28,7 @@ export default function AffiliatesWishlistPage() {
       setLoading(true);
       setError(null);
       const response = await offersService.getAllOfferRequests();
-      
+
       if (response.success) {
         // Transform the offer request data to match the display format
         const transformedData = response.requests.map(request => ({
@@ -50,7 +50,7 @@ export default function AffiliatesWishlistPage() {
           expiresAt: request.expires_at,
           createdAt: request.created_at
         }));
-        
+
         setWishlist(transformedData);
       } else {
         setError('Failed to fetch offer requests');
@@ -67,7 +67,7 @@ export default function AffiliatesWishlistPage() {
   const determinePriority = (request) => {
     const volume = request.traffic_volume || 0;
     const hasBudget = request.budget_range && Object.keys(request.budget_range).length > 0;
-    
+
     if (volume > 50000 || hasBudget) return 'high';
     if (volume > 10000) return 'medium';
     return 'low';
@@ -83,7 +83,7 @@ export default function AffiliatesWishlistPage() {
     try {
       setSendingEmail(true);
       const result = await offersService.sendContactEmail(showContactForm, contactMessage);
-      
+
       if (result.success) {
         alert('Contact email sent successfully!');
         setShowContactForm(null);
@@ -157,7 +157,7 @@ export default function AffiliatesWishlistPage() {
                 type="text"
                 placeholder="e.g. Health, Finance"
                 value={filters.vertical}
-                onChange={(e) => setFilters({...filters, vertical: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, vertical: e.target.value })}
                 className="input-field"
               />
             </div>
@@ -172,7 +172,7 @@ export default function AffiliatesWishlistPage() {
                 type="text"
                 placeholder="e.g. US, UK, CA"
                 value={filters.geo}
-                onChange={(e) => setFilters({...filters, geo: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, geo: e.target.value })}
                 className="input-field"
               />
             </div>
@@ -185,7 +185,7 @@ export default function AffiliatesWishlistPage() {
               </label>
               <select
                 value={filters.priority}
-                onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
                 className="input-field"
               >
                 <option value="">All Priorities</option>
@@ -238,14 +238,14 @@ export default function AffiliatesWishlistPage() {
               {wishlist.length === 0 ? 'No affiliate requests yet' : 'No affiliates found'}
             </div>
             <p className="text-gray-400 dark:text-gray-500 mb-6">
-              {wishlist.length === 0 
-                ? 'There are currently no affiliate requests in the system. Check back later!' 
+              {wishlist.length === 0
+                ? 'There are currently no affiliate requests in the system. Check back later!'
                 : 'Try adjusting your filters to find more partners'
               }
             </p>
             {wishlist.length > 0 && (
               <button
-                onClick={() => setFilters({vertical: "", geo: "", priority: ""})}
+                onClick={() => setFilters({ vertical: "", geo: "", priority: "" })}
                 className="btn-primary"
               >
                 Clear Filters
@@ -255,139 +255,97 @@ export default function AffiliatesWishlistPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-in-scale">
             {filteredWishlist.map((item, index) => (
-              <div 
-                key={item.id} 
-                className="group card card-hover"
-                style={{ animationDelay: `${index * 0.1}s` }}
+              <div
+                key={item.id}
+                className="relative group flex flex-col h-full rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-transform duration-300 hover:scale-[1.025] hover:shadow-2xl"
+                style={{ animationDelay: `${index * 0.1}s`, minHeight: '520px', display: 'flex', flexDirection: 'column' }}
               >
-                <div className={`absolute top-4 right-4 ${getPriorityColor(item.priority)} text-white px-2 py-1 rounded-full text-xs font-bold flex items-center`}>
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  {item.priority.toUpperCase()}
-                </div>
+                {/* Ribbon Priority */}
+                <div className={`absolute -left-8 top-6 rotate-[-45deg] px-8 py-1 text-xs font-bold tracking-widest ${getPriorityColor(item.priority)} text-white shadow-lg z-10`}>{item.priority.toUpperCase()}</div>
 
-                <div className="p-6">
-                  {/* Header */}
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-3 group-hover:scale-110 transition-transform">
+                {/* Card Top Gradient Bar */}
+                <div className="h-2 w-full bg-gradient-to-r from-green-400 via-blue-400 to-purple-400" />
+
+                {/* Card Content */}
+                <div className="flex flex-col flex-1 p-6">
+                  {/* Avatar & Title */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white text-2xl font-extrabold shadow-lg border-4 border-white dark:border-gray-900">
                       {item.affiliate.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                        {item.title || item.affiliate}
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {item.payoutType} • {new Date(item.createdAt).toLocaleDateString()}
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="truncate font-extrabold text-lg text-gray-900 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{item.title || item.affiliate}</h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <span>{item.payoutType}</span>
+                        <span>•</span>
+                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Verticals */}
-                  <div className="mb-4">
-                    <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Verticals:</span>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {item.verticals.map(vertical => (
-                        <span key={vertical} className="badge bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                          {vertical}
-                        </span>
-                      ))}
-                    </div>
+                  {/* Verticals & GEOs */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {item.verticals.map(vertical => (
+                      <span key={vertical} className="badge bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded-full text-xs font-semibold">{vertical}</span>
+                    ))}
+                    {item.geos.slice(0, 3).map((geo, idx) => (
+                      <span key={geo + idx} className="badge bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
+                        {geo}
+                      </span>
+                    ))}
+                    {item.geos.length > 3 && (
+                      <span className="badge bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded-full text-xs font-semibold">+{item.geos.length - 3} more</span>
+                    )}
                   </div>
 
-                  {/* GEOs */}
-                  <div className="mb-4">
-                    <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Target GEOs:</span>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {item.geos.length > 0 ? item.geos.slice(0, 4).map((geo, index) => (
-                        <span key={index} className="badge bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                          </svg>
-                          {geo}
-                        </span>
-                      )) : (
-                        <span className="badge bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          No specific GEOs mentioned
-                        </span>
-                      )}
-                      {item.geos.length > 4 && (
-                        <span className="badge bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          +{item.geos.length - 4} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="text-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                      <div className="font-bold text-green-600 dark:text-green-400">{item.dailyVolume}</div>
+                  {/* Stats Row */}
+                  <div className="flex gap-2 mb-3">
+                    <div className="flex-1 text-center bg-green-50 dark:bg-green-900/30 rounded-lg p-2">
+                      <div className="font-bold text-green-600 dark:text-green-400 text-lg">{item.dailyVolume}</div>
                       <div className="text-xs text-gray-600 dark:text-gray-400">Daily Volume</div>
                     </div>
-                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                      <div className="font-bold text-blue-600 dark:text-blue-400">{item.payoutType}</div>
+                    <div className="flex-1 text-center bg-blue-50 dark:bg-blue-900/30 rounded-lg p-2">
+                      <div className="font-bold text-blue-600 dark:text-blue-400 text-lg">{item.payoutType}</div>
                       <div className="text-xs text-gray-600 dark:text-gray-400">Payout Type</div>
                     </div>
                   </div>
 
                   {/* Traffic Types & Platforms */}
-                  <div className="mb-4">
-                    <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Traffic Types:</span>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {item.trafficTypes.length > 0 ? item.trafficTypes.map((type, index) => (
-                        <span key={index} className="badge badge-info">
-                          {type}
-                        </span>
-                      )) : (
-                        <span className="badge bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          Not specified
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {item.trafficTypes.length > 0 ? item.trafficTypes.map((type, idx) => (
+                      <span key={type + idx} className="badge badge-info px-2 py-1 rounded-full text-xs font-semibold">{type}</span>
+                    )) : (
+                      <span className="badge bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded-full text-xs font-semibold">Not specified</span>
+                    )}
+                    {item.platforms && item.platforms.length > 0 && item.platforms.map((platform, idx) => (
+                      <span key={platform + idx} className="badge bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-2 py-1 rounded-full text-xs font-semibold">{platform}</span>
+                    ))}
                   </div>
-
-                  {/* Platforms */}
-                  {item.platforms && item.platforms.length > 0 && (
-                    <div className="mb-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Platforms:</span>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {item.platforms.map((platform, index) => (
-                          <span key={index} className="badge bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                            {platform}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Requirements */}
-                  <div className="mb-6">
-                    <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Requirements:</span>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{item.requirements}</p>
+                  <div className="mb-4">
+                    <span className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Requirements:</span>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 h-20 overflow-y-auto text-sm text-gray-700 dark:text-gray-300 shadow-inner border border-gray-100 dark:border-gray-700">
+                      {item.requirements}
+                    </div>
                   </div>
 
-                  {/* Action Button */}
-                  <button
-                    onClick={() => setShowContactForm(item.id)}
-                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg flex items-center justify-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                    Contact Affiliate
-                  </button>
+                  <div className="flex-1" />
 
-                  {/* Budget Range Info */}
-                  {item.budgetRange && Object.keys(item.budgetRange).length > 0 && (
-                    <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded text-sm">
-                      <span className="font-medium text-yellow-800 dark:text-yellow-200">Budget: </span>
-                      <span className="text-yellow-700 dark:text-yellow-300">
-                        {JSON.stringify(item.budgetRange)}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex flex-col justify-end min-h-[60px]">
+                    {/* Action Button */}
+                    <button
+                      onClick={() => setShowContactForm(item.id)}
+                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl flex items-center justify-center"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                      </svg>
+                      Contact Affiliate
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -400,7 +358,7 @@ export default function AffiliatesWishlistPage() {
             <div className="card max-w-lg w-full p-6 animate-slide-in-up max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Contact Affiliate</h3>
-                <button 
+                <button
                   onClick={() => {
                     setShowContactForm(null);
                     setContactMessage('');
@@ -412,7 +370,7 @@ export default function AffiliatesWishlistPage() {
                   </svg>
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 {/* Request Info */}
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -446,7 +404,7 @@ export default function AffiliatesWishlistPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => {
                       setShowContactForm(null);
                       setContactMessage('');
@@ -456,7 +414,7 @@ export default function AffiliatesWishlistPage() {
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={handleSendContactEmail}
                     disabled={sendingEmail || !contactMessage.trim()}
                     className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -473,7 +431,6 @@ export default function AffiliatesWishlistPage() {
                       <>
                         <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                         </svg>
                         Send Email
                       </>

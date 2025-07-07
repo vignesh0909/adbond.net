@@ -116,17 +116,9 @@ const validateEntityRegistration = [
         .isObject()
         .withMessage('Contact info must be an object')
         .custom((value, { req }) => {
-            if (!value.address || typeof value.address !== 'string' || value.address.trim() === '') {
-                throw new Error('Address is required in contact_info and cannot be empty.');
-            }
-
             const hasPhone = value.phone && typeof value.phone === 'string' && value.phone.trim() !== '';
-            const hasTelegram = value.telegram && typeof value.telegram === 'string' && value.telegram.trim() !== '';
-            const hasTeams = value.teams && typeof value.teams === 'string' && value.teams.trim() !== '';
-            const hasLinkedin = value.linkedin && typeof value.linkedin === 'string' && value.linkedin.trim() !== '';
-
-            if (!(hasPhone || hasTelegram || hasTeams || hasLinkedin)) {
-                throw new Error('At least one of phone, telegram, teams, or linkedin is required in contact_info, in addition to address.');
+            if (!hasPhone) {
+                throw new Error('Phone number is required in contact_info and cannot be empty.');
             }
             return true;
         }),

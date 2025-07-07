@@ -12,9 +12,11 @@ export default function AdvertiserDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Form states for creating new offer
-  const [showCreateOffer, setShowCreateOffer] = useState(false);
-  const [newOffer, setNewOffer] = useState({
+  // Form states for offer modal (create/edit)
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingOffer, setEditingOffer] = useState(null);
+  const [offerData, setOfferData] = useState({
     title: '',
     category: '',
     description: '',
@@ -55,7 +57,7 @@ export default function AdvertiserDashboard() {
       console.log('No currentUser or entity_id available');
       return;
     }
-    
+
     try {
       setLoading(true);
       const response = await offersAPI.getOffersByEntity(currentUser.entity_id);
@@ -83,33 +85,68 @@ export default function AdvertiserDashboard() {
     }
   };
 
-  const handleCreateOffer = async (e) => {
+  const resetOfferForm = () => {
+    setOfferData({
+      title: '',
+      category: '',
+      description: '',
+      target_geo: [],
+      payout_type: 'CPA',
+      payout_value: '',
+      landing_page_url: '',
+      requirements: '',
+      expires_at: ''
+    });
+    setEditingOffer(null);
+    setIsEditMode(false);
+  };
+
+  const openCreateOffer = () => {
+    resetOfferForm();
+    setShowOfferModal(true);
+  };
+
+  const openEditOffer = (offer) => {
+    setEditingOffer(offer);
+    setIsEditMode(true);
+    setOfferData({
+      title: offer.title || '',
+      category: offer.category || '',
+      description: offer.description || '',
+      target_geo: Array.isArray(offer.target_geo) ? offer.target_geo.join(', ') : offer.target_geo || '',
+      payout_type: offer.payout_type || 'CPA',
+      payout_value: offer.payout_value || '',
+      landing_page_url: offer.landing_page_url || '',
+      requirements: offer.requirements || '',
+      expires_at: offer.expires_at ? offer.expires_at.substring(0, 16) : ''
+    });
+    setShowOfferModal(true);
+  };
+
+  const handleOfferSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const offerData = {
-        ...newOffer,
+      const formattedData = {
+        ...offerData,
         entity_id: currentUser.entity_id,
-        target_geo: newOffer.target_geo.split(',').map(geo => geo.trim()),
-        payout_value: parseFloat(newOffer.payout_value)
+        target_geo: typeof offerData.target_geo === 'string' ?
+          offerData.target_geo.split(',').map(geo => geo.trim()) :
+          offerData.target_geo,
+        payout_value: parseFloat(offerData.payout_value)
       };
 
-      await offersAPI.createOffer(offerData);
-      setShowCreateOffer(false);
-      setNewOffer({
-        title: '',
-        category: '',
-        description: '',
-        target_geo: [],
-        payout_type: 'CPA',
-        payout_value: '',
-        landing_page_url: '',
-        requirements: '',
-        expires_at: ''
-      });
+      if (isEditMode) {
+        await offersAPI.updateOffer(editingOffer.offer_id, formattedData);
+      } else {
+        await offersAPI.createOffer(formattedData);
+      }
+
+      setShowOfferModal(false);
+      resetOfferForm();
       fetchMyOffers();
     } catch (err) {
-      setError('Failed to create offer');
+      setError(`Failed to ${isEditMode ? 'update' : 'create'} campaign`);
       console.error(err);
     } finally {
       setLoading(false);
@@ -162,10 +199,10 @@ export default function AdvertiserDashboard() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
           <h2 className="text-3xl font-extrabold text-blue-700 dark:text-blue-300 tracking-tight">Advertiser Dashboard</h2>
           <button
-            onClick={() => setShowCreateOffer(true)}
+            onClick={() => openCreateOffer()}
             className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white px-6 py-2 rounded-lg shadow-lg font-bold transition"
           >
-            + Create New Offer
+            + Create Campaign
           </button>
         </div>
         {error && (
@@ -181,7 +218,7 @@ export default function AdvertiserDashboard() {
               className={`py-2 px-1 border-b-2 font-semibold text-lg transition-all ${selectedTab === 'offers'
                 ? 'border-blue-500 text-blue-600 dark:text-blue-300'
                 : 'border-transparent text-gray-500 hover:text-blue-700 dark:hover:text-blue-200'
-              }`}
+                }`}
             >
               My Offers <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{myOffers.length}</span>
             </button>
@@ -190,7 +227,7 @@ export default function AdvertiserDashboard() {
               className={`py-2 px-1 border-b-2 font-semibold text-lg transition-all ${selectedTab === 'reviews'
                 ? 'border-blue-500 text-blue-600 dark:text-blue-300'
                 : 'border-transparent text-gray-500 hover:text-blue-700 dark:hover:text-blue-200'
-              }`}
+                }`}
             >
               Reviews
             </button>
@@ -222,8 +259,16 @@ export default function AdvertiserDashboard() {
                       </span>
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${offer.offer_status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}>{offer.offer_status}</span>
                     </div>
-                    <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    {/* <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
                       Clicks: {offer.click_count} | Conversions: {offer.conversion_count}
+                    </div> */}
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => openEditOffer(offer)}
+                        className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg shadow-md transition"
+                      >
+                        Edit
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -238,178 +283,203 @@ export default function AdvertiserDashboard() {
             <EntityReviewsDashboard entityId={currentUser.entity_id} />
           </div>
         )}
-        {/* Create Offer Modal */}
-        {showCreateOffer && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-            <div className="bg-white/90 dark:bg-gray-900/90 rounded-2xl max-w-2xl w-full max-h-screen overflow-y-auto p-8 border border-blue-100 dark:border-gray-800 shadow-2xl">
-              <h3 className="text-2xl font-bold mb-4 text-blue-700 dark:text-blue-200">Create New Offer</h3>
-              <form onSubmit={handleCreateOffer} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={newOffer.title}
-                    onChange={(e) => setNewOffer({ ...newOffer, title: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <input
-                    type="text"
-                    required
-                    value={newOffer.category}
-                    onChange={(e) => setNewOffer({ ...newOffer, category: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    required
-                    value={newOffer.description}
-                    onChange={(e) => setNewOffer({ ...newOffer, description: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                    rows="3"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Target GEOs (comma-separated)</label>
-                  <input
-                    type="text"
-                    required
-                    value={newOffer.target_geo}
-                    onChange={(e) => setNewOffer({ ...newOffer, target_geo: e.target.value })}
-                    placeholder="US, UK, CA"
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Payout Type</label>
-                    <select
-                      value={newOffer.payout_type}
-                      onChange={(e) => setNewOffer({ ...newOffer, payout_type: e.target.value })}
-                      className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                    >
-                      <option value="CPA">CPA</option>
-                      <option value="CPL">CPL</option>
-                      <option value="CPI">CPI</option>
-                      <option value="RevShare">RevShare</option>
-                    </select>
+        {/* Unified Offer Modal (Create/Edit) */}
+        {showOfferModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="modal-content bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-700/30 shadow-2xl animate-modal-in">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 p-6 rounded-t-3xl z-10 shadow-sm"
+                style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(59, 130, 246, 0.05) 100%)' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                      🎯
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {isEditMode ? 'Edit Campaign' : 'Create New Campaign'}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        {isEditMode ? 'Update offer details' : 'Create a new offer for affiliates to promote'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Payout Value</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={newOffer.payout_value}
-                      onChange={(e) => setNewOffer({ ...newOffer, payout_value: e.target.value })}
-                      className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Landing Page URL</label>
-                  <input
-                    type="url"
-                    required
-                    value={newOffer.landing_page_url}
-                    onChange={(e) => setNewOffer({ ...newOffer, landing_page_url: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Requirements</label>
-                  <textarea
-                    value={newOffer.requirements}
-                    onChange={(e) => setNewOffer({ ...newOffer, requirements: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                    rows="2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expires At (Optional)</label>
-                  <input
-                    type="datetime-local"
-                    value={newOffer.expires_at}
-                    onChange={(e) => setNewOffer({ ...newOffer, expires_at: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg shadow-md transition"
-                  >
-                    {loading ? 'Creating...' : 'Create Offer'}
-                  </button>
                   <button
                     type="button"
-                    onClick={() => setShowCreateOffer(false)}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition"
+                    onClick={() => setShowOfferModal(false)}
+                    className="w-10 h-10 bg-gray-100 dark:bg-gray-800 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 group"
                   >
-                    Cancel
+                    <span className="text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 text-lg">✕</span>
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
-        {/* Bid Modal */}
-        {showBidModal && selectedRequest && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-            <div className="bg-white/90 dark:bg-gray-900/90 rounded-2xl max-w-lg w-full p-8 border border-blue-100 dark:border-gray-800 shadow-2xl">
-              <h3 className="text-2xl font-bold mb-4 text-blue-700 dark:text-blue-200">Submit Counter Offer</h3>
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                <h4 className="font-medium">{selectedRequest.title}</h4>
-                <p className="text-sm text-gray-600">Vertical: {selectedRequest.vertical}</p>
-                <p className="text-sm text-gray-600">
-                  Desired Payout: {selectedRequest.desired_payout_type}
-                </p>
               </div>
-              <form onSubmit={handleSubmitBid} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Offer Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={bidData.bid_amount}
-                    onChange={(e) => setBidData({ ...bidData, bid_amount: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                  <textarea
-                    value={bidData.bid_notes}
-                    onChange={(e) => setBidData({ ...bidData, bid_notes: e.target.value })}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                    rows="3"
-                    placeholder="Additional details about your offer..."
-                  />
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg shadow-md transition"
-                  >
-                    {loading ? 'Submitting...' : 'Submit Offer'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowBidModal(false)}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+
+              {/* Modal Content */}
+              <div className="p-6">
+                <form onSubmit={handleOfferSubmit} className="space-y-6">
+                  {/* Basic Information Card */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/30 animate-slide-up animate-delay-100">
+                    <h4 className="font-bold text-blue-700 dark:text-blue-300 mb-4 flex items-center">
+                      <span className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center text-white text-sm mr-2">📝</span>
+                      Campgaign Information (All fields required *)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Campaign Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={offerData.title}
+                          onChange={(e) => setOfferData({ ...offerData, title: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                          placeholder="Enter compelling offer title"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Category <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={offerData.category}
+                          onChange={(e) => setOfferData({ ...offerData, category: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                          placeholder="e.g., Health, Finance, Gaming"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Campgaign Description <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        required
+                        value={offerData.description}
+                        onChange={(e) => setOfferData({ ...offerData, description: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                        rows="3"
+                        placeholder="Describe your offer details..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Targeting & Payout Card */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-700/30 animate-slide-up animate-delay-200">
+                    <h4 className="font-bold text-purple-700 dark:text-purple-300 mb-4 flex items-center">
+                      <span className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center text-white text-sm mr-2">🎯</span>
+                      Targeting & Payout
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Target GEOs <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={offerData.target_geo}
+                          onChange={(e) => setOfferData({ ...offerData, target_geo: e.target.value })}
+                          placeholder="US, UK, CA, AU"
+                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Comma-separated country codes</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Landing Page URL <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          value={offerData.landing_page_url}
+                          onChange={(e) => setOfferData({ ...offerData, landing_page_url: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                          placeholder="https://example.com/landing"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payout Type</label>
+                        <select
+                          value={offerData.payout_type}
+                          onChange={(e) => setOfferData({ ...offerData, payout_type: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                        >
+                          <option value="CPA">CPA - Cost Per Action</option>
+                          <option value="CPL">CPL - Cost Per Lead</option>
+                          <option value="CPI">CPI - Cost Per Install</option>
+                          <option value="RevShare">Revenue Share</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Payout Value ($) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          required
+                          value={offerData.payout_value}
+                          onChange={(e) => setOfferData({ ...offerData, payout_value: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Settings Card */}
+                  <div className="bg-gradient-to-r from-pink-50 to-blue-50 dark:from-pink-900/20 dark:to-blue-900/20 rounded-2xl p-6 border border-pink-200/50 dark:border-pink-700/30 animate-slide-up animate-delay-300">
+                    <h4 className="font-bold text-pink-700 dark:text-pink-300 mb-4 flex items-center">
+                      <span className="w-6 h-6 bg-pink-500 rounded-lg flex items-center justify-center text-white text-sm mr-2">⚙️</span>
+                      Allowed Media Types
+                    </h4>
+                    <div className="space-y-4">
+                      <div>
+                        {/* <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Allowed Media Types</label> */}
+                        <textarea
+                          value={offerData.requirements}
+                          onChange={(e) => setOfferData({ ...offerData, requirements: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                          rows="2"
+                          placeholder="Eg. Blog, Display, Email, Newsletter"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2 animate-slide-up animate-delay-400">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 hover:from-blue-600 hover:via-purple-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          {isEditMode ? 'Updating Campaign...' : 'Creating Campaign...'}
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          {isEditMode ? 'Update Campaign' : 'Create Campaign'}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowOfferModal(false)}
+                      className="flex-1 sm:flex-none sm:px-8 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}

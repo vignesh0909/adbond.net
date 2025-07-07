@@ -86,8 +86,7 @@ router.get('/metadata/template/:type', (req, res) => {
                 phone: "string - Phone number",
                 teams: "string - Microsoft Teams contact",
                 linkedin: "string - LinkedIn profile URL",
-                telegram: "string - Telegram handle",
-                address: "string - Physical address"
+                telegram: "string - Telegram handle"
             },
             secondary_email: "string - Secondary email address",
             description: "string - Entity description",
@@ -135,9 +134,9 @@ router.post('/register',
                 return res.status(400).json({ message: 'Invalid entity type. Must be one of: advertiser, affiliate, network' });
             }
 
-            // Validate contact info has at least one contact method
-            if (!contact_info.phone && !contact_info.telegram && !contact_info.teams && !contact_info.linkedin && !contact_info.address) {
-                return res.status(400).json({ message: 'At least one contact method is required (phone, telegram, teams, linkedin, or address)' });
+            // Validate phone number is provided
+            if (!contact_info.phone || typeof contact_info.phone !== 'string' || contact_info.phone.trim() === '') {
+                return res.status(400).json({ message: 'Phone number is required' });
             }
 
             // Validate entity metadata based on entity type
@@ -173,6 +172,20 @@ router.post('/register',
             // Verification: Ensure the entity is pending and no email logic is triggered here
             if (entity.verification_status !== 'pending') {
                 console.warn(`WARNING: Entity ${entity.entity_id} was not created with 'pending' status. Current status: ${entity.verification_status}`);
+            }
+
+            // Send admin notification email about new entity registration
+            try {
+                const emailService = require('../services/emailService');
+                const emailResult = await emailService.sendAdminNotificationEmail(entity);
+                if (emailResult.success) {
+                    console.log(`Admin notification email sent successfully for entity: ${entity.name}`);
+                } else {
+                    console.error(`Failed to send admin notification email for entity: ${entity.name}`, emailResult.error);
+                }
+            } catch (emailError) {
+                console.error('Error sending admin notification email:', emailError);
+                // Continue with registration even if admin email fails
             }
 
             res.status(201).json({

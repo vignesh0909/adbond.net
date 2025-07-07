@@ -1,6 +1,6 @@
 # LinkedIn.us Backend API
 
-A robust backend API for LinkedIn.us platform with user authentication, entity management, and offer system.
+A robust backend API for Adbond.net platform with user authentication, entity management, and offer system.
 
 ## 🚀 Quick Start
 

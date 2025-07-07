@@ -13,7 +13,6 @@ const createOffersTableQuery = `CREATE TABLE IF NOT EXISTS offers (
     landing_page_url VARCHAR(500) NOT NULL,
     offer_status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (offer_status IN ('active', 'paused', 'expired', 'draft')),
     private_offer BOOLEAN DEFAULT FALSE,
-    expires_at TIMESTAMP,
     requirements TEXT,
     allowed_traffic_sources JSONB,
     click_count INTEGER DEFAULT 0,
@@ -46,7 +45,6 @@ CREATE TABLE IF NOT EXISTS offer_requests (
     budget_range JSONB,
     notes TEXT,
     request_status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (request_status IN ('active', 'fulfilled', 'expired', 'cancelled')),
-    expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -141,7 +139,6 @@ class OffersModel {
             landing_page_url,
             offer_status = 'active',
             private_offer = false,
-            expires_at,
             requirements,
             allowed_traffic_sources
         } = offerData;
@@ -152,16 +149,15 @@ class OffersModel {
             INSERT INTO offers (
                 offer_id, entity_id, title, category, description, target_geo,
                 payout_type, payout_value, landing_page_url, offer_status,
-                private_offer, expires_at, requirements, allowed_traffic_sources
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                private_offer, requirements, allowed_traffic_sources
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
         `;
 
         const values = [
             offer_id, entity_id, title, category, description, JSON.stringify(target_geo),
             payout_type, payout_value, landing_page_url, offer_status,
-            private_offer, expires_at, requirements, 
-            allowed_traffic_sources ? JSON.stringify(allowed_traffic_sources) : null
+            private_offer, requirements, allowed_traffic_sources ? JSON.stringify(allowed_traffic_sources) : null
         ];
 
         try {
@@ -239,7 +235,6 @@ class OffersModel {
             desired_payout_type,
             budget_range,
             notes,
-            expires_at
         } = requestData;
 
         const offer_request_id = uuidv4();
@@ -248,8 +243,8 @@ class OffersModel {
             INSERT INTO offer_requests (
                 offer_request_id, user_id, entity_id, title, vertical,
                 geos_targeting, traffic_type, traffic_volume, platforms_used,
-                desired_payout_type, budget_range, notes, expires_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                desired_payout_type, budget_range, notes
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
         `;
 
@@ -258,7 +253,7 @@ class OffersModel {
             JSON.stringify(geos_targeting), JSON.stringify(traffic_type),
             traffic_volume, JSON.stringify(platforms_used),
             desired_payout_type, budget_range ? JSON.stringify(budget_range) : null,
-            notes, expires_at
+            notes
         ];
 
         try {
@@ -270,18 +265,20 @@ class OffersModel {
     }
 
     // Get offer requests
-    static async getOfferRequests(filters = {}, limit = 20, offset = 0) {
+    static async getOfferRequests(user_id, filters = {}, limit = 20, offset = 0) {
         let query = `
             SELECT req.*, e.name as entity_name, e.entity_type, 
                    CONCAT(u.first_name, ' ', u.last_name) as user_name
             FROM offer_requests req
             LEFT JOIN entities e ON req.entity_id = e.entity_id
             LEFT JOIN users u ON req.user_id = u.user_id
-            WHERE req.request_status = 'active'
+            WHERE req.request_status = 'active' and u.user_id != $1
         `;
         
         const values = [];
         let paramCount = 0;
+        values.push(user_id);
+        paramCount++;
 
         if (filters.vertical) {
             paramCount++;
@@ -616,6 +613,241 @@ class OffersModel {
         try {
             const result = await client.query(query, values);
             return { success: true, email: result.rows[0] };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Update an existing offer
+    static async updateOffer(offer_id, offerData, entity_id) {
+        const {
+            title,
+            category,
+            description,
+            target_geo,
+            payout_type,
+            payout_value,
+            landing_page_url,
+            offer_status,
+            private_offer,
+            requirements,
+            allowed_traffic_sources
+        } = offerData;
+
+        // Build update query dynamically based on provided fields
+        const updateFields = [];
+        const values = [];
+        let paramCount = 0;
+
+        if (title !== undefined) {
+            paramCount++;
+            updateFields.push(`title = $${paramCount}`);
+            values.push(title);
+        }
+
+        if (category !== undefined) {
+            paramCount++;
+            updateFields.push(`category = $${paramCount}`);
+            values.push(category);
+        }
+
+        if (description !== undefined) {
+            paramCount++;
+            updateFields.push(`description = $${paramCount}`);
+            values.push(description);
+        }
+
+        if (target_geo !== undefined) {
+            paramCount++;
+            updateFields.push(`target_geo = $${paramCount}`);
+            values.push(JSON.stringify(target_geo));
+        }
+
+        if (payout_type !== undefined) {
+            paramCount++;
+            updateFields.push(`payout_type = $${paramCount}`);
+            values.push(payout_type);
+        }
+
+        if (payout_value !== undefined) {
+            paramCount++;
+            updateFields.push(`payout_value = $${paramCount}`);
+            values.push(payout_value);
+        }
+
+        if (landing_page_url !== undefined) {
+            paramCount++;
+            updateFields.push(`landing_page_url = $${paramCount}`);
+            values.push(landing_page_url);
+        }
+
+        if (offer_status !== undefined) {
+            paramCount++;
+            updateFields.push(`offer_status = $${paramCount}`);
+            values.push(offer_status);
+        }
+
+        if (private_offer !== undefined) {
+            paramCount++;
+            updateFields.push(`private_offer = $${paramCount}`);
+            values.push(private_offer);
+        }
+
+        if (requirements !== undefined) {
+            paramCount++;
+            updateFields.push(`requirements = $${paramCount}`);
+            values.push(requirements);
+        }
+
+        if (allowed_traffic_sources !== undefined) {
+            paramCount++;
+            updateFields.push(`allowed_traffic_sources = $${paramCount}`);
+            values.push(allowed_traffic_sources ? JSON.stringify(allowed_traffic_sources) : null);
+        }
+
+        if (updateFields.length === 0) {
+            return { success: false, error: 'No fields to update' };
+        }
+
+        // Add updated_at field
+        paramCount++;
+        updateFields.push(`updated_at = $${paramCount}`);
+        values.push(new Date());
+
+        // Add WHERE clause parameters
+        paramCount++;
+        values.push(offer_id);
+
+        paramCount++;
+        values.push(entity_id);
+
+        const query = `
+            UPDATE offers 
+            SET ${updateFields.join(', ')}
+            WHERE offer_id = $${paramCount - 1} AND entity_id = $${paramCount}
+            RETURNING *
+        `;
+
+        try {
+            const result = await client.query(query, values);
+            if (result.rows.length === 0) {
+                return { success: false, error: 'Offer not found or you do not have permission to update it' };
+            }
+            return { success: true, offer: result.rows[0] };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Update an existing offer request
+    static async updateOfferRequest(offer_request_id, requestData, user_id) {
+        const {
+            title,
+            vertical,
+            geos_targeting,
+            traffic_type,
+            traffic_volume,
+            platforms_used,
+            desired_payout_type,
+            budget_range,
+            notes,
+            request_status
+        } = requestData;
+
+        // Build update query dynamically based on provided fields
+        const updateFields = [];
+        const values = [];
+        let paramCount = 0;
+
+        if (title !== undefined) {
+            paramCount++;
+            updateFields.push(`title = $${paramCount}`);
+            values.push(title);
+        }
+
+        if (vertical !== undefined) {
+            paramCount++;
+            updateFields.push(`vertical = $${paramCount}`);
+            values.push(vertical);
+        }
+
+        if (geos_targeting !== undefined) {
+            paramCount++;
+            updateFields.push(`geos_targeting = $${paramCount}`);
+            values.push(JSON.stringify(geos_targeting));
+        }
+
+        if (traffic_type !== undefined) {
+            paramCount++;
+            updateFields.push(`traffic_type = $${paramCount}`);
+            values.push(JSON.stringify(traffic_type));
+        }
+
+        if (traffic_volume !== undefined) {
+            paramCount++;
+            updateFields.push(`traffic_volume = $${paramCount}`);
+            values.push(traffic_volume);
+        }
+
+        if (platforms_used !== undefined) {
+            paramCount++;
+            updateFields.push(`platforms_used = $${paramCount}`);
+            values.push(JSON.stringify(platforms_used));
+        }
+
+        if (desired_payout_type !== undefined) {
+            paramCount++;
+            updateFields.push(`desired_payout_type = $${paramCount}`);
+            values.push(desired_payout_type);
+        }
+
+        if (budget_range !== undefined) {
+            paramCount++;
+            updateFields.push(`budget_range = $${paramCount}`);
+            values.push(budget_range ? JSON.stringify(budget_range) : null);
+        }
+
+        if (notes !== undefined) {
+            paramCount++;
+            updateFields.push(`notes = $${paramCount}`);
+            values.push(notes);
+        }
+
+        if (request_status !== undefined) {
+            paramCount++;
+            updateFields.push(`request_status = $${paramCount}`);
+            values.push(request_status);
+        }
+
+        if (updateFields.length === 0) {
+            return { success: false, error: 'No fields to update' };
+        }
+
+        // Add updated_at field
+        paramCount++;
+        updateFields.push(`updated_at = $${paramCount}`);
+        values.push(new Date());
+
+        // Add WHERE clause parameters
+        paramCount++;
+        values.push(offer_request_id);
+
+        paramCount++;
+        values.push(user_id);
+
+        const query = `
+            UPDATE offer_requests 
+            SET ${updateFields.join(', ')}
+            WHERE offer_request_id = $${paramCount - 1} AND user_id = $${paramCount}
+            RETURNING *
+        `;
+
+        try {
+            const result = await client.query(query, values);
+            if (result.rows.length === 0) {
+                return { success: false, error: 'Offer request not found or you do not have permission to update it' };
+            }
+            return { success: true, request: result.rows[0] };
         } catch (error) {
             return { success: false, error: error.message };
         }

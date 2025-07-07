@@ -1,4 +1,6 @@
 // Shared HTTP client for all API services
+import { tokenUtils } from '../utils/tokenUtils';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4100/api';
 
 // Cache for ongoing requests to prevent duplicates
@@ -19,6 +21,23 @@ export const httpClient = async (endpoint, options = {}) => {
   // Add auth token if available
   const token = localStorage.getItem('authToken');
   if (token) {
+    // Check if token is expired before adding to request
+    if (tokenUtils.isTokenExpired(token)) {
+      console.warn('⚠️ Token is expired, removing from storage and redirecting to login');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('password_reset_required');
+      
+      // Redirect to login if not already on login/signup pages
+      if (typeof window !== 'undefined' && 
+          !window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/signup')) {
+        window.location.href = '/login';
+      }
+      
+      throw new Error('Token expired. Please log in again.');
+    }
+    
     config.headers.Authorization = `Bearer ${token}`;
     console.log('🔑 Adding auth token to request:', endpoint);
   } else {
@@ -54,7 +73,29 @@ export const httpClient = async (endpoint, options = {}) => {
           status: response.status,
           error: data.error || data.message
         });
-        throw new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
+        
+        // Handle 401 Unauthorized responses (token expired/invalid)
+        if (response.status === 401) {
+          console.warn('🔓 Unauthorized response, likely expired token');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('password_reset_required');
+          
+          // Redirect to login if not already on login/signup pages
+          if (typeof window !== 'undefined' && 
+              !window.location.pathname.includes('/login') && 
+              !window.location.pathname.includes('/signup') &&
+              !window.location.pathname.includes('/register')) {
+            window.location.href = '/login';
+          }
+        }
+        
+        const error = new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
+        error.response = {
+          status: response.status,
+          data: data
+        };
+        throw error;
       }
 
       console.log('✅ API Success:', endpoint, 'Status:', response.status);

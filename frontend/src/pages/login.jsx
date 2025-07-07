@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import Navbar from '../components/navbar';
+import { useAuthContext } from '../contexts/AuthContext';
 import { authAPI } from '../services/auth';
 import AdminPanelPage from '../pages/adminpanel';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,29 +8,28 @@ import { customToast } from '../components/ToastProvider';
 
 export default function LoginDashboardPage() {
   const navigate = useNavigate();
-  const [loggedIn, setLoggedIn] = React.useState(false);
+  const { isAuthenticated, user: currentUser, login: authLogin } = useAuthContext();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [agreed, setAgreed] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [currentUser, setCurrentUser] = React.useState(null);
   const [passwordResetRequired, setPasswordResetRequired] = React.useState(false);
   const [initializing, setInitializing] = React.useState(true);
   const [emailNotVerified, setEmailNotVerified] = React.useState(false);
   const [redirecting, setRedirecting] = React.useState(false);
-  
+
   // Ref to track if login is in progress to prevent race conditions
   const loginInProgress = React.useRef(false);
   const lastLoginAttempt = React.useRef(0);
 
   // Navigate to appropriate dashboard when user is fully logged in
   useEffect(() => {
-    if (loggedIn && currentUser && !passwordResetRequired && !initializing) {
+    if (isAuthenticated && currentUser && !passwordResetRequired && !initializing) {
       console.log('User is fully logged in, checking role for navigation:', currentUser.role);
       console.log('Full user object:', currentUser);
-      
+
       // Add a small delay to ensure everything is properly set
       const navigationTimeout = setTimeout(() => {
         // Navigate based on role
@@ -65,60 +65,34 @@ export default function LoginDashboardPage() {
 
       return () => clearTimeout(navigationTimeout);
     }
-  }, [loggedIn, currentUser, passwordResetRequired, initializing, navigate]);
+  }, [isAuthenticated, currentUser, passwordResetRequired, initializing, navigate]);
 
   // Check if user is already logged in on component mount and listen for storage changes
   React.useEffect(() => {
-    const checkAuthStatus = () => {
-      const isLoggedIn = authAPI.isLoggedIn();
-      const user = authAPI.getCurrentUser();
-      const passwordResetNeeded = localStorage.getItem('password_reset_required') === 'true';
+    // The AuthContext handles authentication checking automatically
+    // Just check for password reset requirement from localStorage
+    const passwordResetNeeded = localStorage.getItem('password_reset_required') === 'true';
 
-      console.log('Checking auth status:', { isLoggedIn, user: !!user, passwordResetNeeded });
+    console.log('Checking initial state:', {
+      isAuthenticated,
+      user: !!currentUser,
+      passwordResetNeeded
+    });
 
-      if (isLoggedIn && user) {
-        setLoggedIn(true);
-        setCurrentUser(user);
-        setPasswordResetRequired(passwordResetNeeded);
-        setEmailNotVerified(false); // Clear email verification state on successful auth
-      } else {
-        // Clear state if not properly logged in
-        setLoggedIn(false);
-        setCurrentUser(null);
-        setPasswordResetRequired(false);
-        setEmailNotVerified(false);
-        
-        if (isLoggedIn && !user) {
-          // Token exists but no user data, clear everything
-          console.log('Token exists but no user data, clearing auth');
-          authAPI.logout();
-        }
-      }
-      setInitializing(false); // Done checking initial auth state
-    };
+    if (isAuthenticated && currentUser) {
+      setPasswordResetRequired(passwordResetNeeded);
+      setEmailNotVerified(false);
+    } else {
+      setPasswordResetRequired(false);
+      setEmailNotVerified(false);
+    }
 
-    // Check on mount
-    checkAuthStatus();
-
-    // Listen for storage changes (e.g., logout in another tab)
-    const handleStorageChange = (e) => {
-      if (e.key === 'authToken' || e.key === 'currentUser' || e.key === 'password_reset_required') {
-        console.log('Storage changed, rechecking auth status');
-        checkAuthStatus();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+    setInitializing(false);
+  }, [isAuthenticated, currentUser]);
 
   const handleLogin = useCallback(async (e) => {
     e.preventDefault();
-    
+
     // Debounce: prevent rapid successive clicks
     const now = Date.now();
     if (now - lastLoginAttempt.current < 1000) {
@@ -126,7 +100,7 @@ export default function LoginDashboardPage() {
       return;
     }
     lastLoginAttempt.current = now;
-    
+
     // Prevent double submission using both state and ref
     if (loading || loginInProgress.current) {
       console.log('Login already in progress, ignoring duplicate request');
@@ -139,19 +113,14 @@ export default function LoginDashboardPage() {
     setEmailNotVerified(false);
 
     try {
-      console.log('Calling authAPI.login...');
-      const response = await authAPI.login({ email, password });
+      console.log('Calling authLogin from context...');
+      const response = await authLogin({ email, password });
       console.log('Login API response received:', response);
       console.log('User data from response:', response.user);
       console.log('User role:', response.user?.role);
-      
-      // Immediately update component state after successful login
-      console.log('Updating component state...');
-      const newLoggedInState = true;
-      const newUserState = response.user;
-      
-      setLoggedIn(newLoggedInState);
-      setCurrentUser(newUserState);
+
+      // The AuthContext will automatically update the authentication state
+      // No need to manually set loggedIn and currentUser states
       setEmailNotVerified(false);
 
       // Check if password reset is required
@@ -166,9 +135,9 @@ export default function LoginDashboardPage() {
         localStorage.removeItem('password_reset_required');
       }
 
-      console.log('Login successful, state updated:', { loggedIn: newLoggedInState, user: newUserState });
+      console.log('Login successful, auth context updated');
       customToast.success('Login successful!');
-      
+
     } catch (error) {
       console.error('Login failed:', error);
       // Check if error is due to email not being verified
@@ -247,12 +216,10 @@ export default function LoginDashboardPage() {
   };
 
   const handleLogout = () => {
-    // Clear API storage
-    authAPI.logout();
+    // Use AuthContext logout which handles everything
+    logout();
 
-    // Reset component state
-    setLoggedIn(false);
-    setCurrentUser(null);
+    // Reset local component state
     setEmail("");
     setPassword("");
     setNewPassword("");
@@ -276,31 +243,31 @@ export default function LoginDashboardPage() {
             <div className="mt-6">
               <p className="text-sm text-gray-600 mb-4">Taking too long? Click below to navigate manually:</p>
               <div className="space-y-2">
-                <button 
+                <button
                   onClick={() => navigate('/advertiser-dashboard')}
                   className="block w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                 >
                   Go to Advertiser Dashboard
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/affiliate-dashboard')}
                   className="block w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
                 >
                   Go to Affiliate Dashboard
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/network-dashboard')}
                   className="block w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
                 >
                   Go to Network Dashboard
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/user-dashboard')}
                   className="block w-full bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
                 >
                   Go to User Dashboard
                 </button>
-                <button 
+                <button
                   onClick={() => setRedirecting(false)}
                   className="block w-full bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
                 >
@@ -319,39 +286,39 @@ export default function LoginDashboardPage() {
     return (
       <div className="bg-gray-50 text-gray-900 mt-20 font-sans">
         <Navbar />
-          <section className="py-20 px-6 max-w-md mx-auto">
-            <h2 className="text-3xl font-bold mb-6">Reset Password</h2>
-            <form onSubmit={handlePasswordReset} className="space-y-4">
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New Password"
-                className="w-full border px-3 py-2 rounded"
-                required
-              />
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm New Password"
-                className="w-full border px-3 py-2 rounded"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                disabled={loading}
-              >
-                {loading ? 'Resetting password...' : 'Reset Password'}
-              </button>
-            </form>        </section>
+        <section className="py-20 px-6 max-w-md mx-auto">
+          <h2 className="text-3xl font-bold mb-6">Reset Password</h2>
+          <form onSubmit={handlePasswordReset} className="space-y-4">
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New Password"
+              className="w-full border px-3 py-2 rounded"
+              required
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm New Password"
+              className="w-full border px-3 py-2 rounded"
+              required
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              disabled={loading}
+            >
+              {loading ? 'Resetting password...' : 'Reset Password'}
+            </button>
+          </form>        </section>
       </div>
     );
   }
 
   // Show admin panel for admin users
-  if (loggedIn && currentUser && currentUser.role === 'admin') {
+  if (isAuthenticated && currentUser && currentUser.role === 'admin') {
     console.log('Rendering admin panel for user:', currentUser.role);
     return (
       <>
@@ -366,35 +333,35 @@ export default function LoginDashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 flex flex-col">
       <Navbar />
 
-        {/* Animated Background Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-400/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-400/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
 
-        <main className="flex-1 flex items-center justify-center py-16 px-4 relative">
-          <div className="w-full max-w-md">
-            {/* Login Form Card */}
-            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-8 relative overflow-hidden">
-              {/* Background Decoration */}
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
+      <main className="flex-1 flex items-center justify-center py-16 px-4 relative">
+        <div className="w-full max-w-md">
+          {/* Login Form Card */}
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-8 relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
 
-              {/* Logo Section */}
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-3 mb-4">
-                  <img
-                    src="/assets/Favicon-dark-mode.png"
-                    alt="AdBond Logo"
-                    className="h-12 w-auto sm:h-16 drop-shadow-lg transition-transform group-hover:scale-105"
-                  />
-                  <div>
-                    <span className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AdBond</span>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connect • Trust • Grow</div>
-                  </div>
+            {/* Logo Section */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-3 mb-4">
+                <img
+                  src="/assets/Favicon-dark-mode.png"
+                  alt="AdBond Logo"
+                  className="h-12 w-auto sm:h-16 drop-shadow-lg transition-transform group-hover:scale-105"
+                />
+                <div>
+                  <span className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AdBond</span>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connect • Trust • Grow</div>
                 </div>
-                <h2 className="text-3xl font-black text-gray-900 dark:text-gray-100 mb-2">Welcome Back</h2>
-                <p className="text-gray-600 dark:text-gray-400">Sign in to continue your journey</p>
               </div>
+              <h2 className="text-3xl font-black text-gray-900 dark:text-gray-100 mb-2">Welcome Back</h2>
+              <p className="text-gray-600 dark:text-gray-400">Sign in to continue your journey</p>
+            </div>
 
             <form onSubmit={handleLogin} className="space-y-6">
               {/* Email Field */}
@@ -520,24 +487,6 @@ export default function LoginDashboardPage() {
                   Sign up for free
                 </Link>
               </p>
-            </div>
-          </div>
-
-          {/* Trust Indicators */}
-          <div className="mt-8 text-center">
-            <div className="flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>SSL Secured</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Privacy Protected</span>
-              </div>
             </div>
           </div>
         </div>

@@ -79,6 +79,11 @@ export const offersAPI = {
     return await http.post('/offers/offer-request', requestData);
   },
 
+  // Update offer request
+  updateOfferRequest: async (offerRequestId, requestData) => {
+    return await http.put(`/offers/offer-requests/${offerRequestId}`, requestData);
+  },
+
   // Create bid for offer request
   createBid: async (offerRequestId, bidData) => {
     return await http.post(`/offers/offer-requests/${offerRequestId}/bid`, bidData);

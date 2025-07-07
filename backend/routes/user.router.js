@@ -80,8 +80,10 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
             return res.status(401).json({ message: 'Account is not active. Please contact support.' });
         }
 
-        // Check if email is verified
-        if (!user.email_verified) {
+        // Check if email is verified (skip for entity users)
+        // Entity users (advertisers, affiliates, networks) are pre-approved and don't need email verification
+        const isEntityUser = user.entity_id && ['advertiser', 'affiliate', 'network'].includes(user.role);
+        if (!user.email_verified && !isEntityUser) {
             return res.status(401).json({ 
                 message: 'Please verify your email address before logging in. Check your inbox for a verification link.',
                 email_not_verified: true 

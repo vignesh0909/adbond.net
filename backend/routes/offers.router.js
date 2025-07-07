@@ -250,13 +250,14 @@ router.get('/offer-requests', authenticateToken, async (req, res) => {
             offset = 0
         } = req.query;
 
+        const user_id = req.user.user_id;
         const filters = {};
         if (vertical) filters.vertical = vertical;
         if (desired_payout_type) filters.desired_payout_type = desired_payout_type;
         if (entity_type) filters.entity_type = entity_type;
         if (exclude_entity_id) filters.exclude_entity_id = exclude_entity_id;
 
-        const result = await OffersModel.getOfferRequests(filters, parseInt(limit), parseInt(offset));
+        const result = await OffersModel.getOfferRequests(user_id, filters, parseInt(limit), parseInt(offset));
         
         if (result.success) {
             res.json({
@@ -752,6 +753,74 @@ router.get('/email-history', authenticateToken, async (req, res) => {
         }
     } catch (error) {
         console.error('Error fetching email history:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Update existing offer (advertisers and networks only)
+router.put('/:offer_id', authenticateToken, checkOfferPermissions, async (req, res) => {
+    try {
+        const { offer_id } = req.params;
+        const entity_id = req.body.entity_id;
+        
+        // Validate that the user can update this offer
+        const existingOffer = await OffersModel.getOfferById(offer_id);
+        if (!existingOffer.success) {
+            return res.status(404).json({ success: false, error: 'Offer not found' });
+        }
+        
+        if (existingOffer.offer.entity_id !== entity_id) {
+            return res.status(403).json({ success: false, error: 'You do not have permission to update this offer' });
+        }
+        
+        const result = await OffersModel.updateOffer(offer_id, req.body, entity_id);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Offer updated successfully',
+                offer: result.offer
+            });
+        } else {
+            res.status(500).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        console.error('Update offer error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Update existing offer request (affiliates and networks only)
+router.put('/offer-requests/:offer_request_id', authenticateToken, async (req, res) => {
+    try {
+        const { offer_request_id } = req.params;
+        const user_id = req.user.user_id;
+        
+        // Validate that the user can update this offer request
+        const query = 'SELECT * FROM offer_requests WHERE offer_request_id = $1';
+        const existingRequest = await require('../models/offers.model.pg.js').client.query(query, [offer_request_id]);
+        
+        if (existingRequest.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Offer request not found' });
+        }
+        
+        if (existingRequest.rows[0].user_id !== user_id) {
+            return res.status(403).json({ success: false, error: 'You do not have permission to update this offer request' });
+        }
+        
+        const result = await OffersModel.updateOfferRequest(offer_request_id, req.body, user_id);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Offer request updated successfully',
+                request: result.request
+            });
+        } else {
+            res.status(500).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        console.error('Update offer request error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

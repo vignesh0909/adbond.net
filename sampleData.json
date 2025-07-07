@@ -2,11 +2,14 @@
   "name": "John Doe",
   "email": "",
   "contact_info": {
-    "phone": "",
-    "teams": "",
-    "linkedin": "",
-    "telegram": "",
-    "address": ""
+    "optional": {
+      "teams": "",
+      "linkedin": "",
+      "telegram": ""
+    },
+    "mandatory": {
+      "phone": ""
+    }
   },
   "secondary_email": "",
   "description": "Experienced affiliate marketer with a focus on digital marketing and e-commerce. Specializes in CPA, CPL, and CPI models. Looking to expand network and collaborate with advertisers in various verticals.",

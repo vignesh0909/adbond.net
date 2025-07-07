@@ -24,11 +24,7 @@ CREATE TABLE IF NOT EXISTS entities (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CHECK (
-        contact_info ? 'phone' OR
-        contact_info ? 'telegram' OR
-        contact_info ? 'teams' OR
-        contact_info ? 'linkedin' OR
-        contact_info ? 'address'
+        contact_info ? 'phone'
     )
 );
 
@@ -270,6 +266,23 @@ const entityModel = {
         }
     },
 
+    async getAllEntities() {
+        try {
+            const query = `
+                SELECT entity_id, entity_type, name, email, secondary_email, website,
+                          contact_info, description, additional_notes, how_you_heard,
+                            verification_status, approved_by, entity_metadata, reputation_score,
+                            total_reviews, is_public, user_account_created, created_at, updated_at
+                FROM entities
+                ORDER BY created_at DESC
+            `;
+            const result = await client.query(query);
+            return result.rows;
+        } catch (error) {
+            throw error;
+        }
+    },
+
     // Get only verified entities
     async getVerifiedEntities() {
         try {
@@ -280,25 +293,6 @@ const entityModel = {
                        total_reviews, is_public, created_at, updated_at
                 FROM entities 
                 WHERE verification_status = 'approved'
-                ORDER BY created_at DESC
-            `;
-
-            const result = await client.query(query);
-            return result.rows;
-        } catch (error) {
-            throw error;
-        }
-    },
-
-    // Get only verified entities
-    async getAllEntities() {
-        try {
-            const query = `
-                SELECT entity_id, entity_type, name, email, secondary_email, website, 
-                       contact_info, description, additional_notes, how_you_heard,
-                       verification_status, approved_by, entity_metadata, reputation_score, 
-                       total_reviews, is_public, created_at, updated_at
-                FROM entities 
                 ORDER BY created_at DESC
             `;
 
@@ -661,19 +655,19 @@ const entityModel = {
     // Create user account for entity
     async createUserAccountForEntity(entity) {
         const { userModel } = require('./user.model.pg');
-        
+
         // Generate temporary password
         const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-        
+
         // Extract name parts from entity name
         const nameParts = entity.name.split(' ');
         const firstName = nameParts[0] || entity.name;
         const lastName = nameParts.slice(1).join(' ') || '';
-        
+
         // Set password expiry (24 hours from now)
         const expiryDate = new Date();
         expiryDate.setHours(expiryDate.getHours() + 24);
-        
+
         // Create user account
         const userData = {
             first_name: firstName,
@@ -683,14 +677,15 @@ const entityModel = {
             role: entity.entity_type, // advertiser, affiliate, network
             entity_id: entity.entity_id,
             password_reset_required: true,
-            temp_password_expires: expiryDate
+            temp_password_expires: expiryDate,
+            email_verified: true // Entity users are pre-approved by admin and don't need email verification
         };
-        
+
         const user = await userModel.createUser(userData);
-        
+
         return { user, tempPassword };
     },
-    
+
     // Link entity to user
     async linkEntityToUser(entity_id, user_id) {
         try {
@@ -701,7 +696,7 @@ const entityModel = {
                 WHERE entity_id = $1
                 RETURNING entity_id, name, email, verification_status
             `;
-            
+
             const result = await client.query(query, [entity_id]);
             return result.rows[0];
         } catch (error) {
