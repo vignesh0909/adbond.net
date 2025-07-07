@@ -168,7 +168,7 @@ router.post('/register',
 
             // IMPORTANT: Ensure entity is created with 'pending' status and NO emails are sent during registration
             console.log(`Entity registration completed: ${entity.name} (${entity.entity_id}) - Status: ${entity.verification_status}`);
-            
+
             // Verification: Ensure the entity is pending and no email logic is triggered here
             if (entity.verification_status !== 'pending') {
                 console.warn(`WARNING: Entity ${entity.entity_id} was not created with 'pending' status. Current status: ${entity.verification_status}`);
@@ -530,10 +530,10 @@ router.put('/:id/verification',
                     }
 
                     // Import the mailer service
-                    const { sendWelcomeEmail } = require('../utilities/mailerService');
-                    
+                    const { sendWelcomeEmail } = require('../services/emailService');
+
                     console.log(`Entity ${entity.entity_id} being approved. Current status: ${entity.verification_status} -> ${verification_status}`);
-                    
+
                     // Create user account for approved entity
                     const { user, tempPassword } = await entityModel.createUserAccountForEntity(entity);
                     console.log('User account temp password:', tempPassword);
@@ -545,7 +545,7 @@ router.put('/:id/verification',
                     // Update entity with user account created flag
                     const linkedEntity = await entityModel.linkEntityToUser(entity.entity_id, user.user_id);
                     console.log('Entity linked to user account:', linkedEntity);
-                    
+
                     // Update the response entity with the user account created flag
                     updatedEntity.user_account_created = true;
                 } catch (accountError) {
@@ -623,7 +623,7 @@ router.put('/admin/bulk-verification',
 
             // Create user accounts for approved entities
             if (verification_status === 'approved') {
-                const { sendWelcomeEmail } = require('../utilities/mailerService');
+                const { sendWelcomeEmail } = require('../services/emailService');
                 const accountCreationResults = [];
 
                 // Process accounts sequentially to avoid race conditions
@@ -631,7 +631,7 @@ router.put('/admin/bulk-verification',
                     try {
                         // IMPORTANT: Check if entity was already approved to prevent duplicate emails
                         console.log(`Processing entity ${entity.entity_id} for approval. Previous status: ${entity.verification_status}`);
-                        
+
                         // Skip if entity was already approved (to prevent duplicate emails)
                         if (entity.verification_status === 'approved' && entity.user_account_created) {
                             console.log(`Entity ${entity.entity_id} already has user account created. Skipping email.`);
@@ -646,15 +646,15 @@ router.put('/admin/bulk-verification',
 
                         // Create user account for entity
                         const { user, tempPassword } = await entityModel.createUserAccountForEntity(entity);
-                        
+
                         // Send welcome email with login credentials
                         const emailResult = await sendWelcomeEmail(entity, user, tempPassword);
                         console.log(`Email sending result for ${entity.name}:`, emailResult);
-                        
+
                         // Update entity with user account created flag
                         const linkedEntity = await entityModel.linkEntityToUser(entity.entity_id, user.user_id);
                         console.log(`Entity linked to user account: ${entity.name}`);
-                        
+
                         // Store the results
                         accountCreationResults.push({
                             entity_id: entity.entity_id,
@@ -878,7 +878,7 @@ router.get('/debug/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const entity = await entityModel.getEntityById(id);
-        
+
         if (!entity) {
             return res.status(404).json({ message: 'Entity not found' });
         }

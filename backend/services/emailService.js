@@ -13,11 +13,162 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+
+
 const emailService = {
+    async sendWelcomeEmail(entity, user, tempPassword) {
+        try {
+            // IMPORTANT: This function should ONLY be called when an entity is approved by admin
+            // It should NEVER be called during entity registration
+            console.log(`[MAILER] Sending welcome email for approved entity: ${entity.name} (${entity.entity_id})`);
+
+            // Audit log for debugging
+            const auditLog = {
+                timestamp: new Date().toISOString(),
+                event: 'WELCOME_EMAIL_TRIGGERED',
+                entity_id: entity.entity_id,
+                entity_name: entity.name,
+                recipient_email: user.email,
+                stack_trace: new Error().stack
+            };
+            console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(auditLog));
+
+            // Verify email configuration before sending
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+                console.error('EMAIL_USER and EMAIL_PASS environment variables must be set');
+                return {
+                    success: false,
+                    error: 'Email configuration incomplete. Check EMAIL_USER and EMAIL_PASS environment variables.'
+                };
+            }
+
+            // Default frontend URL if not set in environment
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            console.log(`Sending welcome email to ${user.email} for entity ${entity.name}`);
+
+            // Create email content
+            const emailContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
+                        <img src="${process.env.FRONTEND_URL || 'http://localhost:3000'}/assets/AdBond.svg" alt="AdBond Logo" style="max-width: 150px; margin-bottom: 10px;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">Welcome to AdBond.net!</h1>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div style="padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: -20px;">
+                        <h2 style="color: #333; margin-bottom: 20px;">Hi ${user.firstName || 'User'},</h2>
+
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                            Congratulations! Your entity <strong>"${entity.name}"</strong> has been approved and is now live on AdBond.net.
+                        </p>
+
+                        <h3 style="color: #333; margin-top: 30px;">Your Login Details:</h3>
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                            <strong>Email:</strong> ${user.email}<br>
+                            <strong>Temporary Password:</strong> ${tempPassword}
+                        </p>
+
+                        <p style="color: red; font-size: 14px;">
+                            <strong>Important:</strong> Please login and change your password immediately. This temporary password will expire in 24 hours.
+                        </p>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${frontendUrl}/login" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block;">
+                                Login Now
+                            </a>
+                        </div>
+
+                        <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                            If you have any questions, please don't hesitate to contact us.
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background: #333; padding: 20px; text-align: center; color: #999; margin-top: 20px; border-radius: 0 0 8px 8px;">
+                        <p style="margin: 0; font-size: 12px;">
+                            © ${new Date().getFullYear()} AdBond. All rights reserved.
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 12px;">
+                            <a href="${frontendUrl}" style="color: #667eea; text-decoration: none;">Visit AdBond</a> |
+                            <a href="${frontendUrl}/support" style="color: #667eea; text-decoration: none;">Support</a>
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Email sender address
+            const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@adbond.net';
+
+            // Email options
+            const mailOptions = {
+                from: fromEmail,
+                to: user.email,
+                subject: 'Welcome to Adbond.net - Your Account is Ready',
+                html: emailContent
+            };
+
+            // Verify the SMTP connection before sending
+            try {
+                await transporter.verify();
+                console.log('SMTP connection verified successfully');
+            } catch (verifyError) {
+                console.error('SMTP connection verification failed:', verifyError);
+                return {
+                    success: false,
+                    error: `SMTP connection failed: ${verifyError.message}. Check your email provider settings.`
+                };
+            }
+
+            // Send email
+            const info = await transporter.sendMail(mailOptions);
+            console.log(`[MAILER SUCCESS] Welcome email sent to ${user.email} for entity ${entity.name}: %s`, info.messageId);
+
+            // Log the event with timestamp for debugging
+            const logEntry = {
+                timestamp: new Date().toISOString(),
+                event: 'WELCOME_EMAIL_SENT',
+                entity_id: entity.entity_id,
+                entity_name: entity.name,
+                recipient_email: user.email,
+                message_id: info.messageId
+            };
+            console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(logEntry));
+
+            return { success: true, messageId: info.messageId };
+        } catch (error) {
+            console.error('Error sending welcome email:', error);
+
+            // Provide more detailed error information
+            let errorMsg = error.message;
+            if (error.code === 'EAUTH') {
+                errorMsg = 'Authentication failed. Check your email username and password.';
+            } else if (error.code === 'ESOCKET') {
+                errorMsg = 'Connection failed. Check host and port settings.';
+            } else if (error.code === 'ECONNECTION') {
+                errorMsg = 'Connection error. Check network settings and email provider status.';
+            }
+
+            return {
+                success: false,
+                error: errorMsg,
+                details: error.message,
+                code: error.code || 'UNKNOWN'
+            };
+        }
+    },
+
     // Send email verification
     async sendVerificationEmail(email, firstName, token) {
         const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
-        
+
         const mailOptions = {
             from: process.env.EMAIL_FROM || 'AdBond <noreply@adbond.com>',
             to: email,
@@ -270,13 +421,13 @@ const emailService = {
     async sendAdminNotificationEmail(entity) {
         try {
             console.log(`[EMAIL SERVICE] Sending admin notification for new entity registration: ${entity.name} (${entity.entity_id})`);
-            
+
             // Verify admin email configuration before sending
             if (!process.env.ADMIN_EMAIL_USER || !process.env.ADMIN_EMAIL_FROM) {
                 console.error('ADMIN_EMAIL_USER and ADMIN_EMAIL_FROM environment variables must be set');
-                return { 
-                    success: false, 
-                    error: 'Admin email configuration incomplete. Check ADMIN_EMAIL_USER and ADMIN_EMAIL_FROM environment variables.' 
+                return {
+                    success: false,
+                    error: 'Admin email configuration incomplete. Check ADMIN_EMAIL_USER and ADMIN_EMAIL_FROM environment variables.'
                 };
             }
 
@@ -382,14 +533,14 @@ const emailService = {
             // Send email
             await transporter.sendMail(mailOptions);
             console.log(`Admin notification email sent successfully to ${process.env.ADMIN_EMAIL_USER} for entity: ${entity.name}`);
-            
+
             return { success: true, message: 'Admin notification email sent successfully' };
-            
+
         } catch (error) {
             console.error('Error sending admin notification email:', error);
-            return { 
-                success: false, 
-                error: error.message || 'Failed to send admin notification email' 
+            return {
+                success: false,
+                error: error.message || 'Failed to send admin notification email'
             };
         }
     }
