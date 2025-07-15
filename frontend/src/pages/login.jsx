@@ -339,35 +339,123 @@ export default function LoginDashboardPage() {
   // Show password reset form if required
   if (passwordResetRequired) {
     return (
-      <div className="bg-gray-50 text-gray-900 mt-20 font-sans">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 flex flex-col">
         <Navbar />
-        <section className="py-20 px-6 max-w-md mx-auto">
-          <h2 className="text-3xl font-bold mb-6">Reset Password</h2>
-          <form onSubmit={handlePasswordReset} className="space-y-4">
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New Password"
-              className="w-full border px-3 py-2 rounded"
-              required
-            />
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm New Password"
-              className="w-full border px-3 py-2 rounded"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-              disabled={loading}
-            >
-              {loading ? 'Resetting password...' : 'Reset Password'}
-            </button>
-          </form>        </section>
+        
+        {/* Animated Background Elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-400/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        <main className="flex-1 flex items-center justify-center py-16 px-4 pt-24 relative">
+          <div className="w-full max-w-lg">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-8 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
+              
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-3 mb-4">
+                  <img
+                    src="/assets/Favicon-dark-mode.png"
+                    alt="AdBond Logo"
+                    className="h-12 w-auto sm:h-16 drop-shadow-lg transition-transform group-hover:scale-105"
+                  />
+                  <div>
+                    <span className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AdBond</span>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connect • Trust • Grow</div>
+                  </div>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900 dark:text-gray-100 mb-2">Reset Password</h2>
+                <p className="text-gray-600 dark:text-gray-400">Create a new secure password for your account.</p>
+              </div>
+
+              <form onSubmit={handlePasswordReset} className="space-y-6">
+                {/* New Password Field */}
+                <div>
+                  <label htmlFor="new-password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <input
+                      id="new-password"
+                      name="new-password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-gray-100"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                </div>
+
+                {/* Confirm Password Field */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="confirm-password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Confirm New Password
+                    </label>
+                    {confirmPassword && newPassword !== confirmPassword && (
+                      <span className="text-xs text-red-600 dark:text-red-400 ml-2">Passwords do not match</span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <input
+                      id="confirm-password"
+                      name="confirm-password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-gray-100"
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Requirements */}
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl">
+                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Password Requirements:</h4>
+                  <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                    <li className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${newPassword.length >= 6 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      At least 6 characters long
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Reset Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-3 px-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:transform-none disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Resetting Password...
+                    </div>
+                  ) : 'Reset Password'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -388,8 +476,8 @@ export default function LoginDashboardPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center py-16 px-4 relative">
-          <div className="w-full max-w-md">
+        <main className="flex-1 flex items-center justify-center px-4 pt-32 relative">
+          <div className="w-full max-w-lg">
             <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-8 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
               <div className="text-center mb-8">
