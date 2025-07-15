@@ -177,6 +177,48 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     }
 });
 
+// Forgot password endpoint
+router.post('/forgot-password', async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        // Check if user exists
+        const user = await userModel.getUserByEmail(email);
+        if (!user) {
+            // Return a specific message for better UX while logging the attempt
+            console.log(`Password reset attempted for non-existent email: ${email}`);
+            return res.status(404).json({ 
+                message: 'No account found with this email address. Please check your email or create a new account.',
+                code: 'EMAIL_NOT_FOUND'
+            });
+        }
+
+        // Generate a password reset token (you can implement this in userModel)
+        const resetToken = jwt.sign(
+            { user_id: user.user_id, email: email, type: 'password_reset' },
+            JWT_SECRET,
+            { expiresIn: '1h' } // Token expires in 1 hour
+        );
+
+        // Send password reset email
+        try {
+            await emailService.sendPasswordResetEmail(email, user.first_name, resetToken);
+        } catch (emailError) {
+            console.error('Error sending password reset email:', emailError);
+            return res.status(500).json({ message: 'Failed to send password reset email. Please try again.' });
+        }
+
+        res.status(200).json({ message: 'If the email exists, a password reset link has been sent.' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        next(error);
+    }
+});
+
 // Password reset endpoint
 router.post('/reset-password', authenticateToken, async (req, res, next) => {
     try {
@@ -191,6 +233,12 @@ router.post('/reset-password', authenticateToken, async (req, res, next) => {
         }
 
         const user = await userModel.getUserByEmail(req.user.email);
+
+        // Check if the new password is the same as the current password
+        const isSamePassword = await userModel.verifyPassword(new_password, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({ message: 'New password cannot be the same as your current password. Please choose a different password.' });
+        }
 
         // If not a password reset required case, verify the current password
         if (!user.password_reset_required && current_password) {

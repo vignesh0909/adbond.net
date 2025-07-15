@@ -24,6 +24,7 @@ import ProfilePage from './pages/profilepage';
 import OfferDetails from './pages/offerDetails';
 import EntityDetails from './pages/entityDetails';
 import EmailVerificationPage from './pages/emailVerification';
+import ResetPasswordPage from './pages/resetPassword';
 
 const App = () => {
   return (
@@ -40,6 +41,7 @@ const App = () => {
           <Route path="/login" element={<LogIn />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/verify-email" element={<EmailVerificationPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/register-entity" element={<RegisterEntityPage />} />
           <Route path="/offers" element={<Offers />} />
           <Route path="/writereview" element={<WriteReview />} />

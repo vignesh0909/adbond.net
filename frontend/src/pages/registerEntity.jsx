@@ -15,6 +15,7 @@ export default function RegisterEntityPage() {
 
     // Contact Info
     const [phone, setPhone] = useState('');
+    const [countryCode, setCountryCode] = useState('+91'); // Default to India
     const [teams, setTeams] = useState('');
     const [linkedin, setLinkedin] = useState('');
     const [telegram, setTelegram] = useState('');
@@ -41,6 +42,61 @@ export default function RegisterEntityPage() {
             setError('');
             setSuccess('');
         }, 5000);
+    };
+
+    // Common country codes
+    const countryCodes = [
+        { code: '+1', country: 'US/CA', flag: '🇺🇸' },
+        { code: '+44', country: 'UK', flag: '🇬🇧' },
+        { code: '+91', country: 'India', flag: '🇮🇳' },
+        { code: '+86', country: 'China', flag: '🇨🇳' },
+        { code: '+81', country: 'Japan', flag: '🇯🇵' },
+        { code: '+49', country: 'Germany', flag: '🇩🇪' },
+        { code: '+33', country: 'France', flag: '🇫🇷' },
+        { code: '+39', country: 'Italy', flag: '🇮🇹' },
+        { code: '+34', country: 'Spain', flag: '🇪🇸' },
+        { code: '+61', country: 'Australia', flag: '🇦🇺' },
+        { code: '+55', country: 'Brazil', flag: '🇧🇷' },
+        { code: '+52', country: 'Mexico', flag: '🇲🇽' },
+        { code: '+7', country: 'Russia', flag: '🇷🇺' },
+        { code: '+82', country: 'South Korea', flag: '🇰🇷' },
+        { code: '+65', country: 'Singapore', flag: '🇸🇬' },
+        { code: '+60', country: 'Malaysia', flag: '🇲🇾' },
+        { code: '+66', country: 'Thailand', flag: '🇹🇭' },
+        { code: '+84', country: 'Vietnam', flag: '🇻🇳' },
+        { code: '+62', country: 'Indonesia', flag: '🇮🇩' },
+        { code: '+63', country: 'Philippines', flag: '🇵🇭' },
+        { code: '+971', country: 'UAE', flag: '🇦🇪' },
+        { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
+        { code: '+27', country: 'South Africa', flag: '🇿🇦' },
+        { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
+        { code: '+20', country: 'Egypt', flag: '🇪🇬' },
+        { code: '+90', country: 'Turkey', flag: '🇹🇷' },
+        { code: '+48', country: 'Poland', flag: '🇵🇱' },
+        { code: '+31', country: 'Netherlands', flag: '🇳🇱' },
+        { code: '+46', country: 'Sweden', flag: '🇸🇪' },
+        { code: '+47', country: 'Norway', flag: '🇳🇴' },
+        { code: '+45', country: 'Denmark', flag: '🇩🇰' },
+        { code: '+358', country: 'Finland', flag: '🇫🇮' },
+    ];
+
+    // Phone number validation function (now accepts any 10-digit number)
+    const validatePhoneNumber = (phoneNumber) => {
+        if (!phoneNumber) return false;
+        
+        // Remove all non-digit characters
+        const cleanedPhone = phoneNumber.replace(/\D/g, '');
+        
+        // Check if it's exactly 10 digits
+        return cleanedPhone.length === 10;
+    };
+
+    // Handle phone input with validation
+    const handlePhoneChange = (e) => {
+        const value = e.target.value;
+        // Allow only digits and common phone formatting characters, but limit to reasonable length
+        const formattedValue = value.replace(/[^\d\s\-\(\)]/g, '').slice(0, 15);
+        setPhone(formattedValue);
     };
 
     const handleMetadataChange = (e) => {
@@ -71,7 +127,7 @@ export default function RegisterEntityPage() {
         setSuccess('');
 
         const contactInfo = {
-            phone,
+            phone: `${countryCode}${phone.replace(/\D/g, '')}`, // Combine country code with phone number
             teams,
             linkedin,
             telegram
@@ -80,6 +136,13 @@ export default function RegisterEntityPage() {
         // Phone number is required
         if (!phone || phone.trim() === '') {
             showToastMessage('Phone number is required.', 'error');
+            setLoading(false);
+            return;
+        }
+
+        // Validate phone number format
+        if (!validatePhoneNumber(phone)) {
+            showToastMessage('Please enter a valid 10-digit phone number (e.g., 9876543210).', 'error');
             setLoading(false);
             return;
         }
@@ -117,6 +180,7 @@ export default function RegisterEntityPage() {
             setImageUrl('');
             setAdditionalRequest('');
             setPhone('');
+            setCountryCode('+91'); // Reset to default India
             setTeams('');
             setLinkedin('');
             setTelegram('');
@@ -434,11 +498,85 @@ export default function RegisterEntityPage() {
                                     Contact Information <span className="text-red-500 ml-1">*</span>
                                     <span className="text-sm text-gray-500 dark:text-gray-400 font-normal ml-2">(Atleast one IM is required)</span>
                                 </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (e.g., +1234567890)" className="input-field" required />
-                                    <input type="text" value={teams} onChange={(e) => setTeams(e.target.value)} placeholder="Microsoft Teams ID" className="input-field" />
-                                    <input type="url" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="LinkedIn Profile URL" className="input-field" />
-                                    <input type="text" value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="Telegram Username (e.g., @username)" className="input-field" />
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Phone Number <span className="text-red-500 ml-1">*</span>
+                                            </label>
+                                            <div className="flex">
+                                                <select 
+                                                    value={countryCode} 
+                                                    onChange={(e) => setCountryCode(e.target.value)}
+                                                    className="input-field rounded-r-none border-r-0 flex-shrink-0"
+                                                    style={{ width: '120px' }}
+                                                >
+                                                    {countryCodes.map((country) => (
+                                                        <option key={country.code} value={country.code}>
+                                                            {country.flag} {country.code}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <input 
+                                                    type="tel" 
+                                                    value={phone} 
+                                                    onChange={handlePhoneChange} 
+                                                    placeholder="Enter 10-digit number" 
+                                                    className={`input-field rounded-l-none border-l-0 flex-1 ${!validatePhoneNumber(phone) && phone ? 'border-red-500 focus:border-red-500' : ''}`}
+                                                    maxLength="15"
+                                                    required 
+                                                />
+                                            </div>
+                                            {phone && !validatePhoneNumber(phone) && (
+                                                <p className="text-red-500 text-xs mt-1">
+                                                    Enter exactly 10 digits (e.g., 9876543210)
+                                                </p>
+                                            )}
+                                            {phone && validatePhoneNumber(phone) && (
+                                                <p className="text-green-600 text-xs mt-1">
+                                                    Valid number
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Microsoft Teams ID
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                value={teams} 
+                                                onChange={(e) => setTeams(e.target.value)} 
+                                                placeholder="Microsoft Teams ID" 
+                                                className="input-field" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="w-full">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                LinkedIn Profile
+                                            </label>
+                                            <input 
+                                                type="url" 
+                                                value={linkedin} 
+                                                onChange={(e) => setLinkedin(e.target.value)} 
+                                                placeholder="LinkedIn Profile URL" 
+                                                className="input-field w-full" 
+                                            />
+                                        </div>
+                                        <div className="w-full">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Telegram Username
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                value={telegram} 
+                                                onChange={(e) => setTelegram(e.target.value)} 
+                                                placeholder="Telegram Username (e.g., @username)" 
+                                                className="input-field w-full" 
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                                 {/* Removed Address field as it's no longer required */}
                                 {/* <div>

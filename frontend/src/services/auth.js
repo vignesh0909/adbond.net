@@ -49,6 +49,11 @@ export const authAPI = {
     return await http.put(`/users/profile/${userId}`, userData);
   },
 
+  // Forgot password
+  forgotPassword: async (email) => {
+    return await http.post('/users/forgot-password', { email });
+  },
+
   // Reset password
   resetPassword: async (passwordData) => {
     return await http.post('/users/reset-password', passwordData);

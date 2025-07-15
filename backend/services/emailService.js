@@ -543,7 +543,97 @@ const emailService = {
                 error: error.message || 'Failed to send admin notification email'
             };
         }
-    }
+    },
+
+    // Send password reset email
+    async sendPasswordResetEmail(email, firstName, resetToken) {
+        try {
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+            console.log(`Sending password reset email to ${email}, reset url: ${resetUrl}`);
+
+            const emailContent = `
+                <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">
+                            🔑 Password Reset Request
+                        </h1>
+                        <p style="color: #f8f9fa; margin: 10px 0 0 0; font-size: 16px;">
+                            AdBond System
+                        </p>
+                    </div>
+                    
+                    <div style="background: white; padding: 40px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                        <h2 style="color: #2c3e50; margin-bottom: 20px; font-size: 24px;">
+                            Hello ${firstName}!
+                        </h2>
+                        
+                        <p style="color: #5a6c7d; font-size: 16px; margin-bottom: 25px;">
+                            We received a request to reset your password for your AdBond account. Click the button below to create a new password:
+                        </p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetUrl}" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 25px; 
+                                      font-weight: bold; 
+                                      font-size: 16px;
+                                      display: inline-block; 
+                                      margin: 10px;
+                                      transition: transform 0.2s;">
+                                Reset Your Password
+                            </a>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <p style="color: #6c757d; margin: 0; font-size: 14px;">
+                                <strong>Security Notice:</strong> This link will expire in 1 hour for your security. 
+                                If you didn't request this password reset, please ignore this email or contact support if you have concerns.
+                            </p>
+                        </div>
+                        
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                            <p style="color: #7f8c8d; font-size: 14px; margin: 0;">
+                                If the button doesn't work, you can copy and paste this link into your browser:
+                            </p>
+                            <p style="color: #3498db; font-size: 14px; word-break: break-all; margin: 10px 0;">
+                                ${resetUrl}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #2c3e50; padding: 20px; text-align: center; color: #95a5a6; border-radius: 0 0 10px 10px;">
+                        <p style="margin: 0; font-size: 14px;">
+                            This is an automated email from AdBond System
+                        </p>
+                        <p style="color: #7f8c8d; margin: 10px 0 0 0; font-size: 12px;">
+                            Need help? Contact our support team
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            const mailOptions = {
+                from: process.env.EMAIL_FROM || 'AdBond System <noreply@adbond.net>',
+                to: email,
+                subject: '🔑 Reset Your AdBond Password',
+                html: emailContent
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Password reset email sent successfully to ${email}`);
+
+            return { success: true, message: 'Password reset email sent successfully' };
+
+        } catch (error) {
+            console.error('Error sending password reset email:', error);
+            throw new Error('Failed to send password reset email');
+        }
+    },
 };
 
 module.exports = emailService;

@@ -52,6 +52,7 @@ export const httpClient = async (endpoint, options = {}) => {
                           endpoint.includes('/register') || 
                           endpoint.includes('/logout') || 
                           endpoint.includes('/verify-email') ||
+                          endpoint.includes('/forgot-password') ||
                           endpoint.includes('/reset-password');
 
   // Check if the same request is already ongoing (except for excluded endpoints)

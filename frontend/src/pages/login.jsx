@@ -20,6 +20,13 @@ export default function LoginDashboardPage() {
   const [emailNotVerified, setEmailNotVerified] = React.useState(false);
   const [redirecting, setRedirecting] = React.useState(false);
 
+  // Forgot Password State
+  const [showForgotPassword, setShowForgotPassword] = React.useState(false);
+  const [forgotEmail, setForgotEmail] = React.useState("");
+  const [forgotLoading, setForgotLoading] = React.useState(false);
+  const [forgotSuccess, setForgotSuccess] = React.useState("");
+  const [forgotError, setForgotError] = React.useState("");
+
   // Ref to track if login is in progress to prevent race conditions
   const loginInProgress = React.useRef(false);
   const lastLoginAttempt = React.useRef(0);
@@ -189,7 +196,15 @@ export default function LoginDashboardPage() {
       setConfirmPassword("");
 
     } catch (error) {
-      customToast.error(error.message || "Password reset failed. Please try again.");
+      const errorMessage = error.message || error.response?.data?.error || error.response?.data?.message || "Password reset failed. Please try again.";
+      
+      // Specific error messages for better UX
+      if (errorMessage.includes('same as your current password')) {
+        customToast.error('Please choose a different password. Your new password cannot be the same as your current password.');
+      } else {
+        customToast.error(errorMessage);
+      }
+      
       console.error('Password reset error:', error);
     } finally {
       setLoading(false);
@@ -230,6 +245,46 @@ export default function LoginDashboardPage() {
 
     // Force a page refresh to ensure clean state
     window.location.reload();
+  };
+
+  // Forgot Password Handler
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotSuccess("");
+    setForgotError("");
+    
+    try {
+      console.log('Sending forgot password request to:', forgotEmail);
+      
+      const response = await authAPI.forgotPassword(forgotEmail);
+      console.log('Forgot password response:', response);
+      
+      setForgotSuccess('Password reset email sent! Please check your inbox.');
+      setForgotError("");
+      
+      // Clear the email field after successful submission
+      setForgotEmail("");
+      
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      
+      // Handle specific error cases
+      const errorMessage = error.message || error.response?.data?.error || error.response?.data?.message || 'Failed to send password reset email.';
+      const errorCode = error.response?.data?.code;
+      
+      if (errorCode === 'EMAIL_NOT_FOUND') {
+        setForgotError('No account found with this email address. Please check your email or create a new account.');
+      } else if (error.response?.status === 404) {
+        setForgotError('No account found with this email address. Please check your email or create a new account.');
+      } else {
+        setForgotError(errorMessage);
+      }
+      
+      setForgotSuccess("");
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   // Show loading screen while checking initial auth state or redirecting
@@ -325,6 +380,98 @@ export default function LoginDashboardPage() {
         <Navbar />
         <AdminPanelPage />
       </>
+    );
+  }
+
+  // Show forgot password form
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center py-16 px-4 relative">
+          <div className="w-full max-w-md">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-8 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-3 mb-4">
+                  <img
+                    src="/assets/Favicon-dark-mode.png"
+                    alt="AdBond Logo"
+                    className="h-12 w-auto sm:h-16 drop-shadow-lg transition-transform group-hover:scale-105"
+                  />
+                  <div>
+                    <span className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AdBond</span>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connect • Trust • Grow</div>
+                  </div>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900 dark:text-gray-100 mb-2">Forgot Password</h2>
+                <p className="text-gray-600 dark:text-gray-400">Enter your email to receive a password reset link.</p>
+              </div>
+              <form onSubmit={handleForgotPassword} className="space-y-6">
+                <div>
+                  <label htmlFor="forgot-email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                      </svg>
+                    </div>
+                    <input
+                      id="forgot-email"
+                      name="forgot-email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={forgotEmail}
+                      onChange={e => setForgotEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-gray-100"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+                {forgotSuccess && (
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl">
+                    <div className="text-sm text-green-600 dark:text-green-400 text-center">{forgotSuccess}</div>
+                  </div>
+                )}
+                {forgotError && (
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
+                    <div className="text-sm text-red-600 dark:text-red-400 text-center">{forgotError}</div>
+                    {forgotError.includes('No account found') && (
+                      <div className="mt-3 text-center">
+                        <Link 
+                          to="/signup" 
+                          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
+                        >
+                          Create a new account →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-4">
+                  <button
+                    type="button"
+                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 font-semibold transition-colors"
+                    onClick={() => setShowForgotPassword(false)}
+                  >
+                    ← Back to Login
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:transform-none disabled:cursor-not-allowed"
+                  >
+                    {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
 
@@ -446,7 +593,7 @@ export default function LoginDashboardPage() {
               {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <input
+                  {/* <input
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
@@ -454,9 +601,13 @@ export default function LoginDashboardPage() {
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300 font-medium">
                     Remember me
-                  </label>
+                  </label> */}
                 </div>
-                <button type="button" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors">
+                <button
+                  type="button"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
+                  onClick={() => setShowForgotPassword(true)}
+                >
                   Forgot password?
                 </button>
               </div>
