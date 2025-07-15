@@ -466,4 +466,64 @@ router.post('/verify-identity', authenticateToken, async (req, res, next) => {
     }
 });
 
+// Token-based password reset endpoint (for forgot password)
+router.post('/reset-password-token', async (req, res, next) => {
+    try {
+        const { token, new_password } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ message: 'Reset token is required' });
+        }
+
+        if (!new_password) {
+            return res.status(400).json({ message: 'New password is required' });
+        }
+
+        if (new_password.length < 6) {
+            return res.status(400).json({ message: 'New password must be at least 6 characters long' });
+        }
+
+        // Verify the JWT token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, JWT_SECRET);
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                return res.status(400).json({ message: 'Reset link has expired. Please request a new password reset.' });
+            } else if (error.name === 'JsonWebTokenError') {
+                return res.status(400).json({ message: 'Invalid reset link. Please request a new password reset.' });
+            } else {
+                throw error;
+            }
+        }
+
+        // Verify token type and get user
+        if (decoded.type !== 'password_reset') {
+            return res.status(400).json({ message: 'Invalid token type' });
+        }
+
+        const user = await userModel.getUserByEmail(decoded.email);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if the new password is the same as the current password
+        const isSamePassword = await userModel.verifyPassword(new_password, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({ message: 'New password cannot be the same as your current password. Please choose a different password.' });
+        }
+
+        // Update the password
+        await userModel.updatePassword(user.user_id, new_password);
+
+        res.json({
+            message: 'Password reset successfully',
+            success: true
+        });
+    } catch (error) {
+        console.error('Token-based password reset error:', error);
+        next(error);
+    }
+});
+
 module.exports = router;

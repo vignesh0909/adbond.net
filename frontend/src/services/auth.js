@@ -54,9 +54,17 @@ export const authAPI = {
     return await http.post('/users/forgot-password', { email });
   },
 
-  // Reset password
+  // Reset password (for authenticated users with current password)
   resetPassword: async (passwordData) => {
     return await http.post('/users/reset-password', passwordData);
+  },
+
+  // Reset password with token (for forgot password flow)
+  resetPasswordWithToken: async (token, newPassword) => {
+    return await http.post('/users/reset-password-token', { 
+      token, 
+      new_password: newPassword 
+    });
   },
 
   // Logout

@@ -51,15 +51,8 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      // Store the token in localStorage temporarily for the authenticated reset password request
-      localStorage.setItem('authToken', token);
-      
-      await authAPI.resetPassword({
-        new_password: newPassword
-      });
-
-      // Clear the temporary token
-      localStorage.removeItem('authToken');
+      // Use the new token-based reset method instead of the authenticated method
+      await authAPI.resetPasswordWithToken(token, newPassword);
       
       customToast.success('Password reset successful! You can now log in with your new password.');
       
@@ -70,8 +63,6 @@ export default function ResetPasswordPage() {
 
     } catch (error) {
       console.error('Password reset error:', error);
-      // Clear the temporary token on error
-      localStorage.removeItem('authToken');
       
       const errorMessage = error.message || error.response?.data?.error || error.response?.data?.message || 'Failed to reset password. Please try again.';
       
