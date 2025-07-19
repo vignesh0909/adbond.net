@@ -4,15 +4,12 @@ import ToastProvider from './components/ToastProvider';
 import TokenExpirationWarning from './components/TokenExpirationWarning';
 import { AuthProvider } from './contexts/AuthContext';
 import AdBondPage from './AdBondPage';
-// Import test utilities for development
 import Showcase from './pages/showcase';
 import AdminPanel from './pages/adminpanel';
-import AffiliatedWishlist from './pages/affiliatedwishlist';
 import AdvertisersWishlist from './pages/advertiserswishlist';
 import DataBase from './pages/database';
 import LogIn from './pages/login';
-import WriteReview from './pages/writereview';
-import WriteReviewNew from './pages/writeReviewNew';
+import WriteReview from './pages/writeReview';
 import Offers from './pages/offers';
 import SignupPage from './pages/signup';
 import RegisterEntityPage from './pages/registerEntity';
@@ -25,6 +22,7 @@ import OfferDetails from './pages/offerDetails';
 import EntityDetails from './pages/entityDetails';
 import EmailVerificationPage from './pages/emailVerification';
 import ResetPasswordPage from './pages/resetPassword';
+import Wishlists from './pages/wishlists';
 
 const App = () => {
   return (
@@ -35,7 +33,7 @@ const App = () => {
           <Route path="/" element={<AdBondPage />} />
           <Route path="/showcase" element={<Showcase />} />
           <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/affiliatedwishlist" element={<AffiliatedWishlist />} />
+          <Route path="/wishlist" element={<Wishlists />} />
           <Route path="/advertiserswishlist" element={<AdvertisersWishlist />} />
           <Route path="/affliate-industry" element={<DataBase />} />
           <Route path="/login" element={<LogIn />} />
@@ -44,8 +42,8 @@ const App = () => {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/register-entity" element={<RegisterEntityPage />} />
           <Route path="/offers" element={<Offers />} />
-          <Route path="/writereview" element={<WriteReview />} />
-          <Route path="/write-review" element={<WriteReviewNew />} />
+          <Route path="/write-review" element={<WriteReview />} />
+          <Route path="/writereview" element={<Navigate to="/write-review" />} />
           <Route path="/advertiser-dashboard" element={<AdvertiserDashboard />} />
           <Route path="/affiliate-dashboard" element={<AffiliateDashboard />} />
           <Route path="/network-dashboard" element={<NetworkDashboard />} />

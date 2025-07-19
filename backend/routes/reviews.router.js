@@ -146,26 +146,32 @@ router.post('/', authenticateToken, validateReviewData, async (req, res) => {
         let message = 'Review submitted for moderation';
 
         if (!entity_id && entity_name) {
-            // Create placeholder entity for non-existing entities
-            const placeholder_entity_id = uuidv4();
-            const placeholderQuery = `
-                INSERT INTO entities (
-                    entity_id, entity_type, name, email, website, 
-                    contact_info, description, entity_metadata,
-                    verification_status, is_public
-                ) VALUES (
-                    $1, 'unknown', $2, 'placeholder@unknown.com', 'https://unknown.com',
-                    '{"phone": "N/A"}', 'Entity mentioned in review but not registered',
-                    '{}', 'pending', false
-                )
-                RETURNING entity_id
-            `;
+            // Handle unregistered entity review - use the new table
+            const unregReviewData = {
+                review_id,
+                entity_name,
+                entity_website: req.body.entity_website || '',
+                entity_description: req.body.entity_description || '',
+                entity_contact_info: req.body.entity_contact_info || {},
+                user_id,
+                reviewer_type,
+                title,
+                overall_rating,
+                review_text,
+                category_ratings,
+                proof_attachments,
+                tags,
+                is_anonymous
+            };
 
-            const placeholderResult = await client.query(placeholderQuery, [placeholder_entity_id, entity_name]);
-            target_entity_id = placeholderResult.rows[0].entity_id;
-            // Review for unregistered entity goes to admin
-            review_status = 'pending';
-            message = 'Review submitted successfully. It will be reviewed by our admin team.';
+            const unregReview = await entityModel.createUnregisteredEntityReview(unregReviewData);
+            
+            return res.status(201).json({
+                success: true,
+                message: 'Review submitted successfully. It will be reviewed by our admin team.',
+                review: unregReview,
+                is_unregistered_entity: true
+            });
         } else if (entity_id) {
             // Check if entity is registered and approved
             const entityCheckQuery = `
@@ -191,39 +197,45 @@ router.post('/', authenticateToken, validateReviewData, async (req, res) => {
                 review_status = 'pending';
                 message = 'Review submitted for moderation';
             }
-        }
 
-        // Insert review with determined status
-        const insertQuery = `
-            INSERT INTO reviews (
+            // Insert review with determined status (only for registered entities)
+            const insertQuery = `
+                INSERT INTO reviews (
+                    review_id, entity_id, user_id, reviewer_type, title, overall_rating,
+                    review_text, category_ratings, proof_attachments, tags, is_anonymous,
+                    review_status, created_at, updated_at
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
+                )
+                RETURNING *
+            `;
+
+            const values = [
                 review_id, entity_id, user_id, reviewer_type, title, overall_rating,
-                review_text, category_ratings, proof_attachments, tags, is_anonymous,
-                review_status, created_at, updated_at
-            ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
-            )
-            RETURNING *
-        `;
+                review_text, JSON.stringify(category_ratings), JSON.stringify(proof_attachments),
+                JSON.stringify(tags), is_anonymous, review_status
+            ];
 
-        const values = [
-            review_id, target_entity_id, user_id, reviewer_type, title, overall_rating,
-            review_text, JSON.stringify(category_ratings), JSON.stringify(proof_attachments),
-            JSON.stringify(tags), is_anonymous, review_status
-        ];
+            const result = await client.query(insertQuery, values);
 
-        const result = await client.query(insertQuery, values);
+            // If review was auto-approved, update entity reputation
+            if (review_status === 'approved') {
+                await updateEntityReputation(entity_id);
+            }
 
-        // If review was auto-approved, update entity reputation
-        if (review_status === 'approved') {
-            await updateEntityReputation(target_entity_id);
+            res.status(201).json({
+                success: true,
+                message: message,
+                review: result.rows[0],
+                auto_approved: review_status === 'approved'
+            });
+        } else {
+            // Neither entity_id nor entity_name provided
+            return res.status(400).json({
+                success: false,
+                error: 'Either entity_id or entity_name must be provided'
+            });
         }
-
-        res.status(201).json({
-            success: true,
-            message: message,
-            review: result.rows[0],
-            auto_approved: review_status === 'approved'
-        });
     } catch (error) {
         console.error('Submit review error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
@@ -350,18 +362,8 @@ router.get('/my-reviews', authenticateToken, async (req, res) => {
         }
 
         const query = `
-            SELECT 
-                r.review_id,
-                r.title,
-                r.overall_rating,
-                r.review_text,
-                r.category_ratings,
-                r.review_status,
-                r.admin_notes,
-                r.created_at,
-                r.updated_at,
-                e.name as entity_name,
-                COUNT(rr.reply_id) as reply_count
+            SELECT r.review_id, r.title, r.overall_rating, r.review_text, r.category_ratings, r.review_status,
+                r.admin_notes, r.created_at, r.updated_at, e.name as entity_name, COUNT(rr.reply_id) as reply_count
             FROM reviews r
             JOIN entities e ON r.entity_id = e.entity_id
             LEFT JOIN review_replies rr ON r.review_id = rr.review_id
@@ -400,17 +402,8 @@ router.get('/entity/:entity_id/dashboard', authenticateToken, async (req, res) =
         }
 
         const query = `
-            SELECT 
-                r.review_id,
-                r.title,
-                r.overall_rating,
-                r.review_text,
-                r.category_ratings,
-                r.review_status,
-                r.is_anonymous,
-                r.helpful_votes,
-                r.unhelpful_votes,
-                r.created_at,
+            SELECT r.review_id, r.title, r.overall_rating, r.review_text, r.category_ratings, r.review_status, r.is_anonymous,
+                r.helpful_votes, r.unhelpful_votes, r.created_at,
                 CASE 
                     WHEN r.is_anonymous = true THEN 'Anonymous'
                     ELSE CONCAT(u.first_name, ' ', COALESCE(u.last_name, ''))
@@ -461,21 +454,9 @@ router.get('/admin/moderation', authenticateToken, requireRole(['admin']), async
         const offset = (page - 1) * limit;
 
         const query = `
-            SELECT 
-                r.review_id,
-                r.title,
-                r.overall_rating,
-                r.review_text,
-                r.category_ratings,
-                r.review_status,
-                r.is_anonymous,
-                r.created_at,
-                r.admin_notes,
-                CONCAT(u.first_name, ' ', COALESCE(u.last_name, '')) as reviewer_name,
-                u.email as reviewer_email,
-                r.reviewer_type,
-                e.name as entity_name,
-                e.entity_type
+            SELECT r.review_id, r.title, r.overall_rating, r.review_text, r.category_ratings, r.review_status, r.is_anonymous,
+                r.created_at, r.admin_notes, CONCAT(u.first_name, ' ', COALESCE(u.last_name, '')) as reviewer_name,
+                u.email as reviewer_email, r.reviewer_type, e.name as entity_name, e.entity_type
             FROM reviews r
             JOIN users u ON r.user_id = u.user_id
             JOIN entities e ON r.entity_id = e.entity_id
@@ -574,5 +555,116 @@ async function updateEntityReputation(entity_id) {
         console.error('Update entity reputation error:', error);
     }
 }
+
+// === UNREGISTERED ENTITY REVIEWS ROUTES ===
+
+// Get unregistered entity reviews for admin (admin only)
+router.get('/unregistered', authenticateToken, requireRole(['admin']), async (req, res) => {
+    try {
+        const { status = 'pending', limit = 50, entity_name } = req.query;
+        
+        const reviews = await entityModel.getUnregisteredEntityReviews({
+            status,
+            limit: parseInt(limit),
+            entity_name
+        });
+
+        res.json({
+            success: true,
+            reviews: reviews
+        });
+    } catch (error) {
+        console.error('Get unregistered entity reviews error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Get unregistered entity reviews statistics (admin only)
+router.get('/unregistered/stats', authenticateToken, requireRole(['admin']), async (req, res) => {
+    try {
+        const stats = await entityModel.getUnregisteredReviewStats();
+        
+        res.json({
+            success: true,
+            stats: stats
+        });
+    } catch (error) {
+        console.error('Get unregistered entity reviews stats error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Moderate unregistered entity review (admin only)
+router.put('/unregistered/:review_id/moderate', authenticateToken, requireRole(['admin']), async (req, res) => {
+    try {
+        const { review_id } = req.params;
+        const { action, admin_notes } = req.body; // action: 'approve', 'reject', 'flag'
+
+        const validActions = ['approve', 'reject', 'flag'];
+        if (!validActions.includes(action)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid action. Must be approve, reject, or flag'
+            });
+        }
+
+        const result = await entityModel.moderateUnregisteredEntityReview(review_id, action, admin_notes);
+
+        if (!result) {
+            return res.status(404).json({
+                success: false,
+                error: 'Unregistered review not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `Unregistered entity review ${action}d successfully`,
+            review: result
+        });
+    } catch (error) {
+        console.error('Moderate unregistered entity review error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Convert unregistered entity review to registered entity and review (admin only)
+router.post('/unregistered/:review_id/convert', authenticateToken, requireRole(['admin']), async (req, res) => {
+    try {
+        const { review_id } = req.params;
+        const { entity_type = 'network' } = req.body;
+
+        const validEntityTypes = ['advertiser', 'network', 'affiliate'];
+        if (!validEntityTypes.includes(entity_type)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid entity type. Must be advertiser, network, or affiliate'
+            });
+        }
+
+        const result = await entityModel.convertUnregisteredReviewToEntity(review_id, entity_type);
+
+        if (!result) {
+            return res.status(404).json({
+                success: false,
+                error: 'Unregistered review not found or already processed'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Unregistered entity review converted to registered entity successfully',
+            entity: result.entity,
+            review: result.review,
+            original_review: result.original_review
+        });
+    } catch (error) {
+        console.error('Convert unregistered entity review error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Internal server error' 
+        });
+    }
+});
 
 module.exports = router;

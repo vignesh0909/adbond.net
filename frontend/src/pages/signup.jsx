@@ -29,7 +29,6 @@ export default function SignupPage() {
         password,
       });
       customToast.success('Account created successfully! Please check your email to verify your account before logging in.');
-      console.log('Signup response:', response);
       // Clear form fields after successful signup
       setFirstName('');
       setLastName('');

@@ -30,7 +30,6 @@ export default function RegisterEntityPage() {
 
     // Show toast for errors and success messages
     const showToastMessage = (message, type) => {
-        console.log(`Toast Message: ${message} | Type: ${type}`);
         if (type === 'error') {
             setError(message);
         } else {
@@ -161,7 +160,6 @@ export default function RegisterEntityPage() {
 
         try {
             const response = await entityAPI.register(payload);
-            console.log('Entity registration response:', response);
 
             const successMessage = 'Entity registration submitted successfully! We will review your submission and reach out to you shortly.';
 
@@ -171,7 +169,6 @@ export default function RegisterEntityPage() {
             });
 
             setSuccess(successMessage);
-            console.log('Entity registration successful:', response);
             // Clear form
             setName('');
             setEmail('');
@@ -188,8 +185,6 @@ export default function RegisterEntityPage() {
             setEntityType('advertiser');
 
         } catch (err) {
-            console.log('Entity registration error:', err);
-
             // Display specific error message from the backend API if available
             let errorMessage = 'Entity registration failed. Please check your input and try again.';
 

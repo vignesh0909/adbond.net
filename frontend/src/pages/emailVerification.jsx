@@ -28,10 +28,7 @@ export default function EmailVerificationPage() {
 
   const verifyEmail = async (token) => {
     try {
-      console.log('Verifying email with token:', token);
       const response = await http.get(`/users/verify-email/${token}`);
-      console.log('Verification response:', response);
-      
       setStatus('success');
       setMessage(response.message || 'Email verified successfully!');
       customToast.success('Email verified successfully!');

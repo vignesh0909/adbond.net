@@ -34,57 +34,36 @@ export default function LoginDashboardPage() {
   // Navigate to appropriate dashboard when user is fully logged in
   useEffect(() => {
     if (isAuthenticated && currentUser && !passwordResetRequired && !initializing) {
-      console.log('User is fully logged in, checking role for navigation:', currentUser.role);
-      console.log('Full user object:', currentUser);
-
-      // Add a small delay to ensure everything is properly set
       const navigationTimeout = setTimeout(() => {
         // Navigate based on role
         if (currentUser.role === 'admin') {
-          // Admin stays on the same page but renders AdminPanelPage
-          console.log('Admin user, staying on current page');
           setRedirecting(false);
           return;
         } else if (currentUser.role === 'advertiser') {
-          console.log('Navigating to advertiser dashboard');
           setRedirecting(true);
           navigate('/advertiser-dashboard');
-          // Fallback: reset redirecting after a delay if navigation fails
           setTimeout(() => setRedirecting(false), 3000);
         } else if (currentUser.role === 'affiliate') {
-          console.log('Navigating to affiliate dashboard');
           setRedirecting(true);
           navigate('/affiliate-dashboard');
           setTimeout(() => setRedirecting(false), 3000);
         } else if (currentUser.role === 'network') {
-          console.log('Navigating to network dashboard');
           setRedirecting(true);
           navigate('/network-dashboard');
           setTimeout(() => setRedirecting(false), 3000);
         } else {
-          // Users without specific roles go to user dashboard
-          console.log('User without specific role or unknown role:', currentUser.role, 'navigating to user dashboard');
           setRedirecting(true);
           navigate('/user-dashboard');
           setTimeout(() => setRedirecting(false), 3000);
         }
-      }, 100); // Small delay to ensure state is stable
+      }, 100); 
 
       return () => clearTimeout(navigationTimeout);
     }
   }, [isAuthenticated, currentUser, passwordResetRequired, initializing, navigate]);
 
-  // Check if user is already logged in on component mount and listen for storage changes
   React.useEffect(() => {
-    // The AuthContext handles authentication checking automatically
-    // Just check for password reset requirement from localStorage
     const passwordResetNeeded = localStorage.getItem('password_reset_required') === 'true';
-
-    console.log('Checking initial state:', {
-      isAuthenticated,
-      user: !!currentUser,
-      passwordResetNeeded
-    });
 
     if (isAuthenticated && currentUser) {
       setPasswordResetRequired(passwordResetNeeded);
@@ -103,46 +82,34 @@ export default function LoginDashboardPage() {
     // Debounce: prevent rapid successive clicks
     const now = Date.now();
     if (now - lastLoginAttempt.current < 1000) {
-      console.log('Login attempt too soon, ignoring (debounce)');
       return;
     }
     lastLoginAttempt.current = now;
 
     // Prevent double submission using both state and ref
     if (loading || loginInProgress.current) {
-      console.log('Login already in progress, ignoring duplicate request');
       return;
     }
 
-    console.log('Starting login process...');
     loginInProgress.current = true;
     setLoading(true);
     setEmailNotVerified(false);
 
     try {
-      console.log('Calling authLogin from context...');
       const response = await authLogin({ email, password });
-      console.log('Login API response received:', response);
-      console.log('User data from response:', response.user);
-      console.log('User role:', response.user?.role);
-
       // The AuthContext will automatically update the authentication state
       // No need to manually set loggedIn and currentUser states
       setEmailNotVerified(false);
 
       // Check if password reset is required
       if (response.password_reset_required) {
-        console.log('Password reset required');
         setPasswordResetRequired(true);
         localStorage.setItem('password_reset_required', 'true');
       } else {
-        // Clear any existing password reset state
-        console.log('Clearing password reset state');
         setPasswordResetRequired(false);
         localStorage.removeItem('password_reset_required');
       }
 
-      console.log('Login successful, auth context updated');
       customToast.success('Login successful!');
 
     } catch (error) {
@@ -155,7 +122,6 @@ export default function LoginDashboardPage() {
         customToast.error(error.message || "Login failed. Please check your credentials.");
       }
     } finally {
-      console.log('Login process completed, setting loading to false');
       loginInProgress.current = false;
       setLoading(false);
     }
@@ -197,14 +163,14 @@ export default function LoginDashboardPage() {
 
     } catch (error) {
       const errorMessage = error.message || error.response?.data?.error || error.response?.data?.message || "Password reset failed. Please try again.";
-      
+
       // Specific error messages for better UX
       if (errorMessage.includes('same as your current password')) {
         customToast.error('Please choose a different password. Your new password cannot be the same as your current password.');
       } else {
         customToast.error(errorMessage);
       }
-      
+
       console.error('Password reset error:', error);
     } finally {
       setLoading(false);
@@ -253,26 +219,18 @@ export default function LoginDashboardPage() {
     setForgotLoading(true);
     setForgotSuccess("");
     setForgotError("");
-    
+
     try {
       console.log('Sending forgot password request to:', forgotEmail);
-      
       const response = await authAPI.forgotPassword(forgotEmail);
-      console.log('Forgot password response:', response);
-      
       setForgotSuccess('Password reset email sent! Please check your inbox.');
       setForgotError("");
-      
-      // Clear the email field after successful submission
       setForgotEmail("");
-      
     } catch (error) {
-      console.error('Forgot password error:', error);
-      
       // Handle specific error cases
       const errorMessage = error.message || error.response?.data?.error || error.response?.data?.message || 'Failed to send password reset email.';
       const errorCode = error.response?.data?.code;
-      
+
       if (errorCode === 'EMAIL_NOT_FOUND') {
         setForgotError('No account found with this email address. Please check your email or create a new account.');
       } else if (error.response?.status === 404) {
@@ -280,7 +238,7 @@ export default function LoginDashboardPage() {
       } else {
         setForgotError(errorMessage);
       }
-      
+
       setForgotSuccess("");
     } finally {
       setForgotLoading(false);
@@ -341,18 +299,18 @@ export default function LoginDashboardPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 flex flex-col">
         <Navbar />
-        
+
         {/* Animated Background Elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-400/10 to-pink-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
         </div>
 
-        <main className="flex-1 flex items-center justify-center py-16 px-4 pt-24 relative">
+        <main className="flex-1 flex items-center justify-center py-24 px-4 pt-32 relative">
           <div className="w-full max-w-lg">
             <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-8 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
-              
+
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-3 mb-4">
                   <img
@@ -462,7 +420,6 @@ export default function LoginDashboardPage() {
 
   // Show admin panel for admin users
   if (isAuthenticated && currentUser && currentUser.role === 'admin') {
-    console.log('Rendering admin panel for user:', currentUser.role);
     return (
       <>
         <Navbar />
@@ -529,8 +486,8 @@ export default function LoginDashboardPage() {
                     <div className="text-sm text-red-600 dark:text-red-400 text-center">{forgotError}</div>
                     {forgotError.includes('No account found') && (
                       <div className="mt-3 text-center">
-                        <Link 
-                          to="/signup" 
+                        <Link
+                          to="/signup"
                           className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"
                         >
                           Create a new account →

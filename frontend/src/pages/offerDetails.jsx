@@ -44,7 +44,6 @@ export default function OfferDetailsPage() {
           try {
             response = await entityAPI.getPublicEntityById(offer.entity_id);
           } catch (publicErr) {
-            console.log('Public endpoint failed, trying authenticated endpoint:', publicErr);
             response = await entityAPI.getEntityById(offer.entity_id);
           }
           setEntity(response.entity);
@@ -60,8 +59,6 @@ export default function OfferDetailsPage() {
   }, [offer?.entity_id]);
 
   const handleRunOffer = () => {
-    // Handle offer application logic here
-    console.log('Running offer:', offer.offer_id);
     toast.info('Feature coming soon! Offer application functionality will be available shortly.', {
       position: "top-right",
       autoClose: 4000,
@@ -69,8 +66,6 @@ export default function OfferDetailsPage() {
   };
 
   const handleJoinNetwork = () => {
-    // Handle join network logic here
-    console.log('Joining network:', entity?.entity_id);
     toast.info('Join network functionality coming soon! Please contact us directly for now.', {
       position: "top-right",
       autoClose: 4000,

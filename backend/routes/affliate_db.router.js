@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { companyModel, employeeModel } = require('../models/affliate_db.model.pg.js');
 const { userModel } = require('../models/user.model.pg.js');
-const { authenticateToken } = require('../middleware/auth.js');
-const { validationResult, body, query } = require('express-validator');
+const { authenticateToken } = require('../middleware/auth');
+const { validationResult, query } = require('express-validator');
 
 // Get all companies with basic info (public access for authenticated users)
 router.get('/fetch', authenticateToken, [
@@ -91,8 +91,8 @@ router.get('/:affliate_id/contacts', authenticateToken, async (req, res) => {
             success: true,
             data: contacts,
             access_level: hasFullAccess ? 'full' : 'limited',
-            message: hasFullAccess ? 
-                'Full access granted - contact details visible' : 
+            message: hasFullAccess ?
+                'Full access granted - contact details visible' :
                 'Limited access - verify your identity to see contact details',
             user_verification: {
                 identity_verified: userStatus.identity_verified,
@@ -144,74 +144,5 @@ router.get('/contacts/search', authenticateToken, [
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-// Add a new company (authenticated users only)
-// router.post('/', authenticateToken, [
-//     body('company_name').notEmpty().isString().trim().isLength({ min: 2, max: 255 }),
-//     body('website').optional().isURL(),
-//     body('description').optional().isString().trim(),
-//     body('logo_url').optional().isURL()
-// ], async (req, res) => {
-//     try {
-//         const errors = validationResult(req);
-//         if (!errors.isEmpty()) {
-//             return res.status(400).json({ errors: errors.array() });
-//         }
-
-//         const company = await companyModel.createCompany(req.body);
-
-//         res.status(201).json({
-//             success: true,
-//             data: company,
-//             message: 'Company created successfully'
-//         });
-//     } catch (error) {
-//         if (error.code === '23505') { // Unique constraint violation
-//             return res.status(400).json({ error: 'Company with this name already exists' });
-//         }
-//         console.error('Error creating company:', error);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// });
-
-// // Add a new employee (authenticated users only)
-// router.post('/:companyId/employees', authenticateToken, [
-//     body('first_name').notEmpty().isString().trim().isLength({ min: 1, max: 100 }),
-//     body('last_name').optional().isString().trim().isLength({ max: 100 }),
-//     body('designation').optional().isString().trim().isLength({ max: 255 }),
-//     body('email').optional().isEmail(),
-//     body('phone').optional().isString().trim()
-// ], async (req, res) => {
-//     try {
-//         const errors = validationResult(req);
-//         if (!errors.isEmpty()) {
-//             return res.status(400).json({ errors: errors.array() });
-//         }
-
-//         const { companyId } = req.params;
-
-//         // Check if company exists
-//         const company = await companyModel.getCompanyById(companyId);
-//         if (!company) {
-//             return res.status(404).json({ error: 'Company not found' });
-//         }
-
-//         const employeeData = {
-//             ...req.body,
-//             affliate_id: companyId
-//         };
-
-//         const employee = await employeeModel.createEmployee(employeeData);
-
-//         res.status(201).json({
-//             success: true,
-//             data: employee,
-//             message: 'Employee added successfully'
-//         });
-//     } catch (error) {
-//         console.error('Error adding employee:', error);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// });
 
 module.exports = router;

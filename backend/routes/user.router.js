@@ -71,7 +71,6 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
         }
 
         const user = await userModel.getUserByEmail(email);
-        console.log(user)
         if (!user) {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
@@ -84,9 +83,9 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
         // Entity users (advertisers, affiliates, networks) are pre-approved and don't need email verification
         const isEntityUser = user.entity_id && ['advertiser', 'affiliate', 'network'].includes(user.role);
         if (!user.email_verified && !isEntityUser) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 message: 'Please verify your email address before logging in. Check your inbox for a verification link.',
-                email_not_verified: true 
+                email_not_verified: true
             });
         }
 
@@ -109,7 +108,7 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
 
         await userModel.updateLastLogin(user.user_id);
 
-        // Generate JWT token
+        // Generate JWT token with 1 hour expiration
         const token = jwt.sign(
             {
                 user_id: user.user_id,
@@ -117,7 +116,7 @@ router.post('/login', validateLogin, handleValidationErrors, async (req, res, ne
                 role: user.role
             },
             JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: '1h' }
         );
 
         res.json({
@@ -191,7 +190,7 @@ router.post('/forgot-password', async (req, res, next) => {
         if (!user) {
             // Return a specific message for better UX while logging the attempt
             console.log(`Password reset attempted for non-existent email: ${email}`);
-            return res.status(404).json({ 
+            return res.status(404).json({
                 message: 'No account found with this email address. Please check your email or create a new account.',
                 code: 'EMAIL_NOT_FOUND'
             });
@@ -292,11 +291,7 @@ router.put('/profile/:id', authenticateToken, validateProfileUpdate, handleValid
         }
 
         const updatedUser = await userModel.updateUser(req.params.id, {
-            first_name,
-            last_name,
-            email,
-            profile_image_url,
-            linkedin_profile
+            first_name, last_name, email, profile_image_url, linkedin_profile
         });
 
         res.json({
@@ -314,7 +309,7 @@ router.get('/verification-status', authenticateToken, async (req, res, next) => 
     try {
         const status = await userModel.getUserVerificationStatus(req.user.user_id);
         console.log('User verification status:', status);
-        res.json({ 
+        res.json({
             success: true,
             data: status,
             status: status // Also include in the status field for backward compatibility

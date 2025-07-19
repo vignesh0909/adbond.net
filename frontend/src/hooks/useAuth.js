@@ -16,15 +16,14 @@ export const useAuth = () => {
       const loggedIn = authAPI.isLoggedIn();
       const currentUser = authAPI.getCurrentUser();
       const tokenData = authAPI.getTokenInfo();
-      
+
       setIsAuthenticated(loggedIn);
       setUser(currentUser);
       setTokenInfo(tokenData);
       setIsLoading(false);
-      
+
       return loggedIn;
     } catch (error) {
-      console.error('Error checking auth status:', error);
       setIsAuthenticated(false);
       setUser(null);
       setTokenInfo(null);
@@ -38,10 +37,10 @@ export const useAuth = () => {
     try {
       setIsLoading(true);
       const response = await authAPI.login(credentials);
-      
+
       // Refresh auth state after successful login
       const isLoggedIn = checkAuthStatus();
-      
+
       setIsLoading(false);
       return response;
     } catch (error) {
@@ -58,16 +57,15 @@ export const useAuth = () => {
       setUser(null);
       setTokenInfo(null);
     } catch (error) {
-      console.error('Error during logout:', error);
     }
   }, []);
 
   // Handle token expiration warning
   useEffect(() => {
     const handleTokenWarning = (event) => {
-      console.warn('Token expiring warning:', event.detail);
       // Update token info when warning is received
-      setTokenInfo(authAPI.getTokenInfo());
+      const updatedTokenInfo = authAPI.getTokenInfo();
+      setTokenInfo(updatedTokenInfo);
     };
 
     // Listen for token expiring warnings
@@ -96,7 +94,7 @@ export const useAuth = () => {
   // Initialize authentication state and start token expiration checking
   useEffect(() => {
     checkAuthStatus();
-    
+
     // Start token expiration checking if user is authenticated
     if (authAPI.isLoggedIn()) {
       authAPI.startTokenExpirationCheck();
@@ -108,13 +106,18 @@ export const useAuth = () => {
     };
   }, [checkAuthStatus]);
 
-  // Periodic auth status check (every 30 seconds)
+  // Periodic auth status check and token info update (every 30 seconds)
   useEffect(() => {
+    const checkInterval = 30 * 1000; // 30 seconds
+
     const interval = setInterval(() => {
       if (isAuthenticated) {
         checkAuthStatus();
+        // Update token info to reflect current expiration status
+        const updatedTokenInfo = authAPI.getTokenInfo();
+        setTokenInfo(updatedTokenInfo);
       }
-    }, 30000);
+    }, checkInterval);
 
     return () => clearInterval(interval);
   }, [isAuthenticated, checkAuthStatus]);
@@ -125,12 +128,12 @@ export const useAuth = () => {
     user,
     isLoading,
     tokenInfo,
-    
+
     // Auth actions
     login,
     logout,
     checkAuthStatus,
-    
+
     // Utility functions
     isTokenExpiring: tokenInfo?.isExpiringWithin(5 * 60 * 1000) || false, // 5 minutes
     timeUntilExpiration: tokenInfo?.timeUntilExpiration || 0,

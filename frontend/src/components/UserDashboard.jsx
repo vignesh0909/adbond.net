@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { reviewsAPI } from '../services/reviews';
 import { authAPI } from '../services/auth';
 import { customToast } from './ToastProvider';
+import ReviewReplies from './ReviewReplies';
 
 export default function UserDashboard({ currentUser, onLogout }) {
     const [activeTab, setActiveTab] = useState('overview');
@@ -192,7 +193,7 @@ export default function UserDashboard({ currentUser, onLogout }) {
                         </div>
                         <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No reviews yet</h4>
                         <p className="text-gray-600 dark:text-gray-400 mb-6">You haven't written any reviews yet</p>
-                        <a href="/review" className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
+                        <a href="/write-review" className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
                             Write Your First Review ✨
                         </a>
                     </div>
@@ -243,7 +244,7 @@ export default function UserDashboard({ currentUser, onLogout }) {
                     </span>
                     My Reviews
                 </h2>
-                <a href="/review" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
+                <a href="/write-review" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
                     Write New Review ✨
                 </a>
             </div>
@@ -262,7 +263,7 @@ export default function UserDashboard({ currentUser, onLogout }) {
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">No Reviews Yet</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">Start building your review history by sharing your experiences</p>
-                    <a href="/review" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
+                    <a href="/write-review" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
                         Write Your First Review ✨
                     </a>
                 </div>
@@ -303,6 +304,13 @@ export default function UserDashboard({ currentUser, onLogout }) {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Review Replies */}
+                            <ReviewReplies 
+                                reviewId={review.review_id} 
+                                showReplies={true}
+                                initiallyExpanded={false}
+                            />
                         </div>
                     ))}
                 </div>

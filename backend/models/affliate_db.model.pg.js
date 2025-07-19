@@ -37,42 +37,14 @@ CREATE INDEX IF NOT EXISTS idx_employees_name ON affliate_contacts(first_name, l
 CREATE INDEX IF NOT EXISTS idx_employees_designation ON affliate_contacts(designation);
 `;
 
-// const createCompanyAccessLogTableQuery = `
-// CREATE TABLE IF NOT EXISTS company_access_logs (
-//     log_id TEXT PRIMARY KEY,
-//     user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-//     affliate_id TEXT NOT NULL REFERENCES affliates(affliate_id) ON DELETE CASCADE,
-//     contact_id TEXT REFERENCES affliate_contacts(contact_id) ON DELETE SET NULL,
-//     access_type VARCHAR(50) NOT NULL CHECK (access_type IN ('view_company', 'view_employee', 'export_data', 'contact_reveal')),
-//     access_granted BOOLEAN NOT NULL,
-//     ip_address INET,
-//     user_agent TEXT,
-//     metadata JSONB,
-//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-// );
-
-// -- Create indexes for access logs
-// CREATE INDEX IF NOT EXISTS idx_access_logs_user ON company_access_logs(user_id);
-// CREATE INDEX IF NOT EXISTS idx_access_logs_company ON company_access_logs(affliate_id);
-// CREATE INDEX IF NOT EXISTS idx_access_logs_employee ON company_access_logs(contact_id);
-// CREATE INDEX IF NOT EXISTS idx_access_logs_date ON company_access_logs(created_at);
-// `;
-
 // Execute table creation queries
 const createTables = async () => {
     try {
-        console.log('Creating affliates table...');
         await client.query(createAffliateTableQuery);
         console.log('Companies table created successfully');
 
-        console.log('Creating affliate_contacts table...');
         await client.query(createAffEmployeesTableQuery);
         console.log('Employees table created successfully');
-
-        // console.log('Creating company access logs table...');
-        // await client.query(createCompanyAccessLogTableQuery);
-        // console.log('Company access logs table created successfully');
-
     } catch (error) {
         console.error('Error creating tables:', error.message);
         throw error;
@@ -188,67 +160,32 @@ const employeeModel = {
     // Get affliate_contacts by company (with access control)
     async getEmployeesByCompany(affliate_id, user_has_access = false) {
         const query = user_has_access ? `
-            SELECT 
-                contact_id,
-                affliate_id,
-                first_name,
-                last_name,
-                full_name,
-                designation,
-                email,
-                phone,
-                created_at,
-                updated_at
+            SELECT contact_id, affliate_id, first_name, last_name, full_name, designation, email, phone,
+                created_at, updated_at
             FROM affliate_contacts 
             WHERE affliate_id = $1
             ORDER BY designation, last_name, first_name
         ` : `
-            SELECT 
-                contact_id,
-                affliate_id,
-                first_name,
-                last_name,
-                full_name,
-                designation,
-                created_at,
-                updated_at
+            SELECT contact_id, affliate_id, first_name, last_name, full_name, designation, created_at, updated_at
             FROM affliate_contacts 
             WHERE affliate_id = $1
             ORDER BY designation, last_name, first_name
         `;
-        
-        console.log('getEmployeesByCompany query:', query);
-        console.log('user_has_access:', user_has_access);
+
         const result = await client.query(query, [affliate_id]);
-        console.log('Query result rows:', result.rows);
         return result.rows;
     },
 
     // Search affliate_contacts
     async searchEmployees(searchTerm, affliate_id = null, user_has_access = false) {
         let query = user_has_access ? `
-            SELECT 
-                e.contact_id,
-                e.affliate_id,
-                e.first_name,
-                e.last_name,
-                e.full_name,
-                e.designation,
-                e.email,
-                e.phone,
-                c.company_name
+            SELECT e.contact_id, e.affliate_id, e.first_name, e.last_name, e.full_name, e.designation, e.email,
+                e.phone, c.company_name
             FROM affliate_contacts e
             JOIN affliates c ON e.affliate_id = c.affliate_id
             WHERE (e.first_name ILIKE $1 OR e.last_name ILIKE $1 OR e.designation ILIKE $1)
         ` : `
-            SELECT 
-                e.contact_id,
-                e.affliate_id,
-                e.first_name,
-                e.last_name,
-                e.full_name,
-                e.designation,
-                c.company_name
+            SELECT e.contact_id, e.affliate_id, e.first_name, e.last_name, e.full_name, e.designation, c.company_name
             FROM affliate_contacts e
             JOIN affliates c ON e.affliate_id = c.affliate_id
             WHERE (e.first_name ILIKE $1 OR e.last_name ILIKE $1 OR e.designation ILIKE $1)

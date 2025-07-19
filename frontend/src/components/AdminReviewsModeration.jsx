@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { reviewsAPI } from '../services/reviews';
+import UnregisteredEntityReviews from './UnregisteredEntityReviews';
 
 export default function AdminReviewsModeration() {
+    const [activeTab, setActiveTab] = useState('registered'); // 'registered' or 'unregistered'
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedStatus, setSelectedStatus] = useState('pending');
@@ -14,8 +16,10 @@ export default function AdminReviewsModeration() {
     });
 
     useEffect(() => {
-        fetchReviews();
-    }, [selectedStatus]);
+        if (activeTab === 'registered') {
+            fetchReviews();
+        }
+    }, [selectedStatus, activeTab]);
 
     const fetchReviews = async () => {
         try {
@@ -91,14 +95,48 @@ export default function AdminReviewsModeration() {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                <h2 className="text-3xl font-extrabold drop-shadow-lg">Review Moderation</h2>
-                <div className="flex space-x-2">
-                    {['pending', 'approved', 'rejected', 'flagged'].map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setSelectedStatus(status)}
-                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors duration-200 shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+            {/* Main Tabs */}
+            <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="-mb-px flex space-x-8">
+                    <button
+                        onClick={() => setActiveTab('registered')}
+                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === 'registered'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                        Registered Entity Reviews
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('unregistered')}
+                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === 'unregistered'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                        Unregistered Entity Reviews
+                    </button>
+                </nav>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'unregistered' ? (
+                <div>
+                    <p className="mb-4 text-sm text-gray-600">Debug: Switching to unregistered tab</p>
+                    <UnregisteredEntityReviews />
+                </div>
+            ) : (
+                <>
+                    {/* Existing registered reviews moderation UI */}
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                        <div className="flex space-x-2">
+                            {['pending', 'approved', 'rejected', 'flagged'].map(status => (
+                                <button
+                                    key={status}
+                                    onClick={() => setSelectedStatus(status)}
+                                    className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors duration-200 shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                                 selectedStatus === status
                                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
                                     : 'bg-white/80 text-gray-700 hover:bg-blue-50'
@@ -294,6 +332,8 @@ export default function AdminReviewsModeration() {
                         </form>
                     </div>
                 </div>
+            )}
+                </>
             )}
         </div>
     );

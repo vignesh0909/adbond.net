@@ -90,23 +90,14 @@ const userModel = {
     // Create a new user
     async createUser(userData) {
         try {
-            const { 
-                first_name, 
-                last_name, 
-                email, 
-                password, 
-                role = 'user', 
-                entity_id = null,
-                password_reset_required = false,
-                temp_password_expires = null,
-                email_verified = false
-            } = userData;
+            const { first_name, last_name, email, password, role = 'user', entity_id = null, password_reset_required = false,
+                temp_password_expires = null, email_verified = false } = userData;
             const user_id = uuidv4();
-            
+
             // Hash password
             const saltRounds = 12;
             const hashedPassword = await bcrypt.hash(password, saltRounds);
-            
+
             const query = `
                 INSERT INTO users (
                     user_id, entity_id, first_name, last_name, email, password, role,
@@ -116,13 +107,13 @@ const userModel = {
                 RETURNING user_id, entity_id, first_name, last_name, email, role, status, 
                          password_reset_required, email_verified, created_at
             `;
-            
+
             const values = [
                 user_id, entity_id, first_name, last_name, email, hashedPassword, role,
                 password_reset_required, temp_password_expires, email_verified
             ];
             const result = await client.query(query, values);
-            
+
             return result.rows[0];
         } catch (error) {
             throw error;
@@ -135,7 +126,7 @@ const userModel = {
             const query = 'SELECT * FROM users WHERE email = $1';
             const result = await client.query(query, [email]);
             const user = result.rows[0];
-            
+
             if (!user) {
                 return null;
             }
@@ -166,7 +157,7 @@ const userModel = {
             `;
             const result = await client.query(query, [user_id]);
             const user = result.rows[0];
-            
+
             if (!user) {
                 return null;
             }
@@ -225,7 +216,7 @@ const userModel = {
     async updateUser(user_id, userData) {
         try {
             const { first_name, last_name, email, profile_image_url, linkedin_profile } = userData;
-            
+
             const query = `
                 UPDATE users 
                 SET first_name = COALESCE($2, first_name),
@@ -239,10 +230,10 @@ const userModel = {
                          profile_image_url, linkedin_profile, identity_verified, 
                          last_login, created_at, updated_at
             `;
-            
+
             const values = [user_id, first_name, last_name, email, profile_image_url, linkedin_profile];
             const result = await client.query(query, values);
-            
+
             return result.rows[0];
         } catch (error) {
             throw error;
@@ -293,19 +284,19 @@ const userModel = {
             `;
             const result = await client.query(query, [user_id]);
             const user = result.rows[0];
-            
+
             if (!user || !user.password_reset_required) {
                 return { expired: false, requires_reset: false };
             }
-            
+
             if (!user.temp_password_expires) {
                 return { expired: false, requires_reset: true };
             }
-            
+
             const now = new Date();
             const expiryDate = new Date(user.temp_password_expires);
-            
-            return { 
+
+            return {
                 expired: now > expiryDate,
                 requires_reset: user.password_reset_required,
                 expiry_date: user.temp_password_expires
@@ -415,7 +406,7 @@ const userModel = {
             `;
             const result = await client.query(query, [user_id]);
             const user = result.rows[0];
-            
+
             if (!user) {
                 return null;
             }

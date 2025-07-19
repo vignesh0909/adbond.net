@@ -5,23 +5,19 @@ const createOffersTableQuery = `CREATE TABLE IF NOT EXISTS offers (
     offer_id TEXT PRIMARY KEY,
     entity_id TEXT NOT NULL REFERENCES entities(entity_id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
-    category VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL,
+    category VARCHAR(100) NOT NULL DEFAULT 'NA',
+    description TEXT,
     target_geo JSONB NOT NULL,
     payout_type VARCHAR(20) CHECK (payout_type IN ('CPA', 'CPL', 'CPI', 'RevShare')) NOT NULL,
     payout_value NUMERIC(12, 2) NOT NULL,
     landing_page_url VARCHAR(500) NOT NULL,
-    offer_status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (offer_status IN ('active', 'paused', 'expired', 'draft')),
+    offer_status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (offer_status IN ('active', 'inactive', 'paused', 'expired', 'draft')),
     private_offer BOOLEAN DEFAULT FALSE,
     requirements TEXT,
     allowed_traffic_sources JSONB,
-    click_count INTEGER DEFAULT 0,
-    conversion_count INTEGER DEFAULT 0,
-    applied_entities JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
  -- Indexes for offers
     CREATE INDEX IF NOT EXISTS idx_offers_entity ON offers(entity_id);
     CREATE INDEX IF NOT EXISTS idx_offers_status ON offers(offer_status);
@@ -41,10 +37,10 @@ CREATE TABLE IF NOT EXISTS offer_requests (
     traffic_type JSONB NOT NULL,
     traffic_volume INTEGER NOT NULL,
     platforms_used JSONB NOT NULL,
-    desired_payout_type VARCHAR(20) CHECK (desired_payout_type IN ('CPL', 'CPI', 'CPA', 'RevShare')),
+    desired_payout_type VARCHAR(20),
     budget_range JSONB,
     notes TEXT,
-    request_status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (request_status IN ('active', 'fulfilled', 'expired', 'cancelled')),
+    request_status VARCHAR(20) NOT NULL DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -55,59 +51,9 @@ CREATE TABLE IF NOT EXISTS offer_requests (
     CREATE INDEX IF NOT EXISTS idx_offer_requests_status ON offer_requests(request_status);
 `;
 
-const offerRequestsBidsTableQuery = `
-CREATE TABLE IF NOT EXISTS offer_request_bids (
-    bid_id TEXT PRIMARY KEY,
-    offer_request_id TEXT NOT NULL REFERENCES offer_requests(offer_request_id) ON DELETE CASCADE,
-    entity_id TEXT NOT NULL REFERENCES entities(entity_id) ON DELETE CASCADE,
-    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    bid_amount NUMERIC(12, 2) NOT NULL,
-    bid_notes TEXT,
-    offer_details JSONB,
-    bid_status VARCHAR(20) DEFAULT 'pending' CHECK (bid_status IN ('pending', 'accepted', 'rejected', 'withdrawn')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
- -- Indexes for offer request bids
-    CREATE INDEX IF NOT EXISTS idx_offer_request_bids_request ON offer_request_bids(offer_request_id);
-    CREATE INDEX IF NOT EXISTS idx_offer_request_bids_entity ON offer_request_bids(entity_id);
-    CREATE INDEX IF NOT EXISTS idx_offer_request_bids_user ON offer_request_bids(user_id);
-    CREATE INDEX IF NOT EXISTS idx_offer_request_bids_status ON offer_request_bids(bid_status);
-`;
-
-const createEmailTrackingTableQuery = `
-CREATE TABLE IF NOT EXISTS email_tracking (
-    email_id TEXT PRIMARY KEY,
-    sender_user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    sender_entity_id TEXT REFERENCES entities(entity_id) ON DELETE SET NULL,
-    recipient_user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    recipient_entity_id TEXT REFERENCES entities(entity_id) ON DELETE SET NULL,
-    offer_request_id TEXT REFERENCES offer_requests(offer_request_id) ON DELETE SET NULL,
-    email_type VARCHAR(50) NOT NULL DEFAULT 'contact_request',
-    recipient_email VARCHAR(255) NOT NULL,
-    subject TEXT NOT NULL,
-    message_content TEXT,
-    email_status VARCHAR(20) DEFAULT 'sent' CHECK (email_status IN ('sent', 'delivered', 'failed', 'bounced')),
-    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delivered_at TIMESTAMP,
-    opened_at TIMESTAMP,
-    replied_at TIMESTAMP,
-    metadata JSONB
-);
--- Indexes for email tracking
-    CREATE INDEX IF NOT EXISTS idx_email_tracking_sender_user ON email_tracking(sender_user_id);
-    CREATE INDEX IF NOT EXISTS idx_email_tracking_recipient_user ON email_tracking(recipient_user_id);
-    CREATE INDEX IF NOT EXISTS idx_email_tracking_offer_request ON email_tracking(offer_request_id);
-    CREATE INDEX IF NOT EXISTS idx_email_tracking_type ON email_tracking(email_type);
-    CREATE INDEX IF NOT EXISTS idx_email_tracking_status ON email_tracking(email_status);
-    CREATE INDEX IF NOT EXISTS idx_email_tracking_sent_at ON email_tracking(sent_at);
-`;
-
 const tables = [
     { name: 'offers', query: createOffersTableQuery },
-    { name: 'offer_requests', query: createOfferRequestsTableQuery },
-    { name: 'offer_request_bids', query: offerRequestsBidsTableQuery },
-    { name: 'email_tracking', query: createEmailTrackingTableQuery },
+    { name: 'offer_requests', query: createOfferRequestsTableQuery }
 ];
 
 tables.forEach(table => {
@@ -128,23 +74,11 @@ tables.forEach(table => {
 class OffersModel {
     // Create a new offer
     static async createOffer(offerData) {
-        const {
-            entity_id,
-            title,
-            category,
-            description,
-            target_geo,
-            payout_type,
-            payout_value,
-            landing_page_url,
-            offer_status = 'active',
-            private_offer = false,
-            requirements,
-            allowed_traffic_sources
-        } = offerData;
+        const { entity_id, title, category, description, target_geo, payout_type, payout_value, landing_page_url, offer_status = 'active',
+            private_offer = false, requirements, allowed_traffic_sources } = offerData;
 
         const offer_id = uuidv4();
-        
+
         const query = `
             INSERT INTO offers (
                 offer_id, entity_id, title, category, description, target_geo,
@@ -170,52 +104,109 @@ class OffersModel {
 
     // Get offers with filtering
     static async getOffers(filters = {}, limit = 20, offset = 0) {
-        let query = `
+        let baseQuery = `
             SELECT o.*, e.name as entity_name, e.entity_type, e.website
             FROM offers o
             LEFT JOIN entities e ON o.entity_id = e.entity_id
             WHERE o.offer_status = 'active'
         `;
-        
+
+        let countQuery = `
+            SELECT COUNT(*) as total
+            FROM offers o
+            LEFT JOIN entities e ON o.entity_id = e.entity_id
+            WHERE o.offer_status = 'active'
+        `;
+
         const values = [];
         let paramCount = 0;
 
         if (filters.category) {
             paramCount++;
-            query += ` AND o.category = $${paramCount}`;
+            const categoryCondition = ` AND o.category = $${paramCount}`;
+            baseQuery += categoryCondition;
+            countQuery += categoryCondition;
             values.push(filters.category);
         }
 
         if (filters.payout_type) {
             paramCount++;
-            query += ` AND o.payout_type = $${paramCount}`;
+            const payoutCondition = ` AND o.payout_type = $${paramCount}`;
+            baseQuery += payoutCondition;
+            countQuery += payoutCondition;
             values.push(filters.payout_type);
         }
 
         if (filters.entity_type) {
             paramCount++;
-            query += ` AND e.entity_type = $${paramCount}`;
+            const entityCondition = ` AND e.entity_type = $${paramCount}`;
+            baseQuery += entityCondition;
+            countQuery += entityCondition;
             values.push(filters.entity_type);
         }
 
         if (filters.min_payout) {
             paramCount++;
-            query += ` AND o.payout_value >= $${paramCount}`;
+            const minPayoutCondition = ` AND o.payout_value >= $${paramCount}`;
+            baseQuery += minPayoutCondition;
+            countQuery += minPayoutCondition;
             values.push(filters.min_payout);
         }
 
         if (filters.max_payout) {
             paramCount++;
-            query += ` AND o.payout_value <= $${paramCount}`;
+            const maxPayoutCondition = ` AND o.payout_value <= $${paramCount}`;
+            baseQuery += maxPayoutCondition;
+            countQuery += maxPayoutCondition;
             values.push(filters.max_payout);
         }
 
-        query += ` ORDER BY o.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
-        values.push(limit, offset);
+        if (filters.exclude_entity) {
+            paramCount++;
+            const excludeCondition = ` AND e.email != $${paramCount}`;
+            baseQuery += excludeCondition;
+            countQuery += excludeCondition;
+            values.push(filters.exclude_entity);
+        }
+
+        if (filters.search) {
+            paramCount++;
+            const searchCondition = ` AND (o.title ILIKE $${paramCount} OR o.description ILIKE $${paramCount} OR o.category ILIKE $${paramCount})`;
+            baseQuery += searchCondition;
+            countQuery += searchCondition;
+            values.push(`%${filters.search}%`);
+        }
+
+        if (filters.geo) {
+            paramCount++;
+            const geoCondition = ` AND o.target_geo::text ILIKE $${paramCount}`;
+            baseQuery += geoCondition;
+            countQuery += geoCondition;
+            values.push(`%${filters.geo}%`);
+        }
+
+        baseQuery += ` ORDER BY o.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+        const finalValues = [...values, limit, offset];
 
         try {
-            const result = await client.query(query, values);
-            return { success: true, offers: result.rows };
+            // Get total count
+            const countResult = await client.query(countQuery, values);
+            const total = parseInt(countResult.rows[0].total);
+
+            // Get offers
+            const result = await client.query(baseQuery, finalValues);
+
+            return {
+                success: true,
+                offers: result.rows,
+                total: total,
+                pagination: {
+                    limit,
+                    offset,
+                    total,
+                    hasMore: result.rows.length === limit
+                }
+            };
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -223,22 +214,11 @@ class OffersModel {
 
     // Create offer request
     static async createOfferRequest(requestData) {
-        const {
-            user_id,
-            entity_id,
-            title,
-            vertical,
-            geos_targeting,
-            traffic_type,
-            traffic_volume,
-            platforms_used,
-            desired_payout_type,
-            budget_range,
-            notes,
-        } = requestData;
+        const { user_id, entity_id, title, vertical, geos_targeting, traffic_type, traffic_volume, platforms_used,
+            desired_payout_type, budget_range, notes } = requestData;
 
         const offer_request_id = uuidv4();
-        
+
         const query = `
             INSERT INTO offer_requests (
                 offer_request_id, user_id, entity_id, title, vertical,
@@ -274,7 +254,7 @@ class OffersModel {
             LEFT JOIN users u ON req.user_id = u.user_id
             WHERE req.request_status = 'active' and u.user_id != $1
         `;
-        
+
         const values = [];
         let paramCount = 0;
         values.push(user_id);
@@ -304,51 +284,18 @@ class OffersModel {
             values.push(filters.exclude_entity_id);
         }
 
+        if (filters.search) {
+            paramCount++;
+            query += ` AND (req.title ILIKE $${paramCount} OR req.vertical ILIKE $${paramCount} OR req.notes ILIKE $${paramCount})`;
+            values.push(`%${filters.search}%`);
+        }
+
         query += ` ORDER BY req.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
         values.push(limit, offset);
 
         try {
             const result = await client.query(query, values);
             return { success: true, requests: result.rows };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Track offer click
-    static async trackOfferClick(clickData) {
-        const {
-            offer_id,
-            clicker_entity_id,
-            user_id,
-            ip_address,
-            user_agent,
-            referrer_url
-        } = clickData;
-
-        const click_id = uuidv4();
-        
-        const query = `
-            INSERT INTO offer_clicks (
-                click_id, offer_id, clicker_entity_id, user_id,
-                ip_address, user_agent, referrer_url
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
-        `;
-
-        const values = [click_id, offer_id, clicker_entity_id, user_id, ip_address, user_agent, referrer_url];
-
-        try {
-            // Insert click record
-            const clickResult = await client.query(query, values);
-            
-            // Update offer click count
-            await client.query(
-                'UPDATE offers SET click_count = click_count + 1 WHERE offer_id = $1',
-                [offer_id]
-            );
-
-            return { success: true, click: clickResult.rows[0] };
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -374,90 +321,70 @@ class OffersModel {
         }
     }
 
-    // Create bid for offer request
-    static async createBid(bidData) {
-        const {
-            offer_request_id,
-            entity_id,
-            user_id,
-            bid_amount,
-            bid_notes,
-            offer_details
-        } = bidData;
-
-        const bid_id = uuidv4();
-        
-        const query = `
-            INSERT INTO offer_request_bids (
-                bid_id, offer_request_id, entity_id, user_id,
-                bid_amount, bid_notes, offer_details
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
-        `;
-
-        const values = [
-            bid_id, offer_request_id, entity_id, user_id,
-            bid_amount, bid_notes, offer_details ? JSON.stringify(offer_details) : null
-        ];
-
-        try {
-            const result = await client.query(query, values);
-            return { success: true, bid: result.rows[0] };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Get bids for an offer request
-    static async getBidsForRequest(offer_request_id) {
-        const query = `
-            SELECT b.*, e.name as entity_name, e.entity_type, 
-                   CONCAT(u.first_name, ' ', u.last_name) as user_name
-            FROM offer_request_bids b
-            LEFT JOIN entities e ON b.entity_id = e.entity_id
-            LEFT JOIN users u ON b.user_id = u.user_id
-            WHERE b.offer_request_id = $1
-            ORDER BY b.created_at DESC
-        `;
-
-        try {
-            const result = await client.query(query, [offer_request_id]);
-            return { success: true, bids: result.rows };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
     // Get offers by entity
     static async getOffersByEntity(entity_id, filters = {}, limit = 20, offset = 0) {
-        let query = `
+        let baseQuery = `
             SELECT o.*, e.name as entity_name, e.entity_type
             FROM offers o
             LEFT JOIN entities e ON o.entity_id = e.entity_id
             WHERE o.entity_id = $1
         `;
-        
+
+        let countQuery = `
+            SELECT COUNT(*) as total
+            FROM offers o
+            WHERE o.entity_id = $1
+        `;
+
         const values = [entity_id];
         let paramCount = 1;
 
         if (filters.status) {
             paramCount++;
-            query += ` AND o.offer_status = $${paramCount}`;
+            const statusCondition = ` AND o.offer_status = $${paramCount}`;
+            baseQuery += statusCondition;
+            countQuery += statusCondition;
             values.push(filters.status);
         }
 
         if (filters.category) {
             paramCount++;
-            query += ` AND o.category = $${paramCount}`;
+            const categoryCondition = ` AND o.category = $${paramCount}`;
+            baseQuery += categoryCondition;
+            countQuery += categoryCondition;
             values.push(filters.category);
         }
 
-        query += ` ORDER BY o.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
-        values.push(limit, offset);
+        if (filters.search) {
+            paramCount++;
+            const searchCondition = ` AND (o.title ILIKE $${paramCount} OR o.description ILIKE $${paramCount} OR o.category ILIKE $${paramCount})`;
+            baseQuery += searchCondition;
+            countQuery += searchCondition;
+            values.push(`%${filters.search}%`);
+        }
+
+        baseQuery += ` ORDER BY o.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+        const finalValues = [...values, limit, offset];
 
         try {
-            const result = await client.query(query, values);
-            return { success: true, offers: result.rows };
+            // Get total count
+            const countResult = await client.query(countQuery, values);
+            const total = parseInt(countResult.rows[0].total);
+
+            // Get offers
+            const result = await client.query(baseQuery, finalValues);
+
+            return {
+                success: true,
+                offers: result.rows,
+                total: total,
+                pagination: {
+                    limit,
+                    offset,
+                    total,
+                    hasMore: result.rows.length === limit
+                }
+            };
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -473,7 +400,7 @@ class OffersModel {
             LEFT JOIN users u ON req.user_id = u.user_id
             WHERE req.user_id = $1
         `;
-        
+
         const values = [user_id];
         let paramCount = 1;
 
@@ -489,52 +416,18 @@ class OffersModel {
             values.push(filters.vertical);
         }
 
+        if (filters.search) {
+            paramCount++;
+            query += ` AND (req.title ILIKE $${paramCount} OR req.vertical ILIKE $${paramCount} OR req.notes ILIKE $${paramCount})`;
+            values.push(`%${filters.search}%`);
+        }
+
         query += ` ORDER BY req.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
         values.push(limit, offset);
 
         try {
             const result = await client.query(query, values);
             return { success: true, requests: result.rows };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Email tracking methods
-    static async trackEmailSent(emailData) {
-        const {
-            sender_user_id,
-            sender_entity_id,
-            recipient_user_id,
-            recipient_entity_id,
-            offer_request_id,
-            email_type,
-            recipient_email,
-            subject,
-            message_content,
-            metadata
-        } = emailData;
-
-        const email_id = uuidv4();
-        
-        const query = `
-            INSERT INTO email_tracking (
-                email_id, sender_user_id, sender_entity_id, recipient_user_id,
-                recipient_entity_id, offer_request_id, email_type, recipient_email,
-                subject, message_content, metadata
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING *
-        `;
-
-        const values = [
-            email_id, sender_user_id, sender_entity_id, recipient_user_id,
-            recipient_entity_id, offer_request_id, email_type, recipient_email,
-            subject, message_content, metadata ? JSON.stringify(metadata) : null
-        ];
-
-        try {
-            const result = await client.query(query, values);
-            return { success: true, email: result.rows[0] };
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -556,7 +449,7 @@ class OffersModel {
             LEFT JOIN offer_requests req ON et.offer_request_id = req.offer_request_id
             WHERE 1=1
         `;
-        
+
         const values = [];
         let paramCount = 0;
 
@@ -595,44 +488,10 @@ class OffersModel {
         }
     }
 
-    static async updateEmailStatus(email_id, status, timestamp_field = null) {
-        let query = `UPDATE email_tracking SET email_status = $1`;
-        const values = [status];
-        let paramCount = 1;
-
-        if (timestamp_field) {
-            paramCount++;
-            query += `, ${timestamp_field} = $${paramCount}`;
-            values.push(new Date());
-        }
-
-        paramCount++;
-        query += ` WHERE email_id = $${paramCount} RETURNING *`;
-        values.push(email_id);
-
-        try {
-            const result = await client.query(query, values);
-            return { success: true, email: result.rows[0] };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
     // Update an existing offer
     static async updateOffer(offer_id, offerData, entity_id) {
-        const {
-            title,
-            category,
-            description,
-            target_geo,
-            payout_type,
-            payout_value,
-            landing_page_url,
-            offer_status,
-            private_offer,
-            requirements,
-            allowed_traffic_sources
-        } = offerData;
+        const { title, category, description, target_geo, payout_type, payout_value, landing_page_url,
+            offer_status, private_offer, requirements, allowed_traffic_sources } = offerData;
 
         // Build update query dynamically based on provided fields
         const updateFields = [];
@@ -850,6 +709,101 @@ class OffersModel {
             return { success: true, request: result.rows[0] };
         } catch (error) {
             return { success: false, error: error.message };
+        }
+    }
+
+    // Bulk create multiple offers
+    static async bulkCreateOffers(offersArray, user_id) {
+        const client_conn = await client.connect();
+
+        try {
+            await client_conn.query('BEGIN');
+
+            const results = {
+                successful: 0,
+                failed: 0,
+                errors: [],
+                createdOffers: []
+            };
+
+            for (let i = 0; i < offersArray.length; i++) {
+                try {
+                    const offerData = offersArray[i];
+
+                    // Generate offer_id if not present
+                    if (!offerData.offer_id) {
+                        offerData.offer_id = uuidv4();
+                    }
+
+                    const query = `
+                        INSERT INTO offers (
+                            offer_id, entity_id, title, category, description, target_geo,
+                            payout_type, payout_value, landing_page_url, offer_status,
+                            private_offer, requirements, allowed_traffic_sources
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                        RETURNING *
+                    `;
+
+                    const values = [
+                        offerData.offer_id,
+                        offerData.entity_id,
+                        offerData.title,
+                        offerData.category,
+                        offerData.description || '',
+                        JSON.stringify(offerData.target_geo),
+                        offerData.payout_type,
+                        offerData.payout_value,
+                        offerData.landing_page_url,
+                        offerData.offer_status || 'active',
+                        offerData.private_offer || false,
+                        offerData.requirements || '',
+                        offerData.allowed_traffic_sources ? JSON.stringify(offerData.allowed_traffic_sources) : null
+                    ];
+
+                    const result = await client_conn.query(query, values);
+                    results.successful++;
+                    results.createdOffers.push(result.rows[0]);
+
+                } catch (error) {
+                    results.failed++;
+                    results.errors.push({
+                        offerIndex: i,
+                        offerData: offersArray[i],
+                        error: error.message
+                    });
+
+                    // Log individual offer creation errors but continue with others
+                    console.error(`Error creating offer ${i}:`, error.message);
+                }
+            }
+
+            await client_conn.query('COMMIT');
+
+            return {
+                success: true,
+                summary: {
+                    total: offersArray.length,
+                    successful: results.successful,
+                    failed: results.failed,
+                    errors: results.errors,
+                    createdOffers: results.createdOffers
+                }
+            };
+
+        } catch (error) {
+            await client_conn.query('ROLLBACK');
+            console.error('Bulk create offers transaction error:', error);
+            return {
+                success: false,
+                error: `Transaction failed: ${error.message}`,
+                summary: {
+                    total: offersArray.length,
+                    successful: 0,
+                    failed: offersArray.length
+                }
+            };
+        } finally {
+            client_conn.release();
         }
     }
 }

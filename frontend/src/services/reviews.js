@@ -55,6 +55,35 @@ export const reviewsAPI = {
             action, 
             admin_notes: adminNotes 
         });
+    },
+
+    // === UNREGISTERED ENTITY REVIEWS ===
+    
+    // Admin: Get unregistered entity reviews
+    async getUnregisteredEntityReviews(params = {}) {
+        const queryParams = new URLSearchParams(params).toString();
+        const endpoint = `/reviews/unregistered${queryParams ? `?${queryParams}` : ''}`;
+        return await http.get(endpoint);
+    },
+
+    // Admin: Get unregistered entity reviews statistics
+    async getUnregisteredEntityReviewsStats() {
+        return await http.get('/reviews/unregistered/stats');
+    },
+
+    // Admin: Moderate unregistered entity review
+    async moderateUnregisteredEntityReview(reviewId, action, adminNotes = '') {
+        return await http.put(`/reviews/unregistered/${reviewId}/moderate`, { 
+            action, 
+            admin_notes: adminNotes 
+        });
+    },
+
+    // Admin: Convert unregistered entity review to registered entity
+    async convertUnregisteredEntityReview(reviewId, entityType = 'network') {
+        return await http.post(`/reviews/unregistered/${reviewId}/convert`, { 
+            entity_type: entityType 
+        });
     }
 };
 

@@ -5,6 +5,36 @@ import { authAPI } from '../services/auth';
 import { entityAPI } from '../services/entity';
 import AdminReviewsModeration from '../components/AdminReviewsModeration';
 import Navbar from '../components/navbar';
+import {
+  Users,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Check,
+  X,
+  Trash2,
+  LogOut,
+  Shield,
+  FileCheck,
+  AlertTriangle,
+  ChevronDown,
+  User,
+  Building,
+  Phone,
+  Mail,
+  MapPin,
+  Globe,
+  Calendar,
+  Settings,
+  FolderOpen,
+  UserIcon,
+  Award,
+  FileText,
+  Megaphone,
+  MapPinIcon,
+  ChevronRight
+} from 'lucide-react';
 
 export default function AdminPanelPage() {
   // State for active tab
@@ -53,16 +83,6 @@ export default function AdminPanelPage() {
           filters.verification_status = filterStatus;
         }
         const data = await entityAPI.getAllEntities(filters);
-        console.log('Fetched entities data:', data);
-        console.log('Entities array:', data.entities);
-        if (data.entities && data.entities.length > 0) {
-          console.log('First entity sample:', data.entities[0]);
-          console.log('Entity ID fields:', {
-            _id: data.entities[0]._id,
-            entity_id: data.entities[0].entity_id,
-            id: data.entities[0].id
-          });
-        }
         setEntities(data.entities || []); // Assuming the API returns { entities: [...] }
       } catch (err) {
         setErrorEntities(err.message || 'Failed to fetch entities');
@@ -82,9 +102,6 @@ export default function AdminPanelPage() {
   };
 
   const handleApproveEntity = async (entityId) => {
-    console.log('Approving entity with ID:', entityId);
-    console.log('Entity object:', entities.find(e => getEntityId(e) === entityId));
-
     setEntityLoading(entityId, true);
 
     try {
@@ -233,9 +250,7 @@ export default function AdminPanelPage() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-              <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-              </svg>
+              <Shield className="w-7 h-7 text-white" />
             </div>
             <div>
               <h2 className="text-4xl font-extrabold text-purple-700 dark:text-purple-300 tracking-tight drop-shadow-lg">Admin Panel</h2>
@@ -246,9 +261,7 @@ export default function AdminPanelPage() {
             onClick={handleLogout}
             className="group bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl shadow-lg font-bold transition-all transform hover:scale-105 hover:shadow-xl"
           >
-            <svg className="w-5 h-5 inline mr-2 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-            </svg>
+            <LogOut className="w-5 h-5 inline mr-2 group-hover:rotate-12 transition-transform" />
             Logout
           </button>
         </div>
@@ -263,9 +276,7 @@ export default function AdminPanelPage() {
                 : 'text-gray-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-gray-800'
                 }`}
             >
-              <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-              </svg>
+              <Building className="w-5 h-5 inline mr-2" />
               Entity Management
             </button>
             <button
@@ -275,9 +286,7 @@ export default function AdminPanelPage() {
                 : 'text-gray-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-gray-800'
                 }`}
             >
-              <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <FileCheck className="w-5 h-5 inline mr-2" />
               Review Moderation
             </button>
             <button
@@ -287,9 +296,7 @@ export default function AdminPanelPage() {
                 : 'text-gray-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-gray-800'
                 }`}
             >
-              <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 12a1 1 0 001-1v-3a1 1 0 10-2 0v3a1 1 0 001 1zm0 4a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-              </svg>
+              <Users className="w-5 h-5 inline mr-2" />
               User Management
             </button>
           </nav>
@@ -302,16 +309,21 @@ export default function AdminPanelPage() {
               <h3 className="text-2xl font-bold text-purple-700 dark:text-purple-300">Entity Management</h3>
               <div className="flex items-center space-x-4">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by status:</span>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:outline-none transition"
-                >
-                  <option value="all">All Entities</option>
-                  <option value="pending">Pending Review</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="appearance-none bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-200 dark:border-gray-700 rounded-xl px-4 py-2 pr-8 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    <option value="all">All Entities</option>
+                    <option value="pending">Pending Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-purple-600 dark:text-purple-400">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -324,9 +336,7 @@ export default function AdminPanelPage() {
 
             {errorEntities && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700 shadow">
-                <svg className="w-6 h-6 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
+                <AlertTriangle className="w-6 h-6 inline mr-2" />
                 Error: {errorEntities}
               </div>
             )}
@@ -348,9 +358,7 @@ export default function AdminPanelPage() {
                       {entities.length === 0 ? (
                         <tr>
                           <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                            <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                            </svg>
+                            <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                             <p className="text-lg">No entities found for "{filterStatus}" status.</p>
                             <p className="text-sm mt-1">Try adjusting your filter criteria</p>
                           </td>
@@ -380,15 +388,13 @@ export default function AdminPanelPage() {
                                 entity.verification_status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
                                   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                                 }`}>
-                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                  {entity.verification_status === 'approved' ? (
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  ) : entity.verification_status === 'rejected' ? (
-                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                  ) : (
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                  )}
-                                </svg>
+                                {entity.verification_status === 'approved' ? (
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                ) : entity.verification_status === 'rejected' ? (
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                ) : (
+                                  <Clock className="w-3 h-3 mr-1" />
+                                )}
                                 {entity.verification_status}
                               </span>
                             </td>
@@ -396,12 +402,9 @@ export default function AdminPanelPage() {
                               <div className="flex space-x-2">
                                 <button
                                   onClick={() => handleViewDetails(entity)}
-                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors transform hover:scale-105"
+                                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
                                 >
-                                  <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                                  </svg>
+                                  <Eye className="w-4 h-4 inline mr-1" />
                                   View
                                 </button>
                                 {entity.verification_status === 'pending' && (
@@ -409,7 +412,7 @@ export default function AdminPanelPage() {
                                     <button
                                       onClick={() => handleApproveEntity(getEntityId(entity))}
                                       disabled={loadingStates[getEntityId(entity)]}
-                                      className="bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors transform hover:scale-105 disabled:hover:scale-100 flex items-center"
+                                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-green-300 disabled:to-emerald-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center shadow-lg hover:shadow-xl disabled:shadow-md"
                                     >
                                       {loadingStates[getEntityId(entity)] ? (
                                         <>
@@ -418,9 +421,7 @@ export default function AdminPanelPage() {
                                         </>
                                       ) : (
                                         <>
-                                          <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                          </svg>
+                                          <Check className="w-4 h-4 inline mr-1" />
                                           Approve
                                         </>
                                       )}
@@ -428,7 +429,7 @@ export default function AdminPanelPage() {
                                     <button
                                       onClick={() => handleRejectEntity(getEntityId(entity))}
                                       disabled={loadingStates[getEntityId(entity)]}
-                                      className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors transform hover:scale-105 disabled:hover:scale-100 flex items-center"
+                                      className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 disabled:from-red-300 disabled:to-pink-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center shadow-lg hover:shadow-xl disabled:shadow-md"
                                     >
                                       {loadingStates[getEntityId(entity)] ? (
                                         <>
@@ -437,9 +438,7 @@ export default function AdminPanelPage() {
                                         </>
                                       ) : (
                                         <>
-                                          <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                          </svg>
+                                          <X className="w-4 h-4 inline mr-1" />
                                           Reject
                                         </>
                                       )}
@@ -450,7 +449,7 @@ export default function AdminPanelPage() {
                                   <button
                                     onClick={() => handleRejectEntity(getEntityId(entity))}
                                     disabled={loadingStates[getEntityId(entity)]}
-                                    className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors transform hover:scale-105 disabled:hover:scale-100 flex items-center"
+                                    className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 disabled:from-red-300 disabled:to-pink-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center shadow-lg hover:shadow-xl disabled:shadow-md"
                                   >
                                     {loadingStates[getEntityId(entity)] ? (
                                       <>
@@ -459,9 +458,7 @@ export default function AdminPanelPage() {
                                       </>
                                     ) : (
                                       <>
-                                        <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                        </svg>
+                                        <X className="w-4 h-4 inline mr-1" />
                                         Reject
                                       </>
                                     )}
@@ -471,7 +468,7 @@ export default function AdminPanelPage() {
                                   <button
                                     onClick={() => handleApproveEntity(getEntityId(entity))}
                                     disabled={loadingStates[getEntityId(entity)]}
-                                    className="bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors transform hover:scale-105 disabled:hover:scale-100 flex items-center"
+                                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-green-300 disabled:to-emerald-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center shadow-lg hover:shadow-xl disabled:shadow-md"
                                   >
                                     {loadingStates[getEntityId(entity)] ? (
                                       <>
@@ -480,9 +477,7 @@ export default function AdminPanelPage() {
                                       </>
                                     ) : (
                                       <>
-                                        <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
+                                        <Check className="w-4 h-4 inline mr-1" />
                                         Approve
                                       </>
                                     )}
@@ -491,7 +486,7 @@ export default function AdminPanelPage() {
                                 <button
                                   onClick={() => handleDeleteEntity(getEntityId(entity))}
                                   disabled={loadingStates[getEntityId(entity)]}
-                                  className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors transform hover:scale-105 disabled:hover:scale-100 flex items-center"
+                                  className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center shadow-lg hover:shadow-xl disabled:shadow-md"
                                 >
                                   {loadingStates[getEntityId(entity)] ? (
                                     <>
@@ -500,10 +495,7 @@ export default function AdminPanelPage() {
                                     </>
                                   ) : (
                                     <>
-                                      <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                      </svg>
+                                      <Trash2 className="w-4 h-4 inline mr-1" />
                                       Delete
                                     </>
                                   )}
@@ -561,9 +553,7 @@ export default function AdminPanelPage() {
                             user.role === 'Advertiser' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
                               'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                             }`}>
-                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                            </svg>
+                            <User className="w-3 h-3 mr-1" />
                             {user.role}
                           </span>
                         </td>
@@ -571,31 +561,27 @@ export default function AdminPanelPage() {
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
                             'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                             }`}>
-                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              {user.status === 'active' ? (
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              ) : (
-                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                              )}
-                            </svg>
+                            {user.status === 'active' ? (
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                            ) : (
+                              <XCircle className="w-3 h-3 mr-1" />
+                            )}
                             {user.status}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <button
                             onClick={() => handleUserToggle(user.id)}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors transform hover:scale-105 ${user.status === "active" ?
-                              'bg-red-500 hover:bg-red-600 text-white' :
-                              'bg-green-500 hover:bg-green-600 text-white'
+                            className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl ${user.status === "active" ?
+                              'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white' :
+                              'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white'
                               }`}
                           >
-                            <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              {user.status === "active" ? (
-                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                              ) : (
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              )}
-                            </svg>
+                            {user.status === "active" ? (
+                              <X className="w-4 h-4 inline mr-1" />
+                            ) : (
+                              <Check className="w-4 h-4 inline mr-1" />
+                            )}
                             {user.status === "active" ? "Ban User" : "Unban User"}
                           </button>
                         </td>
@@ -626,28 +612,23 @@ export default function AdminPanelPage() {
                       <h3 className="text-3xl font-bold text-white mb-2 tracking-tight">Entity Details</h3>
                       <p className="text-purple-100 text-xl font-medium">{selectedEntity.name}</p>
                       <div className="flex items-center space-x-4 mt-3">
-                        <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold backdrop-blur-md border border-white/30 ${
-                          selectedEntity.verification_status === 'approved' 
-                            ? 'bg-green-500/80 text-white' 
-                            : selectedEntity.verification_status === 'rejected' 
-                            ? 'bg-red-500/80 text-white' 
+                        <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold backdrop-blur-md border border-white/30 ${selectedEntity.verification_status === 'approved'
+                          ? 'bg-green-500/80 text-white'
+                          : selectedEntity.verification_status === 'rejected'
+                            ? 'bg-red-500/80 text-white'
                             : 'bg-yellow-500/80 text-white'
-                        }`}>
-                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            {selectedEntity.verification_status === 'approved' ? (
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            ) : selectedEntity.verification_status === 'rejected' ? (
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            ) : (
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            )}
-                          </svg>
+                          }`}>
+                          {selectedEntity.verification_status === 'approved' ? (
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                          ) : selectedEntity.verification_status === 'rejected' ? (
+                            <XCircle className="w-4 h-4 mr-2" />
+                          ) : (
+                            <Clock className="w-4 h-4 mr-2" />
+                          )}
                           {selectedEntity.verification_status?.toUpperCase()}
                         </span>
                         <span className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold bg-white/20 text-white backdrop-blur-md border border-white/30">
-                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                          </svg>
+                          <User className="w-4 h-4 mr-2" />
                           {selectedEntity.entity_type?.toUpperCase()}
                         </span>
                       </div>
@@ -657,30 +638,26 @@ export default function AdminPanelPage() {
                     onClick={closeDetailsModal}
                     className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-2xl flex items-center justify-center text-white hover:text-gray-100 transition-all duration-200 backdrop-blur-md border border-white/30 hover:scale-110 hover:rotate-90"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
               </div>
 
               {/* Modal Content */}
               <div className="p-8 overflow-y-auto max-h-[calc(95vh-200px)] space-y-8">
-                
+
                 {/* Main Information Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  
+
                   {/* Basic Information Card */}
                   <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg border border-purple-200/50 dark:border-purple-700/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                     <div className="flex items-center mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                        </svg>
+                        <UserIcon className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Basic Information</h4>
                     </div>
-                    
+
                     <div className="space-y-5">
                       {[
                         { label: 'Entity Name', value: selectedEntity.name || 'N/A', icon: '👤' },
@@ -702,7 +679,7 @@ export default function AdminPanelPage() {
                           </div>
                         </div>
                       ))}
-                      
+
                       {/* Website Field */}
                       <div className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-purple-900/30 dark:to-blue-900/30 p-4 rounded-2xl border border-purple-100/50 dark:border-purple-700/30 hover:from-purple-100/80 hover:to-blue-100/80 transition-all">
                         <div className="flex items-center justify-between">
@@ -712,10 +689,10 @@ export default function AdminPanelPage() {
                           </div>
                           <span className="text-gray-900 dark:text-gray-100 font-medium max-w-xs">
                             {selectedEntity?.website ? (
-                              <a 
-                                href={selectedEntity.website} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
+                              <a
+                                href={selectedEntity.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                               >
                                 {selectedEntity.website}
@@ -744,13 +721,11 @@ export default function AdminPanelPage() {
                   <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg border border-green-200/50 dark:border-green-700/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                     <div className="flex items-center mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
+                        <Award className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Status & Verification</h4>
                     </div>
-                    
+
                     <div className="space-y-5">
                       {selectedEntity.verification_status === 'approved' && (
                         <div className="bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-900/30 dark:to-emerald-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30">
@@ -759,28 +734,24 @@ export default function AdminPanelPage() {
                               <span className="text-lg">👤</span>
                               <span className="font-semibold text-green-700 dark:text-green-300">User Account</span>
                             </div>
-                            <span className={`px-4 py-2 rounded-xl font-bold text-sm ${
-                              selectedEntity.user_account_created 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-gray-400 text-white'
-                            }`}>
+                            <span className={`px-4 py-2 rounded-xl font-bold text-sm ${selectedEntity.user_account_created
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-400 text-white'
+                              }`}>
                               {selectedEntity.user_account_created ? '✅ Created' : '❌ Not Created'}
                             </span>
                           </div>
                           {selectedEntity.user_account_created && (
                             <div className="bg-green-100/80 dark:bg-green-900/20 p-3 rounded-xl border border-green-200/50">
                               <p className="text-sm text-green-800 dark:text-green-200 flex items-center">
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                                </svg>
+                                <Mail className="w-4 h-4 mr-2" />
                                 Login email sent to <strong>{selectedEntity.email}</strong>
                               </p>
                             </div>
                           )}
                         </div>
                       )}
-                      
+
                       <div className="bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-2xl border border-green-100/50 dark:border-green-700/30">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
@@ -801,13 +772,11 @@ export default function AdminPanelPage() {
                   <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg border border-indigo-200/50 dark:border-indigo-700/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                        </svg>
+                        <FileText className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Description & Notes</h4>
                     </div>
-                    
+
                     <div className="space-y-6">
                       {selectedEntity.description && (
                         <div className="bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-900/30 dark:to-purple-900/30 p-6 rounded-2xl border border-indigo-100/50 dark:border-indigo-700/30">
@@ -836,13 +805,11 @@ export default function AdminPanelPage() {
                   <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg border border-orange-200/50 dark:border-orange-700/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4z" clipRule="evenodd" />
-                        </svg>
+                        <Megaphone className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">Advertiser Details</h4>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-5">
                         {[
@@ -860,7 +827,7 @@ export default function AdminPanelPage() {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="space-y-5">
                         <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
                           <div className="flex items-center space-x-3 mb-2">
@@ -873,7 +840,7 @@ export default function AdminPanelPage() {
                               : selectedEntity.entity_metadata.industries || 'N/A'
                           }</p>
                         </div>
-                        
+
                         <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">💰</span>
@@ -881,7 +848,7 @@ export default function AdminPanelPage() {
                           </div>
                           <p className="text-gray-900 dark:text-gray-100 ml-8 font-medium">{selectedEntity.entity_metadata.referral_commission || 'N/A'}</p>
                         </div>
-                        
+
                         <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">💸</span>
@@ -893,7 +860,7 @@ export default function AdminPanelPage() {
                               : selectedEntity.entity_metadata.payout_types || 'N/A'
                           }</p>
                         </div>
-                        
+
                         <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">🔗</span>
@@ -924,31 +891,29 @@ export default function AdminPanelPage() {
                   <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg border border-blue-200/50 dark:border-blue-700/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                        </svg>
+                        <Users className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Affiliate Details</h4>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {[
-                        { 
-                          label: 'Traffic Sources', 
+                        {
+                          label: 'Traffic Sources',
                           value: Array.isArray(selectedEntity.entity_metadata.traffic_provided_geos)
                             ? selectedEntity.entity_metadata.traffic_provided_geos.join(', ')
                             : selectedEntity.entity_metadata.traffic_provided_geos,
                           icon: '🌐'
                         },
-                        { 
-                          label: 'Verticals', 
+                        {
+                          label: 'Verticals',
                           value: Array.isArray(selectedEntity.entity_metadata.verticals)
                             ? selectedEntity.entity_metadata.verticals.join(', ')
                             : selectedEntity.entity_metadata.verticals,
                           icon: '🎯'
                         },
-                        { 
-                          label: 'Monthly Revenue', 
+                        {
+                          label: 'Monthly Revenue',
                           value: selectedEntity.entity_metadata.monthly_revenue,
                           icon: '💰'
                         }
@@ -970,30 +935,28 @@ export default function AdminPanelPage() {
                   <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg border border-green-200/50 dark:border-green-700/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                        </svg>
+                        <MapPinIcon className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">Network Details</h4>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-5">
                         {[
-                          { 
-                            label: 'Verticals', 
+                          {
+                            label: 'Verticals',
                             value: Array.isArray(selectedEntity.entity_metadata.verticals)
                               ? selectedEntity.entity_metadata.verticals.join(', ')
                               : selectedEntity.entity_metadata.verticals,
                             icon: '🎯'
                           },
-                          { 
-                            label: 'Minimum Payout', 
+                          {
+                            label: 'Minimum Payout',
                             value: selectedEntity.entity_metadata.minimum_payout,
                             icon: '💸'
                           },
-                          { 
-                            label: 'Referral Commission', 
+                          {
+                            label: 'Referral Commission',
                             value: selectedEntity.entity_metadata.referral_commission,
                             icon: '💰'
                           }
@@ -1007,7 +970,7 @@ export default function AdminPanelPage() {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="space-y-5">
                         <div className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 hover:from-green-100/80 hover:to-teal-100/80 transition-all">
                           <div className="flex items-center space-x-3 mb-3">
@@ -1020,7 +983,7 @@ export default function AdminPanelPage() {
                               : selectedEntity.entity_metadata.supported_models || 'N/A'
                           }</p>
                         </div>
-                        
+
                         <div className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 hover:from-green-100/80 hover:to-teal-100/80 transition-all">
                           <div className="flex items-center space-x-3 mb-3">
                             <span className="text-xl">🔗</span>
@@ -1055,13 +1018,9 @@ export default function AdminPanelPage() {
                     onClick={closeDetailsModal}
                     className="group bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 text-white px-10 py-4 rounded-2xl font-bold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-300/50 flex items-center space-x-3 text-lg"
                   >
-                    <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
                     <span>Close Details</span>
-                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                   </button>
                 </div>
               </div>

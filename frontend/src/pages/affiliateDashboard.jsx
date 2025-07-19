@@ -8,7 +8,7 @@ export default function AffiliateDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [availableOffers, setAvailableOffers] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
-  const [selectedTab, setSelectedTab] = useState('offers');
+  const [selectedTab, setSelectedTab] = useState('requests');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,8 +25,7 @@ export default function AffiliateDashboard() {
     platforms_used: [],
     desired_payout_type: 'CPA',
     budget_range: '',
-    notes: '',
-    expires_at: ''
+    notes: ''
   });
 
   // States for bidding on offers
@@ -37,8 +36,29 @@ export default function AffiliateDashboard() {
     const user = authAPI.getCurrentUser();
     if (user && user.role === 'affiliate') {
       setCurrentUser(user);
+      // Fetch data immediately after setting user
+      fetchMyRequestsForUser(user);
     }
   }, []);
+
+  // Helper function to fetch requests for a specific user
+  const fetchMyRequestsForUser = async (user) => {
+    if (!user?.user_id) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await offersAPI.getOfferRequestsByUser(user.user_id);
+      setMyRequests(response.requests || []);
+      setError(''); // Clear any previous errors
+    } catch (err) {
+      setError('Failed to fetch your requests');
+      console.error('Error fetching requests for user:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Separate useEffect to fetch data when currentUser is set
   useEffect(() => {
@@ -63,16 +83,20 @@ export default function AffiliateDashboard() {
 
   const fetchMyRequests = async () => {
     if (!currentUser?.user_id) {
-      console.log('No currentUser or user_id available');
+      console.log('No currentUser or user_id available for fetchMyRequests');
       return;
     }
-    
+
     try {
+      setLoading(true);
       const response = await offersAPI.getOfferRequestsByUser(currentUser.user_id);
       setMyRequests(response.requests || []);
+      setError(''); // Clear any previous errors
     } catch (err) {
       setError('Failed to fetch your requests');
-      console.error(err);
+      console.error('Error fetching requests:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,8 +110,7 @@ export default function AffiliateDashboard() {
       platforms_used: [],
       desired_payout_type: 'CPA',
       budget_range: '',
-      notes: '',
-      expires_at: ''
+      notes: ''
     });
     setEditingRequest(null);
     setIsEditMode(false);
@@ -104,23 +127,22 @@ export default function AffiliateDashboard() {
     setRequestData({
       title: request.title || '',
       vertical: request.vertical || '',
-      geos_targeting: Array.isArray(request.geos_targeting) ? 
-        request.geos_targeting.join(', ') : 
+      geos_targeting: Array.isArray(request.geos_targeting) ?
+        request.geos_targeting.join(', ') :
         (request.geos_targeting || ''),
-      traffic_type: Array.isArray(request.traffic_type) ? 
-        request.traffic_type.join(', ') : 
+      traffic_type: Array.isArray(request.traffic_type) ?
+        request.traffic_type.join(', ') :
         (request.traffic_type || ''),
       traffic_volume: request.traffic_volume || '',
-      platforms_used: Array.isArray(request.platforms_used) ? 
-        request.platforms_used.join(', ') : 
+      platforms_used: Array.isArray(request.platforms_used) ?
+        request.platforms_used.join(', ') :
         (request.platforms_used || ''),
       desired_payout_type: request.desired_payout_type || 'CPA',
-      budget_range: request.budget_range ? 
-        (typeof request.budget_range === 'object' ? 
-          JSON.stringify(request.budget_range) : 
+      budget_range: request.budget_range ?
+        (typeof request.budget_range === 'object' ?
+          JSON.stringify(request.budget_range) :
           request.budget_range) : '',
-      notes: request.notes || '',
-      expires_at: request.expires_at ? request.expires_at.substring(0, 16) : ''
+      notes: request.notes || ''
     });
     setShowRequestModal(true);
   };
@@ -132,19 +154,19 @@ export default function AffiliateDashboard() {
       const formattedData = {
         ...requestData,
         entity_id: currentUser.entity_id,
-        geos_targeting: typeof requestData.geos_targeting === 'string' ? 
-          requestData.geos_targeting.split(',').map(geo => geo.trim()) : 
+        geos_targeting: typeof requestData.geos_targeting === 'string' ?
+          requestData.geos_targeting.split(',').map(geo => geo.trim()) :
           requestData.geos_targeting,
-        traffic_type: typeof requestData.traffic_type === 'string' ? 
-          requestData.traffic_type.split(',').map(type => type.trim()) : 
+        traffic_type: typeof requestData.traffic_type === 'string' ?
+          requestData.traffic_type.split(',').map(type => type.trim()) :
           requestData.traffic_type,
-        platforms_used: typeof requestData.platforms_used === 'string' ? 
-          requestData.platforms_used.split(',').map(platform => platform.trim()) : 
+        platforms_used: typeof requestData.platforms_used === 'string' ?
+          requestData.platforms_used.split(',').map(platform => platform.trim()) :
           requestData.platforms_used,
         traffic_volume: parseInt(requestData.traffic_volume),
-        budget_range: requestData.budget_range ? 
-          (typeof requestData.budget_range === 'string' ? 
-            JSON.parse(requestData.budget_range) : 
+        budget_range: requestData.budget_range ?
+          (typeof requestData.budget_range === 'string' ?
+            JSON.parse(requestData.budget_range) :
             requestData.budget_range) : null
       };
 
@@ -222,7 +244,7 @@ export default function AffiliateDashboard() {
               className={`py-2 px-1 border-b-2 font-semibold text-lg transition-all ${selectedTab === 'requests'
                 ? 'border-pink-500 text-pink-700 dark:text-pink-300'
                 : 'border-transparent text-gray-500 hover:text-pink-700 dark:hover:text-pink-200'
-              }`}
+                }`}
             >
               My Requests <span className="ml-1 text-xs bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full">{myRequests.length}</span>
             </button>
@@ -231,7 +253,7 @@ export default function AffiliateDashboard() {
               className={`py-2 px-1 border-b-2 font-semibold text-lg transition-all ${selectedTab === 'reviews'
                 ? 'border-pink-500 text-pink-700 dark:text-pink-300'
                 : 'border-transparent text-gray-500 hover:text-pink-700 dark:hover:text-pink-200'
-              }`}
+                }`}
             >
               Reviews
             </button>
@@ -251,26 +273,134 @@ export default function AffiliateDashboard() {
                 No requests created yet.
               </div>
             ) : (
-              <div className="grid gap-8 md:grid-cols-2">
-                {myRequests.map((request) => (
-                  <div key={request.offer_request_id} className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-6 border border-pink-100 dark:border-gray-800 hover:scale-[1.02] transition-transform">
-                    <h4 className="font-bold text-lg mb-2 text-pink-700 dark:text-pink-200">{request.title}</h4>
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">Vertical: {request.vertical}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">GEOs: {Array.isArray(request.geos_targeting) ? request.geos_targeting.join(', ') : request.geos_targeting}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Traffic Volume: {request.traffic_volume}/day</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Desired Payout: {request.desired_payout_type}</p>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${request.request_status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : request.request_status === 'fulfilled' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}>{request.request_status}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openEditRequest(request)}
-                          className="text-blue-600 hover:underline text-sm"
-                        >
-                          Edit
-                        </button>
-                        {/* <button className="text-pink-600 hover:underline text-sm">View Bids</button> */}
+              <div className="grid gap-8 md:grid-cols-3 xl:grid-cols-3">
+                {myRequests.map((request, index) => (
+                  <div
+                    key={request.offer_request_id}
+                    className="group relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden animate-fade-in-scale"
+                    style={{ animationDelay: `${index * 0.15}s` }}
+                  >
+                    {/* Status indicator line at top */}
+                    <div className={`absolute top-0 left-0 right-0 h-1 ${request.request_status === 'active'
+                      ? 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600'
+                      : request.request_status === 'fulfilled'
+                        ? 'bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600'
+                        : 'bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600'
+                      }`}></div>
+
+                    {/* Floating status badge */}
+                    <div className="absolute top-4 right-4 z-10">
+                      <div className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg backdrop-blur-sm ${request.request_status === 'active'
+                        ? 'bg-emerald-500/90 text-white ring-2 ring-emerald-200 dark:ring-emerald-800'
+                        : request.request_status === 'fulfilled'
+                          ? 'bg-blue-500/90 text-white ring-2 ring-blue-200 dark:ring-blue-800'
+                          : 'bg-gray-500/90 text-white ring-2 ring-gray-200 dark:ring-gray-800'
+                        }`}>
+                        {request.request_status}
                       </div>
                     </div>
+
+                    <div className="p-4">
+                      {/* Header with icon and vertical */}
+                      <div className="flex items-start space-x-3 mb-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                            {request.title ? request.title.charAt(0).toUpperCase() : '📋'}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-lg mb-1 text-gray-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300 line-clamp-2">
+                            {request.title}
+                          </h4>
+                          <div className="inline-flex items-center px-2 py-0.5 bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 rounded-full">
+                            <span className="w-1.5 h-1.5 bg-pink-500 rounded-full mr-1.5 animate-pulse"></span>
+                            <span className="text-pink-700 dark:text-pink-300 font-medium text-xs">{request.vertical}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compact metrics grid */}
+                      <div className="grid grid-cols-1 gap-2 mb-3">
+                        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg p-2.5 border border-blue-200/30 dark:border-blue-700/30">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center">
+                              <span className="text-white text-xs">🌍</span>
+                            </div>
+                            <div>
+                              <p className="text-blue-600 dark:text-blue-400 text-xs font-bold">GEOs</p>
+                              <p className="text-gray-900 dark:text-white font-semibold text-xs">
+                                {Array.isArray(request.geos_targeting)
+                                  ? request.geos_targeting.slice(0, 4).join(', ') + (request.geos_targeting.length > 4 ? '...' : '')
+                                  : request.geos_targeting}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-2 border border-purple-200/30 dark:border-purple-700/30">
+                            <div className="flex items-center space-x-1.5 mb-0.5">
+                              <div className="w-4 h-4 bg-purple-500 rounded flex items-center justify-center">
+                                <span className="text-white text-xs">📊</span>
+                              </div>
+                              <p className="text-purple-600 dark:text-purple-400 text-xs font-bold">Traffic</p>
+                            </div>
+                            <p className="text-gray-900 dark:text-white font-bold text-xs">
+                              {request.traffic_volume ? `${parseInt(request.traffic_volume).toLocaleString()}` : 'N/A'}
+                            </p>
+                          </div>
+
+                          <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-lg p-2 border border-emerald-200/30 dark:border-emerald-700/30">
+                            <div className="flex items-center space-x-1.5 mb-0.5">
+                              <div className="w-4 h-4 bg-emerald-500 rounded flex items-center justify-center">
+                                <span className="text-white text-xs">💰</span>
+                              </div>
+                              <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">Payout</p>
+                            </div>
+                            <p className="text-gray-900 dark:text-white font-bold text-xs">{request.desired_payout_type}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compact tags section */}
+                      <div className="space-y-2 mb-3">
+                        {request.traffic_type && (
+                          <div className="flex flex-wrap gap-2">
+                            {(Array.isArray(request.traffic_type) ? request.traffic_type : [request.traffic_type]).slice(0, 2).map((type, idx) => (
+                              <span key={idx} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-300 rounded text-xs font-medium border border-blue-200/50 dark:border-blue-700/50">
+                                {type}
+                              </span>
+                            ))}
+
+                            {(Array.isArray(request.platforms_used) ? request.platforms_used : [request.platforms_used]).slice(0, 2).map((platform, idx) => (
+                              <span key={idx} className="px-1.5 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-300 rounded text-xs font-medium border border-purple-200/50 dark:border-purple-700/50">
+                                {platform}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer with date and action */}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
+                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                          {request.created_at && new Date(request.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </div>
+                        <button
+                          onClick={() => openEditRequest(request)}
+                          className="group/btn inline-flex items-center space-x-1.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-1.5 px-3 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                        >
+                          <span className="text-xs">Edit</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Subtle hover gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500/0 via-purple-500/0 to-blue-500/0 group-hover:from-pink-500/5 group-hover:via-purple-500/5 group-hover:to-blue-500/5 transition-all duration-500 pointer-events-none rounded-2xl"></div>
                   </div>
                 ))}
               </div>
@@ -462,15 +592,6 @@ export default function AffiliateDashboard() {
                           placeholder="Additional requirements, specifications, or information..."
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Expires At (Optional)</label>
-                        <input
-                          type="datetime-local"
-                          value={requestData.expires_at}
-                          onChange={(e) => setRequestData({ ...requestData, expires_at: e.target.value })}
-                          className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
-                        />
-                      </div>
                     </div>
                   </div>
 
@@ -488,7 +609,7 @@ export default function AffiliateDashboard() {
                         </span>
                       ) : (
                         <span className="flex items-center justify-center">
-                          {isEditMode ? '✏️ Update Request' : 'Create Request'}
+                          {isEditMode ? 'Update Request' : 'Create Request'}
                         </span>
                       )}
                     </button>

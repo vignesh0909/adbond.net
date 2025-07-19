@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { User, MapPin, List, Filter, Mail, Loader2, X, Star, Tag, Upload, MessageCircle, BookUser } from 'lucide-react';
 import Navbar from '../components/navbar';
 import offersService from '../services/offers';
 
 // Affiliates Wishlist Page (Standalone Export)
-export default function AffiliatesWishlistPage() {
+export default function Wishlists() {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +12,8 @@ export default function AffiliatesWishlistPage() {
   const [filters, setFilters] = useState({
     vertical: "",
     geo: "",
-    priority: ""
+    priority: "",
+    title: ""
   });
 
   const [showContactForm, setShowContactForm] = useState(null);
@@ -103,6 +105,7 @@ export default function AffiliatesWishlistPage() {
     if (filters.vertical && !item.verticals.some(v => v.toLowerCase().includes(filters.vertical.toLowerCase()))) return false;
     if (filters.geo && !item.geos.some(geo => geo.toLowerCase().includes(filters.geo.toLowerCase()))) return false;
     if (filters.priority && item.priority !== filters.priority) return false;
+    if (filters.title && !(item.title && item.title.toLowerCase().includes(filters.title.toLowerCase()))) return false;
     return true;
   });
 
@@ -129,28 +132,20 @@ export default function AffiliatesWishlistPage() {
         {/* Header */}
         <div className="flex items-center mb-8 animate-slide-in-down">
           <div className="w-12 h-12 bg-gradient-to-tr from-green-600 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-            <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-            </svg>
+            <BookUser className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-green">Affiliates Wishlist</h2>
+            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-green">Wishlist</h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Connect with quality affiliates actively seeking new offers</p>
-            <div className="mt-2 flex items-center text-sm">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-              <span className="text-green-600 dark:text-green-400 font-medium">Live data from offer requests</span>
-            </div>
           </div>
         </div>
 
         {/* Filters */}
         <div className="card p-6 mb-8 animate-fade-in-scale">
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-5 gap-4">
             <div>
               <label className="font-semibold mb-2 block text-gray-700 dark:text-gray-200 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                </svg>
+                <Filter className="w-4 h-4 mr-2" />
                 Filter by Vertical
               </label>
               <input
@@ -163,9 +158,7 @@ export default function AffiliatesWishlistPage() {
             </div>
             <div>
               <label className="font-semibold mb-2 block text-gray-700 dark:text-gray-200 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
+                <MapPin className="w-4 h-4 mr-2" />
                 Filter by GEO
               </label>
               <input
@@ -178,9 +171,7 @@ export default function AffiliatesWishlistPage() {
             </div>
             <div>
               <label className="font-semibold mb-2 block text-gray-700 dark:text-gray-200 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
+                <List className="w-4 h-4 mr-2" />
                 Priority Level
               </label>
               <select
@@ -194,10 +185,23 @@ export default function AffiliatesWishlistPage() {
                 <option value="low">🟢 Low Priority</option>
               </select>
             </div>
-            <div className="flex items-end">
-              <div className="text-gray-600 dark:text-gray-300 font-medium">
-                {filteredWishlist.length} affiliate{filteredWishlist.length !== 1 ? 's' : ''} found
-              </div>
+            <div>
+              <label className="font-semibold mb-2 block text-gray-700 dark:text-gray-200 flex items-center">
+                <BookUser className="w-4 h-4 mr-2" />
+                Search by Title
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Offer Title"
+                value={filters.title}
+                onChange={(e) => setFilters({ ...filters, title: e.target.value })}
+                className="input-field"
+              />
+            </div>
+            <div className="flex items-center justify-center">
+              <p className="text-gray-600 dark:text-gray-300 font-medium text-center">
+                {filteredWishlist.length} item{filteredWishlist.length !== 1 ? 's' : ''} found
+              </p>
             </div>
           </div>
         </div>
@@ -206,18 +210,14 @@ export default function AffiliatesWishlistPage() {
         {loading ? (
           <div className="text-center py-20 animate-fade-in-scale">
             <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-spin">
-              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-              </svg>
+              <Loader2 className="w-10 h-10 text-white" />
             </div>
             <div className="text-gray-600 dark:text-gray-300 text-xl font-semibold">Loading affiliate requests...</div>
           </div>
         ) : error ? (
           <div className="text-center py-20 animate-fade-in-scale">
             <div className="w-20 h-20 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
+              <X className="w-10 h-10 text-white" />
             </div>
             <div className="text-red-600 dark:text-red-400 text-2xl font-semibold mb-2">{error}</div>
             <button
@@ -230,9 +230,7 @@ export default function AffiliatesWishlistPage() {
         ) : filteredWishlist.length === 0 ? (
           <div className="text-center py-20 animate-fade-in-scale">
             <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-              </svg>
+              <User className="w-10 h-10 text-white" />
             </div>
             <div className="text-gray-500 dark:text-gray-400 text-2xl font-semibold mb-2">
               {wishlist.length === 0 ? 'No affiliate requests yet' : 'No affiliates found'}
@@ -257,17 +255,17 @@ export default function AffiliatesWishlistPage() {
             {filteredWishlist.map((item, index) => (
               <div
                 key={item.id}
-                className="relative group flex flex-col h-full rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-transform duration-300 hover:scale-[1.025] hover:shadow-2xl"
-                style={{ animationDelay: `${index * 0.1}s`, minHeight: '520px', display: 'flex', flexDirection: 'column' }}
+                className="relative group flex flex-col min-h-full h-full rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-transform duration-300 hover:scale-[1.025] hover:shadow-2xl"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {/* Ribbon Priority */}
-                <div className={`absolute -left-8 top-6 rotate-[-45deg] px-8 py-1 text-xs font-bold tracking-widest ${getPriorityColor(item.priority)} text-white shadow-lg z-10`}>{item.priority.toUpperCase()}</div>
+                {/* <div className={`absolute -left-8 top-6 rotate-[-45deg] px-8 py-1 text-xs font-bold tracking-widest ${getPriorityColor(item.priority)} text-white shadow-lg z-10`}>{item.priority.toUpperCase()}</div> */}
 
                 {/* Card Top Gradient Bar */}
                 <div className="h-2 w-full bg-gradient-to-r from-green-400 via-blue-400 to-purple-400" />
 
                 {/* Card Content */}
-                <div className="flex flex-col flex-1 p-6">
+                <div className="flex flex-col flex-1 p-6 min-h-0">
                   {/* Avatar & Title */}
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white text-2xl font-extrabold shadow-lg border-4 border-white dark:border-gray-900">
@@ -290,7 +288,7 @@ export default function AffiliatesWishlistPage() {
                     ))}
                     {item.geos.slice(0, 3).map((geo, idx) => (
                       <span key={geo + idx} className="badge bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
+                        <MapPin className="w-3 h-3 mr-1" />
                         {geo}
                       </span>
                     ))}
@@ -312,7 +310,7 @@ export default function AffiliatesWishlistPage() {
                   </div>
 
                   {/* Traffic Types & Platforms */}
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex flex-wrap gap-2 mb-3 min-h-[32px]">
                     {item.trafficTypes.length > 0 ? item.trafficTypes.map((type, idx) => (
                       <span key={type + idx} className="badge badge-info px-2 py-1 rounded-full text-xs font-semibold">{type}</span>
                     )) : (
@@ -324,25 +322,20 @@ export default function AffiliatesWishlistPage() {
                   </div>
 
                   {/* Requirements */}
-                  <div className="mb-4">
+                  <div className="mb-2 flex-1">
                     <span className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Requirements:</span>
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 h-20 overflow-y-auto text-sm text-gray-700 dark:text-gray-300 shadow-inner border border-gray-100 dark:border-gray-700">
                       {item.requirements}
                     </div>
                   </div>
 
-                  <div className="flex-1" />
-
-                  <div className="flex flex-col justify-end min-h-[60px]">
+                  <div className="flex flex-col justify-end">
                     {/* Action Button */}
                     <button
                       onClick={() => setShowContactForm(item.id)}
                       className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl flex items-center justify-center"
                     >
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                      </svg>
+                      <Mail className="w-4 h-4 mr-2" />
                       Contact Affiliate
                     </button>
                   </div>
@@ -365,9 +358,7 @@ export default function AffiliatesWishlistPage() {
                   }}
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
@@ -421,17 +412,12 @@ export default function AffiliatesWishlistPage() {
                   >
                     {sendingEmail ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
                         Sending...
                       </>
                     ) : (
                       <>
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                        </svg>
+                        <Mail className="w-4 h-4 mr-2" />
                         Send Email
                       </>
                     )}

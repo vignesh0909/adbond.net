@@ -11,6 +11,7 @@ export default function CompanyDatabasePage() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [contactsLoading, setContactsLoading] = useState(false);
   const [error, setError] = useState("");
   const [userVerificationStatus, setUserVerificationStatus] = useState(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -41,7 +42,6 @@ export default function CompanyDatabasePage() {
   const fetchUserVerificationStatus = async () => {
     try {
       const response = await http.get('/users/verification-status');
-      console.log('Verification status response:', response);
       setUserVerificationStatus(response.data || response.status);
     } catch (err) {
       console.error('Error fetching verification status:', err);
@@ -125,28 +125,24 @@ export default function CompanyDatabasePage() {
 
   const fetchCompanyContacts = async (companyId) => {
     try {
-      setLoading(true);
+      setContactsLoading(true);
       const response = await http.get(`/affiliate-companies/${companyId}/contacts`);
-      console.log('Contacts response:', response);
       setContacts(response.data || []);
       setContactsModalOpen(true);
     } catch (err) {
       setError("Failed to fetch company contacts.");
       console.error(err);
     } finally {
-      setLoading(false);
+      setContactsLoading(false);
     }
   };  const handleIdentityVerification = async (method, data) => {
     try {
-      setLoading(true);
+      setContactsLoading(true);
       const response = await http.post('/users/verify-identity', {
         verification_method: method,
         ...data
       });
 
-      console.log('Verification response:', response);
-
-      // Refresh verification status
       await fetchUserVerificationStatus();
       setShowVerificationModal(false);
 
@@ -158,7 +154,7 @@ export default function CompanyDatabasePage() {
       setError("Identity verification failed. Please try again.");
       console.error(err);
     } finally {
-      setLoading(false);
+      setContactsLoading(false);
     }
   };
 
@@ -267,9 +263,7 @@ export default function CompanyDatabasePage() {
           {/* Results Counter */}
           <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg border border-emerald-100 dark:border-emerald-700">
             <div className="flex items-center text-emerald-700 dark:text-emerald-300">
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-              </svg>
+              <Filter className="w-4 h-4 mr-2" />
               <span className="font-medium">
                 {loading ? 'Loading...' : `${companies.length} of ${pagination.total} companies found`}
                 {searchDebounce && ` for "${searchDebounce}"`}
@@ -285,18 +279,14 @@ export default function CompanyDatabasePage() {
         ) : error ? (
           <div className="card p-6 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 animate-shake">
             <div className="flex items-center text-red-700 dark:text-red-300">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
+              <AlertCircle className="w-5 h-5 mr-2" />
               {error}
             </div>
           </div>
         ) : companies.length === 0 ? (
           <div className="text-center py-20 animate-fade-in-scale">
             <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
+              <Database className="w-10 h-10 text-white" />
             </div>
             <div className="text-gray-500 dark:text-gray-400 text-2xl font-semibold mb-2">No companies found</div>
             <p className="text-gray-400 dark:text-gray-500 mb-6">
@@ -320,25 +310,19 @@ export default function CompanyDatabasePage() {
                   <tr>
                     <th className="px-6 py-4 text-left font-semibold text-emerald-700 dark:text-emerald-300">
                       <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9 12a1 1 0 001-1v-3a1 1 0 10-2 0v3a1 1 0 001 1zm0 4a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                        </svg>
+                        <Building className="w-4 h-4 mr-2" />
                         Company Name
                       </div>
                     </th>
                     <th className="px-6 py-4 text-left font-semibold text-emerald-700 dark:text-emerald-300">
                       <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                        </svg>
+                        <Users className="w-4 h-4 mr-2" />
                         Type
                       </div>
                     </th>
                     <th className="px-6 py-4 text-left font-semibold text-emerald-700 dark:text-emerald-300">
                       <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
+                        <Globe className="w-4 h-4 mr-2" />
                         Action
                       </div>
                     </th>
@@ -377,13 +361,23 @@ export default function CompanyDatabasePage() {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleRequestAccess(company)}
-                          className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg flex items-center"
+                          disabled={contactsLoading}
+                          className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Eye className="w-4 h-4 mr-2" />
-                          {userVerificationStatus?.identity_verified || userVerificationStatus?.entity_id
-                            ? 'View Contacts'
-                            : 'Request Access'
-                          }
+                          {contactsLoading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-4 h-4 mr-2" />
+                              {userVerificationStatus?.identity_verified || userVerificationStatus?.entity_id
+                                ? 'View Contacts'
+                                : 'Request Access'
+                              }
+                            </>
+                          )}
                         </button>
                       </td>
                     </tr>
@@ -407,10 +401,8 @@ export default function CompanyDatabasePage() {
                     </>
                   ) : (
                     <>
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                      Load More Companies ({pagination.total - companies.length} remaining)
+                      <Globe className="w-4 h-4 mr-2" />
+                      Load More ({pagination.total - companies.length} remaining)
                     </>
                   )}
                 </button>
@@ -432,7 +424,7 @@ export default function CompanyDatabasePage() {
         <VerificationModal
           onClose={() => setShowVerificationModal(false)}
           onVerify={handleIdentityVerification}
-          loading={loading}
+          loading={contactsLoading}
         />
       )}
 
@@ -545,8 +537,6 @@ function VerificationModal({ onClose, onVerify, loading }) {
 
 // Contacts Modal Component
 function ContactsModal({ company, contacts, onClose, hasFullAccess }) {
-  console.log('ContactsModal props:', { company, contacts, hasFullAccess });
-  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">

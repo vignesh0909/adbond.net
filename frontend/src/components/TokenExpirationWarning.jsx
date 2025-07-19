@@ -5,19 +5,30 @@ import { useAuthContext } from '../contexts/AuthContext';
  * Component to show token expiration warnings to users
  */
 const TokenExpirationWarning = () => {
-  const { isAuthenticated, isTokenExpiring, timeUntilExpiration, logout } = useAuthContext();
+  const { isAuthenticated, tokenInfo, logout } = useAuthContext();
   const [showWarning, setShowWarning] = useState(false);
   const [minutesRemaining, setMinutesRemaining] = useState(0);
 
+  // Warning threshold (5 minutes before expiration)
+  const warningThreshold = 5 * 60 * 1000; // 5 minutes
+
   useEffect(() => {
-    if (isAuthenticated && isTokenExpiring && timeUntilExpiration > 0) {
-      setShowWarning(true);
-      setMinutesRemaining(Math.ceil(timeUntilExpiration / (60 * 1000)));
+    if (isAuthenticated && tokenInfo && tokenInfo.timeUntilExpiration > 0) {
+      const timeUntilExpiration = tokenInfo.timeUntilExpiration;
+      
+      // Show warning if token is expiring within threshold
+      if (timeUntilExpiration <= warningThreshold) {
+        setShowWarning(true);
+        setMinutesRemaining(Math.ceil(timeUntilExpiration / (60 * 1000)));
+      } else {
+        setShowWarning(false);
+        setMinutesRemaining(0);
+      }
     } else {
       setShowWarning(false);
       setMinutesRemaining(0);
     }
-  }, [isAuthenticated, isTokenExpiring, timeUntilExpiration]);
+  }, [isAuthenticated, tokenInfo, warningThreshold]);
 
   // Auto-hide warning after 10 seconds
   useEffect(() => {
@@ -33,7 +44,7 @@ const TokenExpirationWarning = () => {
   if (!showWarning) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 max-w-sm">
+    <div className="fixed top-24 right-4 z-[60] max-w-sm">
       <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow-lg">
         <div className="flex items-start">
           <div className="flex-shrink-0">

@@ -102,11 +102,49 @@ CREATE TABLE IF NOT EXISTS access_requests (
     CREATE INDEX IF NOT EXISTS idx_access_requests_status ON access_requests(request_status);
 `;
 
+const createUnregisteredEntityReviewsTableQuery = `
+CREATE TABLE IF NOT EXISTS unregistered_entity_reviews (
+    review_id TEXT PRIMARY KEY,
+    entity_name VARCHAR(200) NOT NULL,
+    entity_website VARCHAR(500),
+    entity_description TEXT,
+    entity_contact_info JSONB,
+    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    reviewer_type VARCHAR(20) NOT NULL CHECK (reviewer_type IN ('user', 'advertiser', 'network', 'affiliate')),
+    title VARCHAR(200) NOT NULL,
+    overall_rating INTEGER CHECK (overall_rating >= 1 AND overall_rating <= 5) NOT NULL,
+    review_text TEXT NOT NULL,
+    category_ratings JSONB NOT NULL,
+    proof_attachments JSONB DEFAULT '[]'::jsonb,
+    tags JSONB DEFAULT '[]'::jsonb,
+    is_anonymous BOOLEAN DEFAULT FALSE,
+    is_verified BOOLEAN DEFAULT FALSE,
+    helpful_votes INTEGER DEFAULT 0,
+    unhelpful_votes INTEGER DEFAULT 0,
+    review_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (review_status IN ('pending', 'approved', 'rejected', 'flagged', 'converted')),
+    admin_notes TEXT,
+    dispute_reason TEXT,
+    converted_entity_id TEXT REFERENCES entities(entity_id),
+    converted_review_id TEXT REFERENCES reviews(review_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CHECK (category_ratings ? 'quality' AND category_ratings ? 'support' AND category_ratings ? 'reliability' AND category_ratings ? 'payment_speed')
+);
+
+-- Indexes for unregistered entity reviews
+CREATE INDEX IF NOT EXISTS idx_unregistered_reviews_entity_name ON unregistered_entity_reviews(entity_name);
+CREATE INDEX IF NOT EXISTS idx_unregistered_reviews_user ON unregistered_entity_reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_unregistered_reviews_status ON unregistered_entity_reviews(review_status);
+CREATE INDEX IF NOT EXISTS idx_unregistered_reviews_created ON unregistered_entity_reviews(created_at);
+CREATE INDEX IF NOT EXISTS idx_unregistered_reviews_rating ON unregistered_entity_reviews(overall_rating);
+`;
+
 const tables = [
     { name: 'entities', query: createEntitysTableQuery },
     { name: 'reviews', query: createReviewsTableQuery },
     { name: 'review_replies', query: createReviewRepliesTableQuery },
-    { name: 'access_requests', query: createAccessRequestsTableQuery }
+    { name: 'access_requests', query: createAccessRequestsTableQuery },
+    { name: 'unregistered_entity_reviews', query: createUnregisteredEntityReviewsTableQuery }
 ];
 
 tables.forEach(table => {
@@ -197,18 +235,7 @@ const entityModel = {
     // Create a new entity
     async createEntity(entityData) {
         try {
-            const {
-                entity_type,
-                name,
-                email,
-                secondary_email,
-                website_url,
-                contact_info,
-                description,
-                additional_notes,
-                how_you_heard,
-                entity_metadata
-            } = entityData;
+            const { entity_type, name, email, secondary_email, website_url, contact_info, description, additional_notes, how_you_heard, entity_metadata } = entityData;
 
             const entity_id = uuidv4();
 
@@ -306,18 +333,8 @@ const entityModel = {
     // Update entity
     async updateEntity(entity_id, entityData) {
         try {
-            const {
-                name,
-                email,
-                secondary_email,
-                website,
-                contact_info,
-                description,
-                additional_notes,
-                how_you_heard,
-                entity_metadata,
-                is_public
-            } = entityData;
+            const { name, email, secondary_email, website, contact_info, description, additional_notes, how_you_heard,
+                entity_metadata, is_public } = entityData;
 
             const query = `
                 UPDATE entities 
@@ -418,16 +435,7 @@ const entityModel = {
     // Search entities with advanced filtering
     async searchEntities(filters = {}, page = 1, limit = 10) {
         try {
-            const {
-                entity_type,
-                verification_status,
-                is_public,
-                search_term,
-                min_reputation,
-                verticals,
-                payment_terms,
-                supported_models
-            } = filters;
+            const { entity_type, verification_status, is_public, search_term, min_reputation, verticals, payment_terms, supported_models } = filters;
 
             const offset = (page - 1) * limit;
             let whereConditions = ['1=1'];
@@ -699,6 +707,221 @@ const entityModel = {
 
             const result = await client.query(query, [entity_id]);
             return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Unregistered Entity Reviews Methods
+    async createUnregisteredEntityReview(reviewData) {
+        try {
+            const {
+                review_id,
+                entity_name,
+                entity_website,
+                entity_description,
+                entity_contact_info,
+                user_id,
+                reviewer_type,
+                title,
+                overall_rating,
+                review_text,
+                category_ratings,
+                proof_attachments = [],
+                tags = [],
+                is_anonymous = false
+            } = reviewData;
+
+            const query = `
+                INSERT INTO unregistered_entity_reviews (
+                    review_id, entity_name, entity_website, entity_description, entity_contact_info,
+                    user_id, reviewer_type, title, overall_rating, review_text, category_ratings,
+                    proof_attachments, tags, is_anonymous, review_status, created_at, updated_at
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending', NOW(), NOW()
+                )
+                RETURNING *
+            `;
+
+            const values = [
+                review_id, entity_name, entity_website, entity_description, 
+                JSON.stringify(entity_contact_info || {}), user_id, reviewer_type, title, 
+                overall_rating, review_text, JSON.stringify(category_ratings),
+                JSON.stringify(proof_attachments), JSON.stringify(tags), is_anonymous
+            ];
+
+            const result = await client.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async getUnregisteredEntityReviews(filters = {}) {
+        try {
+            const { status = 'pending', limit = 50, offset = 0, entity_name } = filters;
+            
+            let whereClause = 'WHERE review_status = $1';
+            let queryParams = [status, limit, offset];
+            let paramCount = 1;
+
+            if (entity_name) {
+                paramCount++;
+                whereClause += ` AND entity_name ILIKE $${paramCount}`;
+                queryParams.splice(-2, 0, `%${entity_name}%`);
+            }
+
+            const query = `
+                SELECT 
+                    uer.review_id, uer.entity_name, uer.entity_website, uer.entity_description,
+                    uer.entity_contact_info, uer.title, uer.overall_rating, uer.review_text,
+                    uer.category_ratings, uer.tags, uer.is_anonymous, uer.review_status,
+                    uer.admin_notes, uer.created_at, uer.updated_at,
+                    CASE 
+                        WHEN uer.is_anonymous = true THEN 'Anonymous'
+                        ELSE CONCAT(u.first_name, ' ', COALESCE(u.last_name, ''))
+                    END as reviewer_name,
+                    uer.reviewer_type
+                FROM unregistered_entity_reviews uer
+                LEFT JOIN users u ON uer.user_id = u.user_id
+                ${whereClause}
+                ORDER BY uer.created_at ASC
+                LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+            `;
+
+            const result = await client.query(query, queryParams);
+            return result.rows;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async moderateUnregisteredEntityReview(review_id, action, admin_notes = '') {
+        try {
+            const validActions = ['approve', 'reject', 'flag', 'convert'];
+            if (!validActions.includes(action)) {
+                throw new Error('Invalid action');
+            }
+
+            const status = action === 'approve' ? 'approved' :
+                action === 'reject' ? 'rejected' :
+                action === 'flag' ? 'flagged' : 'converted';
+
+            const query = `
+                UPDATE unregistered_entity_reviews
+                SET review_status = $1, admin_notes = $2, updated_at = NOW()
+                WHERE review_id = $3
+                RETURNING *
+            `;
+
+            const result = await client.query(query, [status, admin_notes, review_id]);
+            return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async convertUnregisteredReviewToEntity(review_id, entity_type = 'network') {
+        try {
+            // Get the unregistered review
+            const getReviewQuery = `
+                SELECT * FROM unregistered_entity_reviews 
+                WHERE review_id = $1 AND review_status = 'pending'
+            `;
+            const reviewResult = await client.query(getReviewQuery, [review_id]);
+            
+            if (reviewResult.rows.length === 0) {
+                throw new Error('Unregistered review not found or already processed');
+            }
+
+            const unregReview = reviewResult.rows[0];
+            
+            // Create entity from the review data
+            const entity_id = uuidv4();
+            const createEntityQuery = `
+                INSERT INTO entities (
+                    entity_id, entity_type, name, email, website, 
+                    contact_info, description, entity_metadata,
+                    verification_status, is_public
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, 'pending', true
+                )
+                RETURNING *
+            `;
+
+            const entityData = [
+                entity_id,
+                entity_type,
+                unregReview.entity_name,
+                unregReview.entity_contact_info?.email || `contact@${unregReview.entity_name.toLowerCase().replace(/\s+/g, '')}.com`,
+                unregReview.entity_website || 'https://example.com',
+                JSON.stringify(unregReview.entity_contact_info || { phone: 'N/A' }),
+                unregReview.entity_description || 'Entity created from review submission',
+                JSON.stringify({})
+            ];
+
+            const entityResult = await client.query(createEntityQuery, entityData);
+            const newEntity = entityResult.rows[0];
+
+            // Create the regular review
+            const new_review_id = uuidv4();
+            const createReviewQuery = `
+                INSERT INTO reviews (
+                    review_id, entity_id, user_id, reviewer_type, title, overall_rating,
+                    review_text, category_ratings, proof_attachments, tags, is_anonymous,
+                    review_status, created_at, updated_at
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, NOW()
+                )
+                RETURNING *
+            `;
+
+            const reviewData = [
+                new_review_id, entity_id, unregReview.user_id, unregReview.reviewer_type,
+                unregReview.title, unregReview.overall_rating, unregReview.review_text,
+                unregReview.category_ratings, unregReview.proof_attachments, unregReview.tags,
+                unregReview.is_anonymous, unregReview.created_at
+            ];
+
+            const newReviewResult = await client.query(createReviewQuery, reviewData);
+            const newReview = newReviewResult.rows[0];
+
+            // Update the unregistered review status
+            const updateUnregQuery = `
+                UPDATE unregistered_entity_reviews
+                SET review_status = 'converted', converted_entity_id = $1, 
+                    converted_review_id = $2, updated_at = NOW()
+                WHERE review_id = $3
+                RETURNING *
+            `;
+
+            await client.query(updateUnregQuery, [entity_id, new_review_id, review_id]);
+
+            return {
+                entity: newEntity,
+                review: newReview,
+                original_review: unregReview
+            };
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async getUnregisteredReviewStats() {
+        try {
+            const query = `
+                SELECT 
+                    review_status,
+                    COUNT(*) as count
+                FROM unregistered_entity_reviews
+                GROUP BY review_status
+            `;
+            
+            const result = await client.query(query);
+            return result.rows.reduce((acc, row) => {
+                acc[row.review_status] = parseInt(row.count);
+                return acc;
+            }, {});
         } catch (error) {
             throw error;
         }

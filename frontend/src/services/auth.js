@@ -20,20 +20,17 @@ export const authAPI = {
 
   // User login
   login: async (credentials) => {
-    console.log('authAPI.login called with:', credentials.email);
     const response = await http.post('/users/login', credentials);
-    console.log('authAPI.login response:', response);
 
     // Store token in localStorage
     if (response.token) {
-      console.log('Storing auth token and user data in localStorage');
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('currentUser', JSON.stringify(response.user));
-      
+
       // Start token expiration checking after successful login
       authAPI.startTokenExpirationCheck();
     } else {
-      console.warn('No token received in login response');
+      // console.warn('No token received in login response');
     }
 
     return response;
@@ -61,37 +58,35 @@ export const authAPI = {
 
   // Reset password with token (for forgot password flow)
   resetPasswordWithToken: async (token, newPassword) => {
-    return await http.post('/users/reset-password-token', { 
-      token, 
-      new_password: newPassword 
+    return await http.post('/users/reset-password-token', {
+      token,
+      new_password: newPassword
     });
   },
 
   // Logout
   logout: () => {
-    console.log('Logging out user and clearing all data');
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('password_reset_required');
-    
+
     // Stop token expiration checking
     authAPI.stopTokenExpirationCheck();
-    
+
     // Trigger logout callbacks
     logoutCallbacks.forEach(callback => {
       try {
         callback();
       } catch (error) {
-        console.error('Error executing logout callback:', error);
+        // console.error('Error executing logout callback:', error);
       }
     });
   },
 
   // Auto logout when token expires
   autoLogout: (reason = 'Token expired') => {
-    console.warn(`Auto logout triggered: ${reason}`);
     authAPI.logout();
-    
+
     // Redirect to login page
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
@@ -102,14 +97,13 @@ export const authAPI = {
   isLoggedIn: () => {
     const token = localStorage.getItem('authToken');
     if (!token) return false;
-    
+
     // Check if token is expired
     if (tokenUtils.isTokenExpired(token)) {
-      console.warn('Token is expired, auto-logging out');
       authAPI.autoLogout('Token expired');
       return false;
     }
-    
+
     return true;
   },
 
@@ -119,8 +113,6 @@ export const authAPI = {
       const user = localStorage.getItem('currentUser');
       return user ? JSON.parse(user) : null;
     } catch (error) {
-      console.error('Error parsing user data from localStorage:', error);
-      // Clear corrupted data
       localStorage.removeItem('currentUser');
       return null;
     }
@@ -130,7 +122,6 @@ export const authAPI = {
   getToken: () => {
     const token = localStorage.getItem('authToken');
     if (token && tokenUtils.isTokenExpired(token)) {
-      console.warn('Stored token is expired, auto-logging out');
       authAPI.autoLogout('Token expired');
       return null;
     }
@@ -147,7 +138,7 @@ export const authAPI = {
   getTokenInfo: () => {
     const token = localStorage.getItem('authToken');
     if (!token) return null;
-    
+
     return {
       token,
       isExpired: tokenUtils.isTokenExpired(token),
@@ -161,31 +152,28 @@ export const authAPI = {
   startTokenExpirationCheck: () => {
     // Clear any existing interval
     authAPI.stopTokenExpirationCheck();
-    
-    console.log('Starting token expiration check interval');
-    
+
     tokenExpirationInterval = setInterval(() => {
       const token = localStorage.getItem('authToken');
-      
+
       if (!token) {
-        console.log('No token found, stopping expiration check');
         authAPI.stopTokenExpirationCheck();
         return;
       }
-      
+
+      // Log token status for debugging (less verbose)
+      const timeUntilExpiration = tokenUtils.getTimeUntilExpiration(token);
+
       if (tokenUtils.isTokenExpired(token)) {
-        console.warn('Token expired during check, auto-logging out');
         authAPI.autoLogout('Token expired');
         return;
       }
-      
+
       // Check if token is expiring within warning threshold
-      const timeUntilExpiration = tokenUtils.getTimeUntilExpiration(token);
       if (timeUntilExpiration <= AUTO_LOGOUT_WARNING_THRESHOLD && timeUntilExpiration > 0) {
         const minutesRemaining = Math.ceil(timeUntilExpiration / (60 * 1000));
-        console.warn(`Token expires in ${minutesRemaining} minutes`);
-        
-        // Optionally show warning to user (can be enhanced with toast notifications)
+
+        // Dispatch warning event
         if (typeof window !== 'undefined' && window.dispatchEvent) {
           window.dispatchEvent(new CustomEvent('tokenExpiringWarning', {
             detail: { minutesRemaining, timeUntilExpiration }
@@ -198,7 +186,6 @@ export const authAPI = {
   // Stop token expiration checking
   stopTokenExpirationCheck: () => {
     if (tokenExpirationInterval) {
-      console.log('Stopping token expiration check interval');
       clearInterval(tokenExpirationInterval);
       tokenExpirationInterval = null;
     }
