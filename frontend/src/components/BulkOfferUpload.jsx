@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { offersAPI } from '../services/offers';
+import { Upload, FileText, FileUp, Loader2 } from 'lucide-react';
 
 // Error code to user-friendly message mapping
 const ERROR_MESSAGES = {
@@ -184,9 +185,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
         onClick={() => setShowModal(true)}
         className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-bold"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
+        <Upload className="w-5 h-5" />
         Bulk Upload Offers
       </button>
 
@@ -243,9 +242,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                   <div className="flex-1 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-2xl p-6 border border-green-200/50 dark:border-green-700/30 animate-slide-up animate-delay-200 text-center">
                     <div className="space-y-4">
                       <div>
-                        <svg className="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                        <FileText className="mx-auto h-12 w-12 text-blue-400" />
                       </div>
                       <div>
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Download Template</h3>
@@ -264,9 +261,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                   <div className="flex-1 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/30 animate-slide-up animate-delay-300">
                     <div className="space-y-4">
                       <div className="text-center">
-                        <svg className="mx-auto h-12 w-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
+                        <FileUp className="mx-auto h-12 w-12 text-green-400" />
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Upload Your File</h3>
                         <p className="text-gray-500 dark:text-gray-400">Choose your Excel file with offer data</p>
                       </div>
@@ -311,10 +306,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                     className="flex-1 sm:flex-none sm:px-8 bg-gradient-to-r from-blue-500 via-green-500 to-blue-600 hover:from-blue-600 hover:via-green-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {previewing && (
-                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <Loader2 className="animate-spin h-4 w-4" />
                     )}
                     {previewing ? 'Validating...' : 'Preview & Validate'}
                   </button>
@@ -392,10 +384,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                       className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
                     >
                       {uploading && (
-                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <Loader2 className="animate-spin h-4 w-4" />
                       )}
                       {uploading ? 'Uploading...' : `Upload ${previewData.valid} Valid Offers`}
                     </button>
