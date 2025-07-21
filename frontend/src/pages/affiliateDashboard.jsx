@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '../components/navbar';
 import EntityReviewsDashboard from '../components/EntityReviewsDashboard';
+import BulkOfferRequestUpload from '../components/BulkOfferRequestUpload';
+import BulkOfferRequestUploadHistory from '../components/BulkOfferRequestUploadHistory';
 import { authAPI } from '../services/auth';
 import { offersAPI } from '../services/offers';
+import ToolTip from '../components/toolTip';
 
 export default function AffiliateDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -25,7 +28,8 @@ export default function AffiliateDashboard() {
     platforms_used: [],
     desired_payout_type: 'CPA',
     budget_range: '',
-    notes: ''
+    notes: '',
+    request_status: 'active'
   });
 
   // States for bidding on offers
@@ -142,6 +146,7 @@ export default function AffiliateDashboard() {
         (typeof request.budget_range === 'object' ?
           JSON.stringify(request.budget_range) :
           request.budget_range) : '',
+      request_status: request.request_status || 'active',
       notes: request.notes || ''
     });
     setShowRequestModal(true);
@@ -224,12 +229,15 @@ export default function AffiliateDashboard() {
       <section className="pt-24 pb-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
           <h2 className="text-3xl font-extrabold text-pink-700 dark:text-pink-300 tracking-tight">Affiliate Dashboard</h2>
-          <button
-            onClick={() => openCreateRequest()}
-            className="bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold transition"
-          >
-            + Create Offer Request
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => openCreateRequest()}
+              className="bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold transition"
+            >
+              + Create Offer Request
+            </button>
+            <BulkOfferRequestUpload onUploadComplete={fetchMyRequests} />
+          </div>
         </div>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 animate-pulse">
@@ -247,6 +255,15 @@ export default function AffiliateDashboard() {
                 }`}
             >
               My Requests <span className="ml-1 text-xs bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full">{myRequests.length}</span>
+            </button>
+            <button
+              onClick={() => setSelectedTab('upload-history')}
+              className={`py-2 px-1 border-b-2 font-semibold text-lg transition-all ${selectedTab === 'upload-history'
+                ? 'border-pink-500 text-pink-700 dark:text-pink-300'
+                : 'border-transparent text-gray-500 hover:text-pink-700 dark:hover:text-pink-200'
+                }`}
+            >
+              Upload History
             </button>
             <button
               onClick={() => setSelectedTab('reviews')}
@@ -308,10 +325,13 @@ export default function AffiliateDashboard() {
                             {request.title ? request.title.charAt(0).toUpperCase() : '📋'}
                           </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-lg mb-1 text-gray-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300 line-clamp-2">
-                            {request.title}
-                          </h4>
+
+                        <div className="flex-1">
+                          <ToolTip text={request.title}>
+                            <h4 className="w-40 truncate font-bold text-lg mb-1 text-gray-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300">
+                              {request.title}
+                            </h4>
+                          </ToolTip>
                           <div className="inline-flex items-center px-2 py-0.5 bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 rounded-full">
                             <span className="w-1.5 h-1.5 bg-pink-500 rounded-full mr-1.5 animate-pulse"></span>
                             <span className="text-pink-700 dark:text-pink-300 font-medium text-xs">{request.vertical}</span>
@@ -405,6 +425,13 @@ export default function AffiliateDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+        {/* Upload History Tab */}
+        {selectedTab === 'upload-history' && (
+          <div>
+            <h3 className="text-xl font-semibold mb-6 text-pink-700 dark:text-pink-200">Bulk Upload History</h3>
+            <BulkOfferRequestUploadHistory />
           </div>
         )}
         {/* Reviews Tab */}
@@ -579,9 +606,40 @@ export default function AffiliateDashboard() {
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-700/30 animate-slide-up animate-delay-300">
                     <h4 className="font-bold text-purple-700 dark:text-purple-300 mb-4 flex items-center">
                       <span className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center text-white text-sm mr-2">📋</span>
-                      Additional Details
+                      Status & Additional Details
                     </h4>
+
                     <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                          Request Status
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <button
+                            type="button"
+                            onClick={() => setRequestData({ ...requestData, request_status: requestData.request_status === 'active' ? 'inactive' : 'active' })}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${requestData.request_status === 'active'
+                              ? 'bg-green-600'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                              }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${requestData.request_status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                            />
+                          </button>
+                          <span className={`text-sm font-medium ${requestData.request_status === 'active'
+                            ? 'text-green-700 dark:text-green-300'
+                            : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                            {requestData.request_status === 'active' ? '🟢 Active' : '🔴 Inactive'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Active requests are visible to advertisers and can receive bids
+                        </p>
+                      </div>
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes & Requirements</label>
                         <textarea

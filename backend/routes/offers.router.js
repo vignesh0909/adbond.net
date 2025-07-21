@@ -5,6 +5,7 @@ const { entityModel } = require('../models/entity.model.pg.js');
 const emailService = require('../services/emailService.js');
 const multer = require('multer');
 const bulkOfferService = require('../services/bulkOfferService.js');
+const bulkOfferRequestService = require('../services/bulkOfferRequestService.js');
 const { validateUploadedFile, createUploadRateLimit } = require('../middleware/uploadMiddleware.js');
 
 // Configure multer for file uploads
@@ -386,16 +387,10 @@ router.get('/entity/public/:entity_id', async (req, res) => {
 router.get('/entity/:entity_id', authenticateToken, async (req, res) => {
     try {
         const { entity_id } = req.params;
-        const {
-            status,
-            category,
-            search,
-            limit = 20,
-            offset = 0
-        } = req.query;
+        const { offer_status, category, search, limit = 20, offset = 0 } = req.query;
 
         const filters = { entity_id };
-        if (status) filters.status = status;
+        if (offer_status) filters.status = offer_status;
         if (category) filters.category = category;
         if (search) filters.search = search;
 
@@ -900,6 +895,159 @@ router.get('/bulk-upload/history', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Bulk upload history error:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch upload history' });
+    }
+});
+
+// BULK OFFER REQUEST UPLOAD ROUTES
+
+// Download Excel template for bulk offer request upload
+router.get('/bulk-offer-request-upload/template', authenticateToken, async (req, res) => {
+    try {
+        const template = bulkOfferRequestService.createTemplate();
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="bulk_offer_requests_template.xlsx"');
+        res.send(template);
+    } catch (error) {
+        console.error('Template creation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create template',
+            code: 'TEMPLATE_ERROR'
+        });
+    }
+});
+
+// Preview Excel file for bulk offer request upload
+router.post('/bulk-offer-request-upload/preview', authenticateToken, uploadRateLimit, upload.single('file'), validateUploadedFile, async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: 'No file uploaded',
+                code: 'NO_FILE'
+            });
+        }
+
+        const previewResults = await bulkOfferRequestService.previewExcelFile(req.file.buffer);
+
+        res.json({
+            success: true,
+            preview: previewResults
+        });
+    } catch (error) {
+        console.error('Preview error:', error);
+        res.status(400).json({
+            success: false,
+            error: error.message,
+            code: 'PREVIEW_ERROR'
+        });
+    }
+});
+
+// Bulk upload offer requests
+router.post('/bulk-offer-request-upload', authenticateToken, uploadRateLimit, upload.single('file'), validateUploadedFile, async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: 'No file uploaded',
+                code: 'NO_FILE'
+            });
+        }
+
+        const userId = req.user.user_id;
+        const { email } = req.user;
+
+        const entity = await entityModel.getEntityByEmail(email);
+
+        if (!entity) {
+            return res.status(404).json({
+                success: false,
+                error: 'Entity not found for user'
+            });
+        }
+
+        if (!['affiliate', 'network'].includes(entity.entity_type)) {
+            return res.status(403).json({
+                success: false,
+                error: 'Only affiliates and networks can create offer requests'
+            });
+        }
+
+        if (entity.verification_status !== 'approved') {
+            return res.status(403).json({
+                success: false,
+                error: 'Entity must be approved to create offer requests'
+            });
+        }
+
+        // Process the Excel file
+        const fileProcessing = await bulkOfferRequestService.processExcelFile(req.file.buffer, userId, entity.entity_id);
+
+        if (fileProcessing.successful === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No valid offer requests found in the file',
+                details: fileProcessing.errors
+            });
+        }
+
+        // Save to database
+        const databaseSave = await bulkOfferRequestService.saveRequestsToDatabase(fileProcessing.processedRequests);
+
+        res.json({
+            success: true,
+            message: `Successfully processed ${databaseSave.successful} offer requests`,
+            results: {
+                fileProcessing: {
+                    total: fileProcessing.total,
+                    successful: fileProcessing.successful,
+                    failed: fileProcessing.failed,
+                    errors: fileProcessing.errors
+                },
+                databaseSave
+            }
+        });
+
+    } catch (error) {
+        console.error('Bulk upload error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            code: 'UPLOAD_ERROR'
+        });
+    }
+});
+
+// Get bulk offer request upload history
+router.get('/bulk-offer-request-upload/history', authenticateToken, async (req, res) => {
+    try {
+        const { limit = 20, offset = 0 } = req.query;
+        const userId = req.user.user_id;
+
+        // Get bulk uploaded offer requests for the current user
+        const result = await OffersModel.getOfferRequestsByUser(userId, {}, parseInt(limit), parseInt(offset));
+
+        if (result.success) {
+            res.json({
+                success: true,
+                requests: result.requests,
+                total: result.total,
+                pagination: result.pagination
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('History fetch error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch upload history'
+        });
     }
 });
 

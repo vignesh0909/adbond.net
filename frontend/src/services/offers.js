@@ -219,6 +219,89 @@ export const offersAPI = {
     });
     return await http.get(`/offers/bulk-upload/history?${queryParams}`);
   },
+
+  // Bulk offer request upload APIs
+
+  // Download Excel template for bulk offer request upload
+  downloadOfferRequestTemplate: async () => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4100/api';
+      const response = await fetch(`${API_BASE_URL}/offers/bulk-offer-request-upload/template`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to download template');
+      }
+
+      // Return the response blob directly
+      return await response.blob();
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Preview Excel file before upload for offer requests
+  previewBulkOfferRequestUpload: async (formData) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4100/api';
+      const response = await fetch(`${API_BASE_URL}/offers/bulk-offer-request-upload/preview`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Preview failed');
+      }
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Upload Excel file with offer requests
+  bulkOfferRequestUpload: async (formData) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4100/api';
+      const response = await fetch(`${API_BASE_URL}/offers/bulk-offer-request-upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get bulk offer request upload history
+  getBulkOfferRequestUploadHistory: async (limit = 10, offset = 0) => {
+    const queryParams = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString()
+    });
+    return await http.get(`/offers/bulk-offer-request-upload/history?${queryParams}`);
+  },
 };
 
 export default offersAPI;

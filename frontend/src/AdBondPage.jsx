@@ -1,24 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from './components/navbar';
-import {
-  Send,
-  ArrowRight,
-  Key,
-  CheckCircle,
-  Database,
-  MapPin,
-  Zap,
-  DollarSign,
-  Award,
-  Star,
-  ThumbsUp,
-  MessageCircle,
-  Edit3,
-  TrendingUp,
-  Instagram,
-  Facebook
-} from 'lucide-react';
+import { Send, ArrowRight, Key, CheckCircle, Database, MapPin, Zap, DollarSign, Award, Star, ThumbsUp, MessageCircle,
+  Edit3, TrendingUp, Instagram, Facebook} from 'lucide-react';
 
 const AdBondPage = () => {
   return (
@@ -528,9 +512,6 @@ const AdBondPage = () => {
               <button className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl text-xl font-black shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-2">
                 <span className="relative z-10 flex items-center gap-2">
                   Join Telegram Group
-                  {/* <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12.01 2.019c-5.495 0-9.991 4.496-9.991 9.991 0 1.778.463 3.445 1.258 4.887L2 22l5.109-1.258c1.443.794 3.109 1.258 4.887 1.258 5.495 0 9.991-4.496 9.991-9.991S17.505 2.019 12.01 2.019zm0 1.8c4.527 0 8.191 3.664 8.191 8.191s-3.664 8.191-8.191 8.191c-1.444 0-2.794-.37-3.977-1.019l-.24-.14-2.82.694.694-2.82-.14-.24c-.649-1.183-1.019-2.533-1.019-3.977 0-4.527 3.664-8.191 8.191-8.191zm4.51 5.794c-.082-.124-.299-.198-.626-.347-.327-.149-1.94-.958-2.24-1.066-.302-.109-.521-.163-.741.163-.22.326-.853 1.066-1.048 1.285-.195.22-.391.248-.717.083-.327-.166-1.379-.508-2.626-1.62-.97-.865-1.625-1.934-1.815-2.261-.195-.326-.021-.502.143-.663.146-.146.326-.38.489-.57.163-.195.217-.326.326-.542.109-.217.054-.407-.027-.57-.082-.163-.741-1.78-.998-2.448-.26-.651-.526-.565-.741-.575-.195-.007-.413-.011-.632-.011-.22 0-.576.082-.876.407-.302.326-1.15 1.124-1.15 2.741s1.178 3.178 1.34 3.396c.163.217 2.293 3.504 5.552 4.916.777.337 1.384.538 1.857.689.78.248 1.49.213 2.051.129.626-.093 1.94-.793 2.213-1.557.272-.765.272-1.418.19-1.557z"/>
-                  </svg> */}
                   <Send />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

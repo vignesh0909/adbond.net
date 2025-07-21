@@ -3,9 +3,12 @@ import Navbar from '../components/navbar';
 import EntityReviewsDashboard from '../components/EntityReviewsDashboard';
 import BulkOfferUpload from '../components/BulkOfferUpload';
 import BulkUploadHistory from '../components/BulkUploadHistory';
+import BulkOfferRequestUpload from '../components/BulkOfferRequestUpload';
+import BulkOfferRequestUploadHistory from '../components/BulkOfferRequestUploadHistory';
 import { authAPI } from '../services/auth';
 import { offersAPI } from '../services/offers';
 import { toast } from 'react-toastify';
+import ToolTip from '../components/toolTip';
 
 export default function NetworkDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -133,7 +136,7 @@ export default function NetworkDashboard() {
         offset: (offersPage - 1) * offersPerPage
       };
       if (offersFilter !== 'all') {
-        filters.request_status = offersFilter;
+        filters.offer_status = offersFilter;
       }
       if (searchQuery.trim()) {
         filters.search = searchQuery.trim();
@@ -522,6 +525,7 @@ export default function NetworkDashboard() {
             >
               + Create Request
             </button>
+            <BulkOfferRequestUpload onUploadComplete={fetchMyRequests} />
           </div>
         </div>
         {error && (
@@ -732,7 +736,10 @@ export default function NetworkDashboard() {
         {selectedTab === 'upload-history' && (
           <div>
             <h3 className="text-xl font-semibold mb-6 text-green-700 dark:text-green-200">Bulk Upload History</h3>
-            <BulkUploadHistory />
+            <div className="space-y-8">
+              <BulkUploadHistory />
+              <BulkOfferRequestUploadHistory />
+            </div>
           </div>
         )}
         {/* My Requests Tab */}
@@ -799,9 +806,11 @@ export default function NetworkDashboard() {
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-lg mb-1 text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300 line-clamp-2">
-                            {request.title}
-                          </h4>
+                          <ToolTip text={request.title}>
+                            <h4 className="w-40 truncate font-bold text-lg mb-1 text-gray-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300">
+                              {request.title}
+                            </h4>
+                          </ToolTip>
                           <div className="inline-flex items-center px-2 py-0.5 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 rounded-full">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
                             <span className="text-green-700 dark:text-green-300 font-medium text-xs">{request.vertical}</span>
