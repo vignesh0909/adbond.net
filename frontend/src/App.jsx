@@ -4,7 +4,6 @@ import ToastProvider from './components/ToastProvider';
 import TokenExpirationWarning from './components/TokenExpirationWarning';
 import { AuthProvider } from './contexts/AuthContext';
 import AdBondPage from './AdBondPage';
-import Showcase from './pages/showcase';
 import AdminPanel from './pages/adminpanel';
 import AdvertisersWishlist from './pages/advertiserswishlist';
 import DataBase from './pages/database';
@@ -31,7 +30,6 @@ const App = () => {
         <TokenExpirationWarning />
         <Routes>
           <Route path="/" element={<AdBondPage />} />
-          <Route path="/showcase" element={<Showcase />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/wishlist" element={<Wishlists />} />
           <Route path="/advertiserswishlist" element={<AdvertisersWishlist />} />

@@ -274,7 +274,7 @@ export default function OffersPage() {
                           className="text-sm text-blue-600 dark:text-blue-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline font-semibold transition-colors flex items-center"
                         >
                           <IdCard className="mr-2" />
-                          {offer.entity_name || 'Unknown Entity'}
+                          {offer.entity_metadata.company_name || 'Unknown Entity'}
                         </button>
                       </div>
 

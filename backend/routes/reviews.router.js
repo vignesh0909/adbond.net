@@ -445,6 +445,90 @@ router.get('/entity/:entity_id/dashboard', authenticateToken, async (req, res) =
     }
 });
 
+// Get reviews given by an entity (for entity dashboard)
+router.get('/entity/:entity_id/given', authenticateToken, async (req, res) => {
+    try {
+        const { entity_id } = req.params;
+        const { page = 1, limit = 10, status } = req.query;
+        const offset = (page - 1) * limit;
+
+        // Verify user owns this entity or is admin
+        const user = await userModel.getUserById(req.user.user_id);
+        if (user.entity_id !== entity_id && user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied'
+            });
+        }
+
+        // Get all users associated with this entity
+        const entityUsersQuery = `
+            SELECT user_id FROM users WHERE entity_id = $1
+        `;
+        const entityUsersResult = await client.query(entityUsersQuery, [entity_id]);
+        const entityUserIds = entityUsersResult.rows.map(row => row.user_id);
+
+        if (entityUserIds.length === 0) {
+            return res.json({
+                success: true,
+                reviews: [],
+                statistics: {
+                    total_given: 0,
+                    avg_rating_given: 0
+                }
+            });
+        }
+
+        let statusFilter = '';
+        let queryParams = [entityUserIds, limit, offset];
+
+        if (status) {
+            statusFilter = 'AND r.review_status = $4';
+            queryParams.push(status);
+        }
+
+        const query = `
+            SELECT r.review_id, r.title, r.overall_rating, r.review_text, r.category_ratings, r.review_status,
+                r.created_at, r.updated_at, e.name as entity_name, e.entity_type as reviewed_entity_type,
+                COUNT(rr.reply_id) as reply_count,
+                u.first_name, u.last_name, u.email as reviewer_email
+            FROM reviews r
+            JOIN entities e ON r.entity_id = e.entity_id
+            LEFT JOIN review_replies rr on r.review_id = rr.review_id
+            LEFT JOIN users u ON r.user_id = u.user_id
+            WHERE r.user_id = ANY($1) ${statusFilter}
+            GROUP BY r.review_id, e.name, e.entity_type, u.first_name, u.last_name, u.email
+            ORDER BY r.created_at DESC
+            LIMIT $2 OFFSET $3
+        `;
+
+        const result = await client.query(query, queryParams);
+
+        // Get statistics for reviews given by this entity
+        const statsQuery = `
+            SELECT 
+                COUNT(*) as total_given,
+                AVG(overall_rating) as avg_rating_given,
+                COUNT(CASE WHEN review_status = 'approved' THEN 1 END) as approved_given,
+                COUNT(CASE WHEN review_status = 'pending' THEN 1 END) as pending_given,
+                COUNT(CASE WHEN review_status = 'rejected' THEN 1 END) as rejected_given
+            FROM reviews
+            WHERE user_id = ANY($1)
+        `;
+
+        const statsResult = await client.query(statsQuery, [entityUserIds]);
+
+        res.json({
+            success: true,
+            reviews: result.rows,
+            statistics: statsResult.rows[0]
+        });
+    } catch (error) {
+        console.error('Get entity given reviews error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
 // ADMIN ROUTES
 
 // Get all reviews for moderation (admin only)

@@ -87,7 +87,6 @@ export default function AffiliateDashboard() {
 
   const fetchMyRequests = async () => {
     if (!currentUser?.user_id) {
-      console.log('No currentUser or user_id available for fetchMyRequests');
       return;
     }
 

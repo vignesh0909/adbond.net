@@ -221,7 +221,6 @@ export default function LoginDashboardPage() {
     setForgotError("");
 
     try {
-      console.log('Sending forgot password request to:', forgotEmail);
       const response = await authAPI.forgotPassword(forgotEmail);
       setForgotSuccess('Password reset email sent! Please check your inbox.');
       setForgotError("");

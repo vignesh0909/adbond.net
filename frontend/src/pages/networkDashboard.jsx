@@ -1458,7 +1458,7 @@ export default function NetworkDashboard() {
                           onChange={(e) => setBidData({ ...bidData, bid_notes: e.target.value })}
                           className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
                           rows="3"
-                          placeholder="Additional details about your offer, terms, or requirements..."
+                          placeholder="Additional details about your offer, terms, or requirements...(Min. 10 characters required)"
                         />
                       </div>
                     </div>

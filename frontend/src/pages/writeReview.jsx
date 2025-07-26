@@ -418,7 +418,7 @@ export default function WriteReviewPage() {
                                     <textarea
                                         value={formData.review_text}
                                         onChange={(e) => handleInputChange('review_text', e.target.value)}
-                                        placeholder="Share your detailed experience working with this entity..."
+                                        placeholder="Share your detailed experience working with this entity...(Min. 10 characters required)"
                                         rows={6}
                                         className="input-field resize-none"
                                         required

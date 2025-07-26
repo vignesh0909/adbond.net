@@ -35,15 +35,10 @@ export default function UserDashboard({ currentUser, onLogout }) {
     const fetchMyReviews = async () => {
         try {
             setReviewsLoading(true);
-            console.log('Fetching reviews for user:', currentUser?.user_id);
             const response = await reviewsAPI.getMyReviews({ limit: 50 });
-            console.log('Reviews API response:', response);
-            
             setMyReviews(response.reviews || []);
             
-            // Calculate stats
             const reviews = response.reviews || [];
-            console.log('Number of reviews found:', reviews.length);
             const stats = {
                 total: reviews.length,
                 approved: reviews.filter(r => r.review_status === 'approved').length,
@@ -52,7 +47,6 @@ export default function UserDashboard({ currentUser, onLogout }) {
                 avgRating: reviews.length > 0 ? 
                     (reviews.reduce((sum, r) => sum + r.overall_rating, 0) / reviews.length).toFixed(1) : 0
             };
-            console.log('Calculated stats:', stats);
             setReviewStats(stats);
         } catch (error) {
             console.error('Failed to fetch reviews:', error);

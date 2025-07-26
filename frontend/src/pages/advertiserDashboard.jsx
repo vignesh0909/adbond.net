@@ -95,7 +95,7 @@ export default function AdvertiserDashboard() {
         offset: (offersPage - 1) * offersPerPage
       };
       if (offersFilter !== 'all') {
-        filters.status = offersFilter;
+        filters.offer_status = offersFilter;
       }
       if (searchQuery.trim()) {
         filters.search = searchQuery.trim();
@@ -557,7 +557,7 @@ export default function AdvertiserDashboard() {
                     </div>
                     <div className="mt-4">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        Campgaign Description <span className="text-red-500">*</span>
+                        Campgaign Description <span className='text-gray-400 font-normal'>Min. 10 characters required</span> <span className="text-red-500">*</span>
                       </label>
                       <textarea
                         required
@@ -565,7 +565,7 @@ export default function AdvertiserDashboard() {
                         onChange={(e) => setOfferData({ ...offerData, description: e.target.value })}
                         className="w-full px-4 py-3 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm text-gray-900 dark:text-gray-100"
                         rows="3"
-                        placeholder="Describe your offer details..."
+                        placeholder="Describe your offer details...(Min. 10 characters required)"
                       />
                     </div>
                   </div>

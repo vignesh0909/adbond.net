@@ -105,7 +105,7 @@ class OffersModel {
     // Get offers with filtering
     static async getOffers(filters = {}, limit = 20, offset = 0) {
         let baseQuery = `
-            SELECT o.*, e.name as entity_name, e.entity_type, e.website
+            SELECT o.*, e.name as entity_name, e.entity_type, e.website, e.entity_metadata
             FROM offers o
             LEFT JOIN entities e ON o.entity_id = e.entity_id
             WHERE o.offer_status = 'active'

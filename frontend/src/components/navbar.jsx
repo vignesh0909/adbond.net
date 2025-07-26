@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, Menu, X, LayoutDashboard, User, Settings, LogOut, Moon, Sun } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
+import { entityAPI } from '../services/entity';
 
 const Navbar = () => {
   const { isAuthenticated, user: currentUser, logout } = useAuthContext();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState('light');
+  const [entityData, setEntityData] = useState(null);
+  const [entityLoading, setEntityLoading] = useState(false);
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
 
@@ -15,6 +18,28 @@ const Navbar = () => {
   useEffect(() => {
     console.log('Navbar auth state changed:', { isAuthenticated, currentUser: currentUser?.email });
   }, [isAuthenticated, currentUser]);
+
+  // Fetch entity data when user changes and has entity_id
+  useEffect(() => {
+    const fetchEntityData = async () => {
+      if (currentUser?.entity_id && isAuthenticated) {
+        try {
+          setEntityLoading(true);
+          const response = await entityAPI.getEntityById(currentUser.entity_id);
+          setEntityData(response.entity);
+        } catch (error) {
+          console.error('Error fetching entity data:', error);
+          setEntityData(null);
+        } finally {
+          setEntityLoading(false);
+        }
+      } else {
+        setEntityData(null);
+      }
+    };
+
+    fetchEntityData();
+  }, [currentUser?.entity_id, isAuthenticated]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -64,12 +89,20 @@ const Navbar = () => {
   };
 
   const getUserInitials = () => {
+    // Prioritize entity company name for initials if available
+    if (entityData?.entity_metadata?.company_name) {
+      const companyName = entityData.entity_metadata.company_name;
+      const words = companyName.split(' ').filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase();
+      } else if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+    }
+
+    // Fallback to user name initials
     if (currentUser?.first_name && currentUser?.last_name) {
       return `${currentUser.first_name[0]}${currentUser.last_name[0]}`.toUpperCase();
-    }
-    if (currentUser?.name) {
-      const names = currentUser.name.split(' ');
-      return names.length > 1 ? `${names[0][0]}${names[1][0]}`.toUpperCase() : names[0][0].toUpperCase();
     }
     if (currentUser?.email) {
       return currentUser.email[0].toUpperCase();
@@ -78,17 +111,20 @@ const Navbar = () => {
   };
 
   const getUserDisplayName = () => {
+    if (entityData?.entity_metadata?.company_name) {
+      return entityData.entity_metadata.company_name;
+    }
+
     if (currentUser?.first_name && currentUser?.last_name) {
       return `${currentUser.first_name} ${currentUser.last_name}`;
     }
-    return currentUser?.name || currentUser?.email || 'User';
+    return currentUser?.email || 'User';
   };
 
   return (
     <header className="fixed top-0 left-0 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 z-50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex justify-between items-center h-20">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <div className="relative">
               <img
@@ -226,8 +262,10 @@ const Navbar = () => {
                   <div className="absolute right-0 mt-3 w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-2 z-50">
                     {/* User Info Header */}
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{getUserDisplayName()}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{currentUser?.role || 'User'}</div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{currentUser.first_name + currentUser.last_name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                        {entityData?.entity_metadata?.company_name && currentUser?.role}
+                      </div>
                     </div>
 
                     {/* Profile Link */}
@@ -352,7 +390,12 @@ const Navbar = () => {
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{getUserDisplayName()}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{currentUser?.role || 'User'}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                          {entityData?.entity_metadata?.company_name && currentUser?.role
+                            ? `${currentUser.role} • ${entityData.entity_metadata.company_name}`
+                            : currentUser?.role || 'User'
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>

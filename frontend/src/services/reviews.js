@@ -42,6 +42,13 @@ export const reviewsAPI = {
         return await http.get(endpoint);
     },
 
+    // Get reviews given by an entity
+    async getEntityGivenReviews(entityId, params = {}) {
+        const queryParams = new URLSearchParams(params).toString();
+        const endpoint = `/reviews/entity/${entityId}/given${queryParams ? `?${queryParams}` : ''}`;
+        return await http.get(endpoint);
+    },
+
     // Admin: Get reviews for moderation
     async getReviewsForModeration(params = {}) {
         const queryParams = new URLSearchParams(params).toString();

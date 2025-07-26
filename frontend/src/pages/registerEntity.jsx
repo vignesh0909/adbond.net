@@ -82,10 +82,10 @@ export default function RegisterEntityPage() {
     // Phone number validation function (now accepts any 10-digit number)
     const validatePhoneNumber = (phoneNumber) => {
         if (!phoneNumber) return false;
-        
+
         // Remove all non-digit characters
         const cleanedPhone = phoneNumber.replace(/\D/g, '');
-        
+
         // Check if it's exactly 10 digits
         return cleanedPhone.length === 10;
     };
@@ -252,11 +252,12 @@ export default function RegisterEntityPage() {
                 Affiliate Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="company_name" value={entityMetadata.company_name || ''} onChange={handleMetadataChange} placeholder="Company Name *" required className="input-field" />
                 <input type="text" name="verticals" value={entityMetadata.verticals || ''} onChange={handleMetadataChange} placeholder="Preferred Verticals (comma-separated) *" required className="input-field" />
                 <input type="number" name="monthly_revenue" value={entityMetadata.monthly_revenue || ''} onChange={handleMetadataChange} placeholder="Monthly Revenue (USD) *" required className="input-field" />
                 <input type="text" name="traffic_provided_geos" value={entityMetadata.traffic_provided_geos || ''} onChange={handleMetadataChange} placeholder="Traffic GEOs (comma-separated) *" required className="input-field" />
             </div>
-            <h4 className="text-md font-semibold mt-6 mb-3 text-gray-700 dark:text-gray-300">Reference Details</h4>
+            <h4 className="text-md font-semibold mt-6 mb-3 text-gray-700 dark:text-gray-300">Reference Details <span className='text-gray-400 font-normal'>(Optional)</span> </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" name="name" value={entityMetadata.reference_details?.name || ''} onChange={handleReferenceDetailsChange} placeholder="Reference Name" className="input-field" />
                 <input type="text" name="contact" value={entityMetadata.reference_details?.contact || ''} onChange={handleReferenceDetailsChange} placeholder="Reference Contact (Email/Phone)" className="input-field" />
@@ -272,7 +273,7 @@ export default function RegisterEntityPage() {
                 Network Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" name="network_name" value={entityMetadata.network_name || ''} onChange={handleMetadataChange} placeholder="Network Name *" required className="input-field" />
+                <input type="text" name="company_name" value={entityMetadata.company_name || ''} onChange={handleMetadataChange} placeholder="Company Name *" required className="input-field" />
                 <input type="text" name="signup_url" value={entityMetadata.signup_url || ''} onChange={handleMetadataChange} placeholder="Signup URL *" required className="input-field" />
                 <input type="text" name="tracking_platform" value={entityMetadata.tracking_platform || ''} onChange={handleMetadataChange} placeholder="Tracking Platform *" required className="input-field" />
                 <input type="text" name="supported_models" value={entityMetadata.supported_models || ''} onChange={handleMetadataChange} placeholder="Supported Models (e.g., CPA, CPL) *" required className="input-field" />
@@ -484,7 +485,7 @@ export default function RegisterEntityPage() {
                                         </svg>
                                         Description <span className="text-red-500 ml-1">*</span>
                                     </label>
-                                    <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe your entity and services" className="input-field" rows="4" required />
+                                    <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe your entity and services (Min. 10 characters required)" className="input-field" rows="4" required />
                                 </div>
                                 <h4 className="text-lg font-semibold mt-6 mb-4 flex items-center text-gray-800 dark:text-gray-200">
                                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -499,9 +500,9 @@ export default function RegisterEntityPage() {
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 Phone Number <span className="text-red-500 ml-1">*</span>
                                             </label>
-                                            <div className="flex">
-                                                <select 
-                                                    value={countryCode} 
+                                            <div className="flex gap-1">
+                                                <select
+                                                    value={countryCode}
                                                     onChange={(e) => setCountryCode(e.target.value)}
                                                     className="input-field rounded-r-none border-r-0 flex-shrink-0"
                                                     style={{ width: '120px' }}
@@ -512,14 +513,14 @@ export default function RegisterEntityPage() {
                                                         </option>
                                                     ))}
                                                 </select>
-                                                <input 
-                                                    type="tel" 
-                                                    value={phone} 
-                                                    onChange={handlePhoneChange} 
-                                                    placeholder="Enter 10-digit number" 
+                                                <input
+                                                    type="tel"
+                                                    value={phone}
+                                                    onChange={handlePhoneChange}
+                                                    placeholder="Enter 10-digit number"
                                                     className={`input-field rounded-l-none border-l-0 flex-1 ${!validatePhoneNumber(phone) && phone ? 'border-red-500 focus:border-red-500' : ''}`}
                                                     maxLength="15"
-                                                    required 
+                                                    required
                                                 />
                                             </div>
                                             {phone && !validatePhoneNumber(phone) && (
@@ -537,12 +538,12 @@ export default function RegisterEntityPage() {
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 Microsoft Teams ID
                                             </label>
-                                            <input 
-                                                type="text" 
-                                                value={teams} 
-                                                onChange={(e) => setTeams(e.target.value)} 
-                                                placeholder="Microsoft Teams ID" 
-                                                className="input-field" 
+                                            <input
+                                                type="text"
+                                                value={teams}
+                                                onChange={(e) => setTeams(e.target.value)}
+                                                placeholder="Microsoft Teams ID"
+                                                className="input-field"
                                             />
                                         </div>
                                     </div>
@@ -551,24 +552,24 @@ export default function RegisterEntityPage() {
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                 LinkedIn Profile
                                             </label>
-                                            <input 
-                                                type="url" 
-                                                value={linkedin} 
-                                                onChange={(e) => setLinkedin(e.target.value)} 
-                                                placeholder="LinkedIn Profile URL" 
-                                                className="input-field w-full" 
+                                            <input
+                                                type="url"
+                                                value={linkedin}
+                                                onChange={(e) => setLinkedin(e.target.value)}
+                                                placeholder="LinkedIn Profile URL"
+                                                className="input-field w-full"
                                             />
                                         </div>
                                         <div className="w-full">
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                 Telegram Username
                                             </label>
-                                            <input 
-                                                type="text" 
-                                                value={telegram} 
-                                                onChange={(e) => setTelegram(e.target.value)} 
-                                                placeholder="Telegram Username (e.g., @username)" 
-                                                className="input-field w-full" 
+                                            <input
+                                                type="text"
+                                                value={telegram}
+                                                onChange={(e) => setTelegram(e.target.value)}
+                                                placeholder="Telegram Username (e.g., @username)"
+                                                className="input-field w-full"
                                             />
                                         </div>
                                     </div>

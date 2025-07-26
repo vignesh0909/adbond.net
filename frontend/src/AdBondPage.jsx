@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from './components/navbar';
-import { Send, ArrowRight, Key, CheckCircle, Database, MapPin, Zap, DollarSign, Award, Star, ThumbsUp, MessageCircle,
-  Edit3, TrendingUp, Instagram, Facebook} from 'lucide-react';
+import {
+  Send, ArrowRight, CheckCircle, Database, MapPin, Zap, DollarSign, Award, Star,
+  ThumbsUp, MessageCircle, Edit3, TrendingUp, Instagram,
+} from 'lucide-react';
 
 const AdBondPage = () => {
   return (
@@ -51,7 +53,7 @@ const AdBondPage = () => {
               <span className="relative z-10">Affiliates Wishlist</span>
             </a>
             <Link
-              to="/showcase"
+              to="/register-entity"
               className="group relative w-full sm:w-72 px-8 py-4 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white rounded-2xl text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-center whitespace-nowrap"
             >
               <span className="relative z-10">Advertisers Showcase</span>
@@ -62,7 +64,7 @@ const AdBondPage = () => {
       </section>
 
       {/* Affiliate Offer Requests */}
-      <section className="relative px-4 sm:px-6 lg:px-20 py-20">
+      <section className="relative px-4 sm:px-6 lg:px-20 pt-20">
         <div className="max-w-7xl mx-auto">
           {/* Section Header */}
           <div className="text-center mb-16">
@@ -84,47 +86,39 @@ const AdBondPage = () => {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                vertical: 'Health & Wellness',
+                title: 'Health & Wellness Offers',
                 geo: 'US, CA, UK',
                 traffic: 'Meta Ads + Google',
                 budget: '$50K+',
-                urgency: 'High',
-                experience: '5+ years'
+                volume: '75K/day',
+                urgency: 'High'
               },
               {
-                vertical: 'Finance & Crypto',
+                title: 'Finance & Crypto',
                 geo: 'UK, DE, AU',
                 traffic: 'Native + Push',
                 budget: '$25K+',
-                urgency: 'Medium',
-                experience: '3+ years'
+                volume: '45K/day',
+                urgency: 'Medium'
               },
               {
-                vertical: 'Gaming & Apps',
+                title: 'Gaming & Apps',
                 geo: 'Global',
                 traffic: 'Social + Video',
                 budget: '$75K+',
-                urgency: 'High',
-                experience: '4+ years'
+                volume: '100K/day',
+                urgency: 'High'
               }
-            ].map((req, i) => (
+            ].map((request, i) => (
               <div
                 key={i}
                 className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-xl rounded-3xl p-8 hover:shadow-2xl transition-all duration-500 border border-gray-200/50 dark:border-gray-700/50 transform hover:-translate-y-2"
               >
-                {/* Urgency Badge */}
-                <div className={`absolute top-6 right-6 px-3 py-1 rounded-full text-xs font-bold ${req.urgency === 'High'
-                  ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white animate-pulse'
-                  : 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white'
-                  }`}>
-                  {req.urgency} Priority
-                </div>
-
                 {/* Request Content */}
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-black text-xl mb-2 text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                      {req.vertical}
+                      {request.title}
                     </h3>
                   </div>
 
@@ -135,7 +129,7 @@ const AdBondPage = () => {
                       </div>
                       <div>
                         <span className="font-semibold text-gray-900 dark:text-gray-100">Target GEO:</span>
-                        <div className="text-gray-600 dark:text-gray-300">{req.geo}</div>
+                        <div className="text-gray-600 dark:text-gray-300">{request.geo}</div>
                       </div>
                     </div>
 
@@ -145,7 +139,7 @@ const AdBondPage = () => {
                       </div>
                       <div>
                         <span className="font-semibold text-gray-900 dark:text-gray-100">Traffic Type:</span>
-                        <div className="text-gray-600 dark:text-gray-300">{req.traffic}</div>
+                        <div className="text-gray-600 dark:text-gray-300">{request.traffic}</div>
                       </div>
                     </div>
 
@@ -155,7 +149,7 @@ const AdBondPage = () => {
                       </div>
                       <div>
                         <span className="font-semibold text-gray-900 dark:text-gray-100">Budget:</span>
-                        <div className="text-green-600 dark:text-green-400 font-bold">{req.budget}</div>
+                        <div className="text-green-600 dark:text-green-400 font-bold">{request.budget}</div>
                       </div>
                     </div>
 
@@ -164,8 +158,8 @@ const AdBondPage = () => {
                         <Award className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">Experience:</span>
-                        <div className="text-gray-600 dark:text-gray-300">{req.experience}</div>
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">Volume:</span>
+                        <div className="text-gray-600 dark:text-gray-300">{request.volume}</div>
                       </div>
                     </div>
                   </div>
@@ -196,7 +190,7 @@ const AdBondPage = () => {
         </div>
       </section>
       {/* Reviews */}
-      <section className="relative px-4 sm:px-6 lg:px-20 py-20" id="reviews">
+      <section className="relative px-4 sm:px-6 lg:px-20 pt-20" id="reviews">
         <div className="max-w-7xl mx-auto">
           {/* Section Header */}
           <div className="text-center mb-16">
@@ -251,7 +245,7 @@ const AdBondPage = () => {
               >
                 {/* Verified Badge */}
                 {review.verified && (
-                  <div className="absolute top-6 right-6 w-6 h-6 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center">
+                  <div className="absolute top-4 right-4 md:top-6 md:right-6 w-6 h-6 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                 )}
@@ -436,12 +430,6 @@ const AdBondPage = () => {
                   </div>
                 </div>
 
-                {/* Action Button */}
-                <button className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white px-6 py-3 rounded-2xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  Request Access
-                  <ArrowRight className="inline-block ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </button>
-
                 {/* Hover Effect Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-cyan-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
               </div>
@@ -586,7 +574,10 @@ const AdBondPage = () => {
                 <Instagram className="w-5 h-5 text-gray-600 group-hover:text-pink-600 transition-colors" />
               </a>
               <a href="#" className="group w-12 h-12 bg-white/60 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-gray-200/50">
-                <svg className="w-5 h-5 text-gray-600 group-hover:text-blue-500 transition-colors" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 462.799" fill="currentColor"><path fill-rule="nonzero" d="M403.229 0h78.506L310.219 196.04 512 462.799H354.002L230.261 301.007 88.669 462.799h-78.56l183.455-209.683L0 0h161.999l111.856 147.88L403.229 0zm-27.556 415.805h43.505L138.363 44.527h-46.68l283.99 371.278z" /></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#000000" />
+                </svg>
+
               </a>
               <a href="#" className="group w-12 h-12 bg-white/60 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-gray-200/50">
                 <svg className="w-5 h-5 text-gray-600 group-hover:text-blue-700 transition-colors" fill="currentColor" viewBox="0 0 24 24">
@@ -594,7 +585,9 @@ const AdBondPage = () => {
                 </svg>
               </a>
               <a href="#" className="group w-12 h-12 bg-white/60 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-gray-200/50">
-                <Facebook className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black cursor-pointer transition-all duration-300 ease-in-out hover:text-blue-600">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="currentColor" />
+                </svg>
               </a>
             </div>
           </div>

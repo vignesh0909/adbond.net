@@ -6,34 +6,9 @@ import { entityAPI } from '../services/entity';
 import AdminReviewsModeration from '../components/AdminReviewsModeration';
 import Navbar from '../components/navbar';
 import {
-  Users,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Eye,
-  Check,
-  X,
-  Trash2,
-  LogOut,
-  Shield,
-  FileCheck,
-  AlertTriangle,
-  ChevronDown,
-  User,
-  Building,
-  Phone,
-  Mail,
-  MapPin,
-  Globe,
-  Calendar,
-  Settings,
-  FolderOpen,
-  UserIcon,
-  Award,
-  FileText,
-  Megaphone,
-  MapPinIcon,
-  ChevronRight
+  Users, Clock, CheckCircle, XCircle, Eye, Check, X, Trash2, LogOut, Shield, FileCheck, AlertTriangle,
+  ChevronDown, User, Building, Phone, Mail, MapPin, Globe, Calendar, Settings, FolderOpen, UserIcon,
+  Award, FileText, Megaphone, MapPinIcon, ChevronRight
 } from 'lucide-react';
 
 export default function AdminPanelPage() {
@@ -369,10 +344,10 @@ export default function AdminPanelPage() {
                             <td className="px-6 py-4">
                               <div className="flex items-center">
                                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-lg mr-3">
-                                  {entity.name?.charAt(0)?.toUpperCase() || 'E'}
+                                  {(entity.entity_metadata?.company_name || entity.entity_metadata?.network_name || entity.name)?.charAt(0)?.toUpperCase() || 'E'}
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900 dark:text-gray-100">{entity.name}</div>
+                                  <div className="font-semibold text-gray-900 dark:text-gray-100">{entity.entity_metadata?.company_name || entity.entity_metadata?.network_name || entity.name}</div>
                                   <div className="text-sm text-gray-500 dark:text-gray-400">ID: {getEntityId(entity)}</div>
                                 </div>
                               </div>
@@ -610,7 +585,7 @@ export default function AdminPanelPage() {
                     </div>
                     <div>
                       <h3 className="text-3xl font-bold text-white mb-2 tracking-tight">Entity Details</h3>
-                      <p className="text-purple-100 text-xl font-medium">{selectedEntity.name}</p>
+                      <p className="text-purple-100 text-xl font-medium">{selectedEntity.entity_metadata?.company_name || selectedEntity.entity_metadata?.network_name || selectedEntity.name}</p>
                       <div className="flex items-center space-x-4 mt-3">
                         <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold backdrop-blur-md border border-white/30 ${selectedEntity.verification_status === 'approved'
                           ? 'bg-green-500/80 text-white'
@@ -667,7 +642,7 @@ export default function AdminPanelPage() {
                         { label: 'LinkedIn', value: selectedEntity.contact_info?.linkedin || 'N/A', icon: '💼' },
                         { label: 'Address', value: selectedEntity.contact_info?.address || 'N/A', icon: '📍' }
                       ].map((item, index) => (
-                        <div key={index} className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-purple-900/30 dark:to-blue-900/30 p-4 rounded-2xl border border-purple-100/50 dark:border-purple-700/30 hover:from-purple-100/80 hover:to-blue-100/80 transition-all">
+                        <div key={index} className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-purple-900/30 dark:to-blue-900/30 p-4 rounded-2xl border border-purple-100/50 dark:border-purple-700/30 transition-all">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <span className="text-lg">{item.icon}</span>
@@ -681,7 +656,7 @@ export default function AdminPanelPage() {
                       ))}
 
                       {/* Website Field */}
-                      <div className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-purple-900/30 dark:to-blue-900/30 p-4 rounded-2xl border border-purple-100/50 dark:border-purple-700/30 hover:from-purple-100/80 hover:to-blue-100/80 transition-all">
+                      <div className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-purple-900/30 dark:to-blue-900/30 p-4 rounded-2xl border border-purple-100/50 dark:border-purple-700/30 transition-all">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <span className="text-lg">🌐</span>
@@ -693,7 +668,7 @@ export default function AdminPanelPage() {
                                 href={selectedEntity.website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                                className="text-blue-600 transition-colors"
                               >
                                 {selectedEntity.website}
                               </a>
@@ -703,7 +678,7 @@ export default function AdminPanelPage() {
                       </div>
 
                       {/* Created Date */}
-                      <div className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-purple-900/30 dark:to-blue-900/30 p-4 rounded-2xl border border-purple-100/50 dark:border-purple-700/30 hover:from-purple-100/80 hover:to-blue-100/80 transition-all">
+                      <div className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-purple-900/30 dark:to-blue-900/30 p-4 rounded-2xl border border-purple-100/50 dark:border-purple-700/30 transition-all">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <span className="text-lg">📅</span>
@@ -738,14 +713,14 @@ export default function AdminPanelPage() {
                               ? 'bg-green-500 text-white'
                               : 'bg-gray-400 text-white'
                               }`}>
-                              {selectedEntity.user_account_created ? '✅ Created' : '❌ Not Created'}
+                              {selectedEntity.user_account_created ? 'Created' : 'Not Created'}
                             </span>
                           </div>
                           {selectedEntity.user_account_created && (
                             <div className="bg-green-100/80 dark:bg-green-900/20 p-3 rounded-xl border border-green-200/50">
                               <p className="text-sm text-green-800 dark:text-green-200 flex items-center">
                                 <Mail className="w-4 h-4 mr-2" />
-                                Login email sent to <strong>{selectedEntity.email}</strong>
+                                Login email sent to <strong className='ml-1'>{selectedEntity.email}</strong>
                               </p>
                             </div>
                           )}
@@ -818,7 +793,7 @@ export default function AdminPanelPage() {
                           { label: 'Category', value: selectedEntity.entity_metadata.program_category, icon: '📂' },
                           { label: 'Payment Terms', value: selectedEntity.entity_metadata.payment_terms, icon: '💳' }
                         ].map((item, index) => (
-                          <div key={index} className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
+                          <div key={index} className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 transition-all">
                             <div className="flex items-center space-x-3 mb-2">
                               <span className="text-lg">{item.icon}</span>
                               <span className="font-bold text-orange-700 dark:text-orange-300">{item.label}</span>
@@ -829,7 +804,7 @@ export default function AdminPanelPage() {
                       </div>
 
                       <div className="space-y-5">
-                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
+                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30  transition-all">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">🎨</span>
                             <span className="font-bold text-orange-700 dark:text-orange-300">Advertising Verticals</span>
@@ -841,7 +816,7 @@ export default function AdminPanelPage() {
                           }</p>
                         </div>
 
-                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
+                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30  transition-all">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">💰</span>
                             <span className="font-bold text-orange-700 dark:text-orange-300">Referral Commission</span>
@@ -849,7 +824,7 @@ export default function AdminPanelPage() {
                           <p className="text-gray-900 dark:text-gray-100 ml-8 font-medium">{selectedEntity.entity_metadata.referral_commission || 'N/A'}</p>
                         </div>
 
-                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
+                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30  transition-all">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">💸</span>
                             <span className="font-bold text-orange-700 dark:text-orange-300">Payout Types</span>
@@ -861,7 +836,7 @@ export default function AdminPanelPage() {
                           }</p>
                         </div>
 
-                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30 hover:from-orange-100/80 hover:to-red-100/80 transition-all">
+                        <div className="bg-gradient-to-r from-orange-50/80 to-red-50/80 dark:from-orange-900/30 dark:to-red-900/30 p-4 rounded-2xl border border-orange-100/50 dark:border-orange-700/30  transition-all">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">🔗</span>
                             <span className="font-bold text-orange-700 dark:text-orange-300">Signup URL</span>
@@ -918,7 +893,7 @@ export default function AdminPanelPage() {
                           icon: '💰'
                         }
                       ].map((item, index) => (
-                        <div key={index} className="bg-gradient-to-r from-blue-50/80 to-cyan-50/80 dark:from-blue-900/30 dark:to-cyan-900/30 p-5 rounded-2xl border border-blue-100/50 dark:border-blue-700/30 hover:from-blue-100/80 hover:to-cyan-100/80 transition-all">
+                        <div key={index} className="bg-gradient-to-r from-blue-50/80 to-cyan-50/80 dark:from-blue-900/30 dark:to-cyan-900/30 p-5 rounded-2xl border border-blue-100/50 dark:border-blue-700/30 transition-all">
                           <div className="flex items-center space-x-3 mb-3">
                             <span className="text-xl">{item.icon}</span>
                             <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">{item.label}</span>
@@ -961,7 +936,7 @@ export default function AdminPanelPage() {
                             icon: '💰'
                           }
                         ].map((item, index) => (
-                          <div key={index} className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 hover:from-green-100/80 hover:to-teal-100/80 transition-all">
+                          <div key={index} className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 transition-all">
                             <div className="flex items-center space-x-3 mb-3">
                               <span className="text-xl">{item.icon}</span>
                               <span className="font-bold text-green-700 dark:text-green-300 text-lg">{item.label}</span>
@@ -972,7 +947,7 @@ export default function AdminPanelPage() {
                       </div>
 
                       <div className="space-y-5">
-                        <div className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 hover:from-green-100/80 hover:to-teal-100/80 transition-all">
+                        <div className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 transition-all">
                           <div className="flex items-center space-x-3 mb-3">
                             <span className="text-xl">💳</span>
                             <span className="font-bold text-green-700 dark:text-green-300 text-lg">Payment Models</span>
@@ -984,7 +959,7 @@ export default function AdminPanelPage() {
                           }</p>
                         </div>
 
-                        <div className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 hover:from-green-100/80 hover:to-teal-100/80 transition-all">
+                        <div className="bg-gradient-to-r from-green-50/80 to-teal-50/80 dark:from-green-900/30 dark:to-teal-900/30 p-5 rounded-2xl border border-green-100/50 dark:border-green-700/30 transition-all">
                           <div className="flex items-center space-x-3 mb-3">
                             <span className="text-xl">🔗</span>
                             <span className="font-bold text-green-700 dark:text-green-300 text-lg">Signup URL</span>
