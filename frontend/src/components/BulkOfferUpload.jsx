@@ -16,13 +16,18 @@ const ERROR_MESSAGES = {
   RATE_LIMIT_EXCEEDED: 'Too many upload attempts. Please wait a few minutes before trying again.'
 };
 
-export default function BulkOfferUpload({ onUploadComplete }) {
+export default function BulkOfferUpload({ onUploadComplete, isNetworkDashboard = false }) {
   const [showModal, setShowModal] = useState(false);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [step, setStep] = useState('upload'); // 'upload', 'preview', 'confirm'
+
+  // Dynamic text based on context
+  const uploadText = isNetworkDashboard ? 'Bulk Upload Campaigns' : 'Bulk Upload Offers';
+  const entityText = isNetworkDashboard ? 'campaigns' : 'offers';
+  const entitySingularText = isNetworkDashboard ? 'campaign' : 'offer';
 
   const handleFileSelect = (event) => {
     const selectedFile = event.target.files[0];
@@ -100,12 +105,12 @@ export default function BulkOfferUpload({ onUploadComplete }) {
         const { fileProcessing, databaseSave } = response.results;
 
         toast.success(
-          `Upload completed! ${databaseSave.successful} offers saved successfully.`
+          `Upload completed! ${databaseSave.successful} ${entityText} saved successfully.`
         );
 
         if (databaseSave.failed > 0) {
           toast.warning(
-            `${databaseSave.failed} offers failed to save. Check the results for details.`
+            `${databaseSave.failed} ${entityText} failed to save. Check the results for details.`
           );
         }
 
@@ -186,7 +191,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
         className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-bold"
       >
         <Upload className="w-5 h-5" />
-        Bulk Upload Offers
+        {uploadText}
       </button>
 
       {showModal && (
@@ -201,10 +206,10 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                      Bulk Upload Offers
+                      {uploadText}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 text-sm">
-                      Upload multiple offers at once using our Excel template
+                      Upload multiple {entityText} at once using our Excel template
                     </p>
                   </div>
                 </div>
@@ -227,7 +232,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                     Instructions
                   </h4>
                   <ul className="text-blue-700 dark:text-blue-200 space-y-1 text-sm list-disc pl-5">
-                    <li>Download the template file and fill in your offer data</li>
+                    <li>Download the template file and fill in your {entitySingularText} data</li>
                     <li>Ensure all required fields are completed</li>
                     <li>Use the exact column names from the template</li>
                     <li>File size limit: 10MB</li>
@@ -263,7 +268,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                       <div className="text-center">
                         <FileUp className="mx-auto h-12 w-12 text-green-400" />
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Upload Your File</h3>
-                        <p className="text-gray-500 dark:text-gray-400">Choose your Excel file with offer data</p>
+                        <p className="text-gray-500 dark:text-gray-400">Choose your Excel file with {entitySingularText} data</p>
                       </div>
 
                       <div className="flex justify-center">
@@ -324,7 +329,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-green-600">{previewData.valid}</div>
-                    <div className="text-green-800">Valid Offers</div>
+                    <div className="text-green-800">Valid {isNetworkDashboard ? 'Campaigns' : 'Offers'}</div>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-red-600">{previewData.invalid}</div>
@@ -349,7 +354,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                 {/* Sample Valid Offers */}
                 {previewData.sampleOffers.length > 0 && (
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-green-800 mb-2">Sample Valid Offers:</h3>
+                    <h3 className="font-semibold text-green-800 mb-2">Sample Valid {isNetworkDashboard ? 'Campaigns' : 'Offers'}:</h3>
                     <div className="space-y-2">
                       {previewData.sampleOffers.map((offer, index) => (
                         <div key={index} className="text-green-700 text-sm">
@@ -386,7 +391,7 @@ export default function BulkOfferUpload({ onUploadComplete }) {
                       {uploading && (
                         <Loader2 className="animate-spin h-4 w-4" />
                       )}
-                      {uploading ? 'Uploading...' : `Upload ${previewData.valid} Valid Offers`}
+                      {uploading ? 'Uploading...' : `Upload ${previewData.valid} Valid ${isNetworkDashboard ? 'Campaigns' : 'Offers'}`}
                     </button>
                   </div>
                 </div>

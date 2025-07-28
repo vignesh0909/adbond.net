@@ -16,13 +16,18 @@ const ERROR_MESSAGES = {
   RATE_LIMIT_EXCEEDED: 'Too many upload attempts. Please wait a few minutes before trying again.'
 };
 
-export default function BulkOfferRequestUpload({ onUploadComplete }) {
+export default function BulkOfferRequestUpload({ onUploadComplete, isNetworkDashboard = false }) {
   const [showModal, setShowModal] = useState(false);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [step, setStep] = useState('upload'); // 'upload', 'preview', 'confirm'
+
+  // Dynamic text based on context
+  const uploadText = isNetworkDashboard ? 'Bulk Upload Campaign Requests' : 'Bulk Upload Offer Requests';
+  const entityText = isNetworkDashboard ? 'campaign requests' : 'offer requests';
+  const entitySingularText = isNetworkDashboard ? 'campaign request' : 'offer request';
 
   const handleFileSelect = (event) => {
     const selectedFile = event.target.files[0];
@@ -100,12 +105,12 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
         const { fileProcessing, databaseSave } = response.results;
 
         toast.success(
-          `Upload completed! ${databaseSave.successful} offer requests saved successfully.`
+          `Upload completed! ${databaseSave.successful} ${entityText} saved successfully.`
         );
 
         if (databaseSave.failed > 0) {
           toast.warning(
-            `${databaseSave.failed} offer requests failed to save. Check the results for details.`
+            `${databaseSave.failed} ${entityText} failed to save. Check the results for details.`
           );
         }
 
@@ -186,7 +191,7 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
         className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-bold"
       >
         <Upload className="w-5 h-5" />
-        Bulk Upload Offer Requests
+        {uploadText}
       </button>
 
       {showModal && (
@@ -201,10 +206,10 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      Bulk Upload Offer Requests
+                      {uploadText}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 text-sm">
-                      Upload multiple offer requests at once using our Excel template
+                      Upload multiple {entityText} at once using our Excel template
                     </p>
                   </div>
                 </div>
@@ -227,7 +232,7 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
                     Instructions
                   </h4>
                   <ul className="text-purple-700 dark:text-purple-200 space-y-1 text-sm list-disc pl-5">
-                    <li>Download the template file and fill in your offer request data</li>
+                    <li>Download the template file and fill in your {entitySingularText} data</li>
                     <li>Ensure all required fields are completed</li>
                     <li>Use the exact column names from the template</li>
                     <li>File size limit: 10MB</li>
@@ -262,7 +267,7 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
                       <div className="text-center">
                         <FileUp className="mx-auto h-12 w-12 text-pink-400" />
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Upload Your File</h3>
-                        <p className="text-gray-500 dark:text-gray-400">Choose your Excel file with offer request data</p>
+                        <p className="text-gray-500 dark:text-gray-400">Choose your Excel file with {entitySingularText} data</p>
                       </div>
 
                       <div className="flex justify-center">
@@ -323,7 +328,7 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-green-600">{previewData.valid}</div>
-                    <div className="text-green-800">Valid Requests</div>
+                    <div className="text-green-800">Valid {isNetworkDashboard ? 'Campaigns' : 'Requests'}</div>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-red-600">{previewData.invalid}</div>
@@ -348,7 +353,7 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
                 {/* Sample Valid Requests */}
                 {previewData.sampleRequests.length > 0 && (
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-green-800 mb-2">Sample Valid Offer Requests:</h3>
+                    <h3 className="font-semibold text-green-800 mb-2">Sample Valid {isNetworkDashboard ? 'Campaign Requests' : 'Offer Requests'}:</h3>
                     <div className="space-y-2">
                       {previewData.sampleRequests.map((request, index) => (
                         <div key={index} className="text-green-700 text-sm">
@@ -385,7 +390,7 @@ export default function BulkOfferRequestUpload({ onUploadComplete }) {
                       {uploading && (
                         <Loader2 className="animate-spin h-4 w-4" />
                       )}
-                      {uploading ? 'Uploading...' : `Upload ${previewData.valid} Valid Requests`}
+                      {uploading ? 'Uploading...' : `Upload ${previewData.valid} Valid ${isNetworkDashboard ? 'Campaign Requests' : 'Requests'}`}
                     </button>
                   </div>
                 </div>

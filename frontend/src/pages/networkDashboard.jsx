@@ -508,7 +508,7 @@ export default function NetworkDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
       <Navbar />
-      <section className="pt-24 pb-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
+      <section className="pt-24 pb-16 lg:px-16 sm:px-6 max-w-8xl mx-auto w-full">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
           <h2 className="text-3xl font-extrabold text-green-700 dark:text-green-300 tracking-tight">Network Dashboard</h2>
           <div className="flex gap-2">
@@ -518,14 +518,14 @@ export default function NetworkDashboard() {
             >
               + Create Campaign
             </button>
-            <BulkOfferUpload onUploadComplete={fetchMyOffers} />
+            <BulkOfferUpload onUploadComplete={fetchMyOffers} isNetworkDashboard={true} />
             <button
               onClick={openCreateRequest}
               className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold transition"
             >
               + Create Request
             </button>
-            <BulkOfferRequestUpload onUploadComplete={fetchMyRequests} />
+            <BulkOfferRequestUpload onUploadComplete={fetchMyRequests} isNetworkDashboard={true} />
           </div>
         </div>
         {error && (
