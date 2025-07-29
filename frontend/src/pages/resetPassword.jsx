@@ -37,8 +37,8 @@ export default function ResetPasswordPage() {
     }
 
     // Validate password
-    if (newPassword.length < 6) {
-      customToast.error('Password must be at least 6 characters long');
+    if (newPassword.length < 8) {
+      customToast.error('Password must be at least 8 characters long');
       return;
     }
 
@@ -182,7 +182,7 @@ export default function ResetPasswordPage() {
                     onChange={e => setNewPassword(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-gray-100"
                     placeholder="Enter new password"
-                    minLength="6"
+                    minLength="8"
                   />
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function ResetPasswordPage() {
                     onChange={e => setConfirmPassword(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-gray-100"
                     placeholder="Confirm new password"
-                    minLength="6"
+                    minLength="8"
                   />
                 </div>
               </div>
@@ -218,8 +218,12 @@ export default function ResetPasswordPage() {
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Password Requirements:</h4>
                 <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <li className="flex items-center gap-2">
-                    <span className={newPassword.length >= 6 ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}>✓</span>
-                    At least 6 characters long
+                    <span className={newPassword.length >= 8 ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}>✓</span>
+                    At least 8 characters long
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${/(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[0-9])/.test(newPassword) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    At least one uppercase letter, special character and number
                   </li>
                   <li className="flex items-center gap-2">
                     <span className={newPassword === confirmPassword && newPassword ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}>✓</span>
@@ -235,7 +239,7 @@ export default function ResetPasswordPage() {
               {/* Reset Password Button */}
               <button
                 type="submit"
-                disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword.length < 6}
+                disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword.length < 8}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-3 px-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:transform-none disabled:cursor-not-allowed"
               >
                 {loading ? (

@@ -3,12 +3,16 @@ import Navbar from '../components/navbar';
 import { useAuthContext } from '../contexts/AuthContext';
 import { authAPI } from '../services/auth';
 import AdminPanelPage from '../pages/adminpanel';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { customToast } from '../components/ToastProvider';
 
 export default function LoginDashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user: currentUser, login: authLogin } = useAuthContext();
+  
+  // Get the intended destination from location state
+  const from = location.state?.from?.pathname || null;
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
@@ -35,7 +39,15 @@ export default function LoginDashboardPage() {
   useEffect(() => {
     if (isAuthenticated && currentUser && !passwordResetRequired && !initializing) {
       const navigationTimeout = setTimeout(() => {
-        // Navigate based on role
+        // If there's a redirect destination from protected route, go there
+        if (from) {
+          setRedirecting(true);
+          navigate(from, { replace: true });
+          setTimeout(() => setRedirecting(false), 3000);
+          return;
+        }
+        
+        // Otherwise navigate based on role
         if (currentUser.role === 'admin') {
           setRedirecting(false);
           return;
@@ -60,7 +72,7 @@ export default function LoginDashboardPage() {
 
       return () => clearTimeout(navigationTimeout);
     }
-  }, [isAuthenticated, currentUser, passwordResetRequired, initializing, navigate]);
+  }, [isAuthenticated, currentUser, passwordResetRequired, initializing, navigate, from]);
 
   React.useEffect(() => {
     const passwordResetNeeded = localStorage.getItem('password_reset_required') === 'true';
@@ -132,8 +144,8 @@ export default function LoginDashboardPage() {
     setLoading(true);
 
     // Validate new password
-    if (newPassword.length < 6) {
-      customToast.error("New password must be at least 6 characters long");
+    if (newPassword.length < 8) {
+      customToast.error("New password must be at least 8 characters long");
       setLoading(false);
       return;
     }
@@ -382,13 +394,17 @@ export default function LoginDashboardPage() {
                   </div>
                 </div>
 
-                {/* Password Requirements */}
+                {/* /* Password Requirements */}
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl">
                   <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Password Requirements:</h4>
                   <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
                     <li className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${newPassword.length >= 6 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                      At least 6 characters long
+                      <div className={`w-2 h-2 rounded-full ${newPassword.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      At least 8 characters long
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${/(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[0-9])/.test(newPassword) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      At least one uppercase letter, special character and number
                     </li>
                   </ul>
                 </div>

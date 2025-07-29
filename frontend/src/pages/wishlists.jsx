@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { User, MapPin, List, Filter, Mail, Loader2, X, Star, Tag, Upload, MessageCircle, BookUser } from 'lucide-react';
+import { User, MapPin, List, Filter, Mail, Loader2, X, Star, Tag, Upload, MessageCircle, BookUser, Lock } from 'lucide-react';
 import Navbar from '../components/navbar';
 import offersService from '../services/offers';
+import { useAuthContext } from '../contexts/AuthContext';
 
 // Affiliates Wishlist Page (Standalone Export)
 export default function Wishlists() {
+  const { isAuthenticated, user } = useAuthContext();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,6 +21,9 @@ export default function Wishlists() {
   const [showContactForm, setShowContactForm] = useState(null);
   const [contactMessage, setContactMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Check if user is an entity (has entity_id)
+  const isEntityUser = isAuthenticated && user && user.entity_id;
 
   // Fetch offer requests on component mount
   useEffect(() => {
@@ -331,13 +336,33 @@ export default function Wishlists() {
 
                   <div className="flex flex-col justify-end">
                     {/* Action Button */}
-                    <button
-                      onClick={() => setShowContactForm(item.id)}
-                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl flex items-center justify-center"
-                    >
-                      <Mail className="w-4 h-4 mr-2" />
-                      Contact Affiliate
-                    </button>
+                    {isEntityUser ? (
+                      <button
+                        onClick={() => setShowContactForm(item.id)}
+                        className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl flex items-center justify-center"
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Contact Affiliate
+                      </button>
+                    ) : (
+                      <div className="w-full">
+                        <button
+                          disabled
+                          className="w-full bg-gray-400 text-gray-600 px-4 py-3 rounded-xl font-semibold cursor-not-allowed flex items-center justify-center opacity-75"
+                          title={!isAuthenticated ? "Please log in to contact affiliates" : "Entity registration required to contact affiliates"}
+                        >
+                          <Lock className="w-4 h-4 mr-2" />
+                          {!isAuthenticated ? "Login Required" : "Entity Access Only"}
+                        </button>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                          {!isAuthenticated ? (
+                            <>Please <a href="/login" className="text-blue-600 hover:underline">log in</a> to contact affiliates</>
+                          ) : (
+                            <>Only registered entities can contact affiliates. <a href="/register-entity" className="text-blue-600 hover:underline">Register as entity</a></>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

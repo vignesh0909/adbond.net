@@ -447,7 +447,14 @@ export default function RegisterEntityPage() {
                                             </svg>
                                             Your Name <span className="text-red-500 ml-1">*</span>
                                         </label>
-                                        <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your Full Name" className="input-field" required />
+                                        <input id="name" type="text" pattern="[A-Za-z\s]+" value={name} placeholder="Your Full Name"
+                                            onChange={(e) => {
+                                                const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                                                setName(value);
+                                            }}
+                                            className="input-field"
+                                            required
+                                        />
                                     </div>
                                     <div>
                                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">

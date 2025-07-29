@@ -296,7 +296,7 @@ export default function WriteReviewPage() {
                                 <option value="">Select an entity...</option>
                                 {entities.map(entity => (
                                     <option key={entity.entity_id} value={entity.entity_id}>
-                                        {entity.name} ({entity.entity_type})
+                                        {entity.entity_metadata.company_name} ({entity.entity_type})
                                     </option>
                                 ))}
                                 <option value="new_entity">🆕 Entity not in list (enter manually)</option>
@@ -318,7 +318,7 @@ export default function WriteReviewPage() {
                                             required={formData.is_new_entity}
                                         />
                                     </div>
-                                    
+
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                             Website (Optional)
@@ -371,7 +371,7 @@ export default function WriteReviewPage() {
                                             />
                                         </div>
                                     </div>
-                                    
+
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700/30">
                                         💡 This entity will be added to our database. Your review will require admin approval before publication. Providing additional details helps our team verify the entity.
                                     </p>

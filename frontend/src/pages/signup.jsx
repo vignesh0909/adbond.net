@@ -10,7 +10,6 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    agreeToTerms: false
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -118,7 +117,12 @@ export default function SignupPage() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const inputValue = type === 'checkbox' ? checked : value;
+    let inputValue = type === 'checkbox' ? checked : value;
+
+    // Restrict firstName and lastName to only alphabets and spaces
+    if (name === 'firstName' || name === 'lastName') {
+      inputValue = inputValue.replace(/[^A-Za-z\s]/g, '');
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -126,9 +130,7 @@ export default function SignupPage() {
     }));
 
     // Real-time validation
-    if (name !== 'agreeToTerms') {
-      validateField(name, inputValue);
-    }
+    validateField(name, inputValue);
 
     // Password strength check
     if (name === 'password') {
@@ -148,7 +150,6 @@ export default function SignupPage() {
       formData.email &&
       formData.password &&
       formData.confirmPassword &&
-      formData.agreeToTerms &&
       Object.keys(errors).length === 0
     );
   };
@@ -158,15 +159,8 @@ export default function SignupPage() {
 
     // Validate all fields
     Object.keys(formData).forEach(key => {
-      if (key !== 'agreeToTerms') {
-        validateField(key, formData[key]);
-      }
+      validateField(key, formData[key]);
     });
-
-    if (!formData.agreeToTerms) {
-      customToast.error('Please agree to the terms and conditions');
-      return;
-    }
 
     if (!isFormValid()) {
       customToast.error('Please fix all errors before submitting');
@@ -190,7 +184,6 @@ export default function SignupPage() {
         email: '',
         password: '',
         confirmPassword: '',
-        agreeToTerms: false
       });
       setErrors({});
       setPasswordStrength({ score: 0, feedback: '' });
@@ -420,6 +413,33 @@ export default function SignupPage() {
                 </p>
               )}
             </div>
+
+            {/* Terms and Conditions */}
+            {/* <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="agreeToTerms"
+                  name="agreeToTerms"
+                  type="checkbox"
+                  checked={formData.agreeToTerms}
+                  onChange={handleInputChange}
+                  className="focus:ring-pink-500 h-4 w-4 text-pink-600 border-gray-300 dark:border-gray-600 rounded"
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="agreeToTerms" className="font-medium text-gray-700 dark:text-gray-200">
+                  I agree to the{' '}
+                  <a href="#" className="text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300">
+                    Terms and Conditions
+                  </a>{' '}
+                  and{' '}
+                  <a href="#" className="text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300">
+                    Privacy Policy
+                  </a>
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+              </div>
+            </div> */}
 
             {/* Submit Button */}
             <button

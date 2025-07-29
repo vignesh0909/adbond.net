@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from './components/navbar';
 import {
   Send, ArrowRight, CheckCircle, Database, MapPin, Zap, DollarSign, Award, Star,
-  ThumbsUp, MessageCircle, Edit3, TrendingUp, Instagram,
+  ThumbsUp, MessageCircle, Edit3, TrendingUp, Instagram, User, Heart,
 } from 'lucide-react';
 
 const AdBondPage = () => {
@@ -291,7 +291,7 @@ const AdBondPage = () => {
                 </p>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
+                {/* <div className="flex gap-3">
                   <button className="flex-1 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 transform group-hover:scale-105">
                     <ThumbsUp className="inline-block w-3 h-3 mr-1" />
                     Helpful
@@ -300,7 +300,7 @@ const AdBondPage = () => {
                     <MessageCircle className="inline-block w-3 h-3 mr-1" />
                     Reply
                   </button>
-                </div>
+                </div> */}
 
                 {/* Hover Effect Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-teal-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
@@ -470,50 +470,129 @@ const AdBondPage = () => {
       </section>
       {/* CTA Section */}
       <section className="relative px-4 sm:px-6 lg:px-20 py-24">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Background Decoration */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-indigo-600/10 rounded-3xl"></div>
+        <div className="max-w-6xl mx-auto">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-600/10 via-red-600/10 to-pink-600/10 rounded-3xl"></div>
 
           <div className="relative">
-            {/* CTA Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50 rounded-full px-6 py-2 mb-8 shadow-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Join the Movement</span>
+            {/* Status indicator */}
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-orange-200/50 dark:border-orange-700/50 rounded-full px-6 py-2 mb-8 shadow-lg">
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Start Your Journey</span>
+              </div>
+
+              <h2 className="text-4xl sm:text-5xl font-black mb-6">
+                <span className="bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 bg-clip-text text-transparent">
+                  Ready to Build Trust?
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-red-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
+                  Choose Your Path Forward
+                </span>
+              </h2>
+
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Whether you're an affiliate seeking quality offers, an advertiser looking for trusted partners, or a network building relationships — start with transparency.
+              </p>
             </div>
 
-            <h2 className="text-4xl sm:text-3xl font-black mb-6">
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                This platform belongs to you — every voice matters.
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                Share the features that will make it better, fairer, and more useful for everyone.
-              </span>
-            </h2>
+            {/* Action Cards */}
+            <div className="grid md:grid-cols-3 gap-8 mb-12">
+              {/* For Affiliates */}
+              <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-200/50 dark:border-gray-700/50 transform hover:-translate-y-2">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                  For Affiliates
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                  Discover verified offers, read authentic reviews, and build your wishlist of dream partnerships.
+                </p>
+                <div className="space-y-3">
+                  <Link
+                    to="/offers"
+                    className="block w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold text-center transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    Browse Offers
+                  </Link>
+                  <Link
+                    to="/wishlist"
+                    className="block w-full bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-blue-600 dark:text-blue-400 border-2 border-blue-500 px-6 py-3 rounded-xl font-semibold text-center transition-all duration-300"
+                  >
+                    Create Wishlist
+                  </Link>
+                </div>
+              </div>
 
-            <p className="mb-12 text-sm text-gray-600 dark:text-gray-300 mx-auto leading-relaxed">
-              <strong>A Non-Profit Initiative by Fission Inc.</strong> After serving 80+ affiliate marketing clients over the past 15 years, we repeatedly heard one thing: the need for a transparent, fraud-free, and community-owned platform. AdBond was born from those requests — a non-profit initiative by Fission Inc. to give back to the industry that shaped us. Built to eliminate fake traffic, foster trust, and showcase proof-backed reviews, AdBond stands as a decentralized, free alternative to commercial listing sites — driven by real needs, not monetization.
-            </p>
+              {/* For Advertisers */}
+              <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-200/50 dark:border-gray-700/50 transform hover:-translate-y-2">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                  For Advertisers
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                  Showcase your offers, connect with quality affiliates, and build your reputation through verified reviews.
+                </p>
+                <div className="space-y-3">
+                  <Link
+                    to="/register-entity"
+                    className="block w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white px-6 py-3 rounded-xl font-semibold text-center transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    Create Profile
+                  </Link>
+                  <Link
+                    to="/advertiserswishlist"
+                    className="block w-full bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-green-600 dark:text-green-400 border-2 border-green-500 px-6 py-3 rounded-xl font-semibold text-center transition-all duration-300"
+                  >
+                    View Requests
+                  </Link>
+                </div>
+              </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
-              <button className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl text-xl font-black shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-2">
+              {/* For Everyone */}
+              <div className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-200/50 dark:border-gray-700/50 transform hover:-translate-y-2">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Heart className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                  Build Community
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                  Share experiences, write reviews, and help build a transparent ecosystem for everyone.
+                </p>
+                <div className="space-y-3">
+                  <Link
+                    to="/write-review"
+                    className="block w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold text-center transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    Write Review
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="block w-full bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-orange-600 dark:text-orange-400 border-2 border-orange-500 px-6 py-3 rounded-xl font-semibold text-center transition-all duration-300"
+                  >
+                    Join Platform
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom CTA */}
+            <div className="text-center">
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                Questions? Connect with our community on Telegram for real-time support and discussions.
+              </p>
+              <button className="group relative px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-2xl text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
                 <span className="relative z-10 flex items-center gap-2">
-                  Join Telegram Group
-                  <Send />
+                  <Send className="w-5 h-5" />
+                  Join Telegram Community
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-700 to-red-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
-
-              <Link
-                to="/signup"
-                className="group relative px-10 py-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 text-gray-900 dark:text-gray-100 rounded-2xl text-xl font-black shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Link>
             </div>
           </div>
         </div>

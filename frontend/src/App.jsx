@@ -2,10 +2,11 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ToastProvider from './components/ToastProvider';
 import TokenExpirationWarning from './components/TokenExpirationWarning';
+import ProtectedRoute from './components/ProtectedRoute';
+import NavigationGuard from './components/NavigationGuard';
 import { AuthProvider } from './contexts/AuthContext';
 import AdBondPage from './AdBondPage';
 import AdminPanel from './pages/adminpanel';
-import AdvertisersWishlist from './pages/advertiserswishlist';
 import DataBase from './pages/database';
 import LogIn from './pages/login';
 import WriteReview from './pages/writeReview';
@@ -28,11 +29,15 @@ const App = () => {
     <AuthProvider>
       <ToastProvider>
         <TokenExpirationWarning />
+        <NavigationGuard />
         <Routes>
           <Route path="/" element={<AdBondPage />} />
           <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/wishlist" element={<Wishlists />} />
-          <Route path="/advertiserswishlist" element={<AdvertisersWishlist />} />
+          <Route path="/wishlist" element={
+            <ProtectedRoute requireAuth={true}>
+              <Wishlists />
+            </ProtectedRoute>
+          } />
           <Route path="/affliate-industry" element={<DataBase />} />
           <Route path="/login" element={<LogIn />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -42,11 +47,31 @@ const App = () => {
           <Route path="/offers" element={<Offers />} />
           <Route path="/write-review" element={<WriteReview />} />
           <Route path="/writereview" element={<Navigate to="/write-review" />} />
-          <Route path="/advertiser-dashboard" element={<AdvertiserDashboard />} />
-          <Route path="/affiliate-dashboard" element={<AffiliateDashboard />} />
-          <Route path="/network-dashboard" element={<NetworkDashboard />} />
-          <Route path="/user-dashboard" element={<UserDashboardPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/advertiser-dashboard" element={
+            <ProtectedRoute requireAuth={true} requireEntity={true}>
+              <AdvertiserDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/affiliate-dashboard" element={
+            <ProtectedRoute requireAuth={true}>
+              <AffiliateDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/network-dashboard" element={
+            <ProtectedRoute requireAuth={true}>
+              <NetworkDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/user-dashboard" element={
+            <ProtectedRoute requireAuth={true}>
+              <UserDashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute requireAuth={true}>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
           <Route path="/offer/:offerId" element={<OfferDetails />} />
           <Route path="/entity/:entityId" element={<EntityDetails />} />
           <Route path="*" element={<Navigate to="/" />} />

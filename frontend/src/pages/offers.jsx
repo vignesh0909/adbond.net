@@ -107,11 +107,11 @@ export default function OffersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/30 dark:bg-blue-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200/30 dark:bg-purple-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-orange-200/30 dark:bg-orange-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-200/30 dark:bg-red-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
         <div className="absolute top-40 left-1/2 transform -translate-x-1/2 w-80 h-80 bg-pink-200/30 dark:bg-pink-400/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
@@ -119,11 +119,11 @@ export default function OffersPage() {
       <section className="relative pt-24 pb-16 px-4 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center mb-8 animate-slide-in-down">
-          <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+          <div className="w-12 h-12 bg-gradient-to-tr from-orange-600 to-red-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
             <Heart className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-purple">Explore Offers</h2>
+            <h2 className="text-4xl font-extrabold drop-shadow-lg text-gradient-orange">Explore Offers</h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Discover the best offers from verified partners</p>
           </div>
         </div>
@@ -135,9 +135,9 @@ export default function OffersPage() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transform hover:scale-105 ${selectedCategory === category
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg border-transparent scale-105'
-                  : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700/80 hover:shadow-md'
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 transform hover:scale-105 ${selectedCategory === category
+                  ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg border-transparent scale-105'
+                  : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-gray-700/80 hover:shadow-md'
                   }`}
               >
                 {category}
@@ -180,11 +180,10 @@ export default function OffersPage() {
               Results
             </label>
             <div className="bg-white/80 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 font-medium">
-              {loading ? (
-                <div className="flex items-center">
-                  <Loader2 className="animate-spin w-4 h-4 mr-2 text-blue-600" />
-                  Loading...
-                </div>
+              {loading ? (              <div className="flex items-center">
+                <Loader2 className="animate-spin w-4 h-4 mr-2 text-orange-600" />
+                Loading...
+              </div>
               ) : (
                 `${total > 0 ? total : offers.length} offer${(total > 0 ? total : offers.length) !== 1 ? 's' : ''} found`
               )}
@@ -192,9 +191,9 @@ export default function OffersPage() {
           </div>
         </div>
 
-        {loading ? (
+        {        loading ? (
           <div className="flex justify-center items-center py-16">
-            <Loader2 className="animate-spin w-10 h-10 text-blue-600" />
+            <Loader2 className="animate-spin w-10 h-10 text-orange-600" />
             <span className="ml-4 text-gray-600 text-lg">Loading offers...</span>
           </div>
         ) : error ? (
@@ -231,11 +230,11 @@ export default function OffersPage() {
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {/* Hover Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                   <div className="relative flex items-start p-6">
                     {/* Offer Icon/Avatar */}
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl mr-5 flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl mr-5 flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
                       {offer.title.charAt(0).toUpperCase()}
                     </div>
 
@@ -243,7 +242,7 @@ export default function OffersPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 pr-4">
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                             {offer.title}
                           </h3>
 
@@ -252,7 +251,7 @@ export default function OffersPage() {
 
                         {/* Payout Display */}
                         <div className="text-right flex-shrink-0">
-                          <div className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mb-1 group-hover:scale-110 transition-transform">
+                          <div className="text-2xl font-extrabold text-orange-600 dark:text-orange-400 mb-1 group-hover:scale-110 transition-transform">
                             {offer.payout_value ? (
                               typeof offer.payout_value === 'string' && offer.payout_value.includes('%') ?
                                 offer.payout_value :
@@ -271,7 +270,7 @@ export default function OffersPage() {
                       <div className="mb-3">
                         <button
                           onClick={(e) => handleEntityClick(e, offer.entity_id, offer.entity_name)}
-                          className="text-sm text-blue-600 dark:text-blue-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline font-semibold transition-colors flex items-center"
+                          className="text-sm text-orange-600 dark:text-orange-400 hover:text-red-700 dark:hover:text-red-300 hover:underline font-semibold transition-colors flex items-center"
                         >
                           <IdCard className="mr-2" />
                           {offer.entity_metadata.company_name || 'Unknown Entity'}
@@ -292,7 +291,7 @@ export default function OffersPage() {
                           </span>
                         )}
                         {Array.isArray(offer.target_geo) && offer.target_geo.length > 0 && (
-                          <span className="badge bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200">
+                          <span className="badge bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200">
                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                             </svg>
@@ -304,7 +303,7 @@ export default function OffersPage() {
                       {/* Action Indicator */}
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                         <span className="text-sm text-gray-500 dark:text-gray-400">Click to view details</span>
-                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1 transition-all" />
                       </div>
                     </div>
                   </div>
@@ -318,7 +317,7 @@ export default function OffersPage() {
                   <button
                     onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                     disabled={page === 1 || loading}
-                    className={`px-4 py-2 rounded-lg font-semibold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200 ${(page === 1 || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+                    className={`px-4 py-2 rounded-lg font-semibold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-orange-50 dark:hover:bg-gray-700 transition-all duration-200 ${(page === 1 || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
                       }`}
                   >
                     Previous
@@ -333,7 +332,7 @@ export default function OffersPage() {
                   <button
                     onClick={() => setPage((prev) => prev + 1)}
                     disabled={offers.length < limit || loading}
-                    className={`px-4 py-2 rounded-lg font-semibold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200 ${(offers.length < limit || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+                    className={`px-4 py-2 rounded-lg font-semibold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-orange-50 dark:hover:bg-gray-700 transition-all duration-200 ${(offers.length < limit || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
                       }`}
                   >
                     Next
@@ -358,7 +357,7 @@ export default function OffersPage() {
                         setTotal(0); // Reset total to avoid stale data
                       }}
                       disabled={loading}
-                      className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                      className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-200"
                     >
                       {[6, 12, 24, 48].map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
