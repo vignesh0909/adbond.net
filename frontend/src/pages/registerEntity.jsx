@@ -146,6 +146,14 @@ export default function RegisterEntityPage() {
             return;
         }
 
+        // At least one IM (Teams, LinkedIn, Telegram) is required
+        const hasAtLeastOneIM = [teams, linkedin, telegram].some(v => v && v.trim() !== '');
+        if (!hasAtLeastOneIM) {
+            showToastMessage('Provide at least one IM: Teams, LinkedIn, or Telegram.', 'error');
+            setLoading(false);
+            return;
+        }
+
         const payload = {
             entity_type: entityType,
             name,
@@ -499,85 +507,90 @@ export default function RegisterEntityPage() {
                                         <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                                     </svg>
                                     Contact Information <span className="text-red-500 ml-1">*</span>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400 font-normal ml-2">(Atleast one IM is required)</span>
                                 </h4>
                                 <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Phone Number <span className="text-red-500 ml-1">*</span>
-                                            </label>
-                                            <div className="flex gap-1">
-                                                <select
-                                                    value={countryCode}
-                                                    onChange={(e) => setCountryCode(e.target.value)}
-                                                    className="input-field rounded-r-none border-r-0 flex-shrink-0"
-                                                    style={{ width: '120px' }}
-                                                >
-                                                    {countryCodes.map((country) => (
-                                                        <option key={country.code} value={country.code}>
-                                                            {country.flag} {country.code}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                    {/* Phone - kept separate and required */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Phone Number <span className="text-red-500 ml-1">*</span>
+                                        </label>
+                                        <div className="flex gap-1">
+                                            <select
+                                                value={countryCode}
+                                                onChange={(e) => setCountryCode(e.target.value)}
+                                                className="input-field rounded-r-none border-r-0 flex-shrink-0"
+                                                style={{ width: '120px' }}
+                                            >
+                                                {countryCodes.map((country) => (
+                                                    <option key={country.code} value={country.code}>
+                                                        {country.flag} {country.code}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <input
+                                                type="tel"
+                                                value={phone}
+                                                onChange={handlePhoneChange}
+                                                placeholder="Enter 10-digit number"
+                                                className={`input-field rounded-l-none border-l-0 flex-1 ${!validatePhoneNumber(phone) && phone ? 'border-red-500 focus:border-red-500' : ''}`}
+                                                maxLength="15"
+                                                required
+                                            />
+                                        </div>
+                                        {phone && !validatePhoneNumber(phone) && (
+                                            <p className="text-red-500 text-xs mt-1">
+                                                Enter exactly 10 digits (e.g., 9876543210)
+                                            </p>
+                                        )}
+                                        {phone && validatePhoneNumber(phone) && (
+                                            <p className="text-green-600 text-xs mt-1">
+                                                Valid number
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Instant Messaging group - at least one required */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Social Platforms <span className="text-gray-500 dark:text-gray-400 font-normal">(At least one IM required)</span>
+                                        </label>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="w-full">
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Microsoft Teams ID
+                                                </label>
                                                 <input
-                                                    type="tel"
-                                                    value={phone}
-                                                    onChange={handlePhoneChange}
-                                                    placeholder="Enter 10-digit number"
-                                                    className={`input-field rounded-l-none border-l-0 flex-1 ${!validatePhoneNumber(phone) && phone ? 'border-red-500 focus:border-red-500' : ''}`}
-                                                    maxLength="15"
-                                                    required
+                                                    type="text"
+                                                    value={teams}
+                                                    onChange={(e) => setTeams(e.target.value)}
+                                                    placeholder="Microsoft Teams ID"
+                                                    className="input-field w-full"
                                                 />
                                             </div>
-                                            {phone && !validatePhoneNumber(phone) && (
-                                                <p className="text-red-500 text-xs mt-1">
-                                                    Enter exactly 10 digits (e.g., 9876543210)
-                                                </p>
-                                            )}
-                                            {phone && validatePhoneNumber(phone) && (
-                                                <p className="text-green-600 text-xs mt-1">
-                                                    Valid number
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Microsoft Teams ID
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={teams}
-                                                onChange={(e) => setTeams(e.target.value)}
-                                                placeholder="Microsoft Teams ID"
-                                                className="input-field"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="w-full">
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                LinkedIn Profile
-                                            </label>
-                                            <input
-                                                type="url"
-                                                value={linkedin}
-                                                onChange={(e) => setLinkedin(e.target.value)}
-                                                placeholder="LinkedIn Profile URL"
-                                                className="input-field w-full"
-                                            />
-                                        </div>
-                                        <div className="w-full">
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                Telegram Username
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={telegram}
-                                                onChange={(e) => setTelegram(e.target.value)}
-                                                placeholder="Telegram Username (e.g., @username)"
-                                                className="input-field w-full"
-                                            />
+                                            <div className="w-full">
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    LinkedIn Profile
+                                                </label>
+                                                <input
+                                                    type="url"
+                                                    value={linkedin}
+                                                    onChange={(e) => setLinkedin(e.target.value)}
+                                                    placeholder="LinkedIn Profile URL"
+                                                    className="input-field w-full"
+                                                />
+                                            </div>
+                                            <div className="w-full">
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Telegram Username
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={telegram}
+                                                    onChange={(e) => setTelegram(e.target.value)}
+                                                    placeholder="Telegram Username (e.g., @username)"
+                                                    className="input-field w-full"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

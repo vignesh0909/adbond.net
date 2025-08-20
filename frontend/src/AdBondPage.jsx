@@ -165,10 +165,10 @@ const AdBondPage = () => {
                   </div>
 
                   {/* Action Button */}
-                  <button className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-2xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                  {/* <button className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-2xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                     I have this Offer
                     <ArrowRight className="inline-block ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </button>
+                  </button> */}
                 </div>
 
                 {/* Hover Effect Overlay */}
