@@ -349,7 +349,7 @@ router.put('/:id/verification', authenticateToken, requireRole(['admin']), valid
         const { id } = req.params;
         const { verification_status, admin_notes } = req.body;
 
-        const validStatuses = ['pending', 'approved', 'rejected', 'on_hold'];
+        const validStatuses = ['pending', 'approved', 'rejected', 'on_hold', 'deleted'];
         if (!validStatuses.includes(verification_status)) {
             return res.status(400).json({
                 message: 'Invalid verification status. Must be one of: pending, approved, rejected, on_hold'
@@ -362,7 +362,7 @@ router.put('/:id/verification', authenticateToken, requireRole(['admin']), valid
             return res.status(404).json({ message: 'Entity not found' });
         }
 
-        const updatedEntity = await entityModel.updateVerificationStatus({ entity_id: id, verification_status: verification_status, admin_user_id: req.user.user_id, admin_notes });
+        const updatedEntity = await entityModel.updateVerificationStatus({ entity_id: id, verification_status, admin_user_id: req.user.user_id, admin_notes });
 
         // Create user account only when entity is being approved
         if (verification_status === 'approved') {
@@ -399,6 +399,22 @@ router.put('/:id/verification', authenticateToken, requireRole(['admin']), valid
                 console.error('Error creating user account for entity:', accountError);
                 // Continue with approval even if account creation fails
                 // We don't want to block the approval process
+            }
+        }
+
+        // Notify when entity is rejected
+        if (verification_status === 'rejected') {
+            try {
+                // Avoid duplicate notifications if it was already rejected
+                if (entity.verification_status !== 'rejected') {
+                    const { sendEntityRejectionEmail } = require('../services/emailService');
+                    await sendEntityRejectionEmail(entity, admin_notes || '');
+                } else {
+                    console.log(`Entity ${entity.entity_id} already rejected previously. Skipping rejection email.`);
+                }
+            } catch (mailErr) {
+                console.error('Error sending rejection email:', mailErr);
+                // Non-blocking: do not fail the API on email issues
             }
         }
 
@@ -563,6 +579,49 @@ router.put('/:id/reputation', authenticateToken, requireRole(['admin', 'system']
         });
     } catch (error) {
         console.error('Update entity reputation error:', error);
+        next(error);
+    }
+});
+
+// Delete entity (admin only)
+router.delete('/:id', authenticateToken, requireRole(['admin']), async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        // Check if entity exists
+        const entity = await entityModel.getEntityById(id);
+        if (!entity) {
+            return res.status(404).json({ message: 'Entity not found' });
+        }
+
+        // Store entity info for response before deletion
+        const entityInfo = {
+            entity_id: entity.entity_id,
+            name: entity.name,
+            email: entity.email,
+            entity_type: entity.entity_type,
+            verification_status: entity.verification_status
+        };
+
+        // Delete the entity (this will cascade to related records due to ON DELETE CASCADE)
+        await entityModel.deleteEntity(id);
+
+        console.log(`Entity deleted by admin ${req.user.user_id}: ${entityInfo.name} (${entityInfo.entity_id})`);
+
+        res.json({
+            message: 'Entity deleted successfully',
+            deleted_entity: entityInfo
+        });
+    } catch (error) {
+        console.error('Delete entity error:', error);
+        
+        // Handle foreign key constraint errors
+        if (error.code === '23503') {
+            return res.status(400).json({
+                message: 'Cannot delete entity due to existing references. Please remove related records first.'
+            });
+        }
+        
         next(error);
     }
 });

@@ -13,7 +13,15 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-
+// Helper function for email audit logging
+const logEmailAudit = (event, data) => {
+    const auditLog = {
+        timestamp: new Date().toISOString(),
+        event: event,
+        ...data
+    };
+    console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(auditLog));
+};
 
 const emailService = {
     async sendWelcomeEmail(entity, user, tempPassword) {
@@ -22,16 +30,13 @@ const emailService = {
             // It should NEVER be called during entity registration
             console.log(`[MAILER] Sending welcome email for approved entity: ${entity.name} (${entity.entity_id})`);
 
-            // Audit log for debugging
-            const auditLog = {
-                timestamp: new Date().toISOString(),
-                event: 'WELCOME_EMAIL_TRIGGERED',
+            logEmailAudit('WELCOME_EMAIL_TRIGGERED', {
+                email_type: 'welcome',
                 entity_id: entity.entity_id,
                 entity_name: entity.name,
                 recipient_email: user.email,
                 stack_trace: new Error().stack
-            };
-            console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(auditLog));
+            });
 
             // Verify email configuration before sending
             if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -131,20 +136,28 @@ const emailService = {
             const info = await transporter.sendMail(mailOptions);
             console.log(`[MAILER SUCCESS] Welcome email sent to ${user.email} for entity ${entity.name}: %s`, info.messageId);
 
-            // Log the event with timestamp for debugging
-            const logEntry = {
-                timestamp: new Date().toISOString(),
-                event: 'WELCOME_EMAIL_SENT',
+            logEmailAudit('WELCOME_EMAIL_SENT', {
+                email_type: 'welcome',
                 entity_id: entity.entity_id,
                 entity_name: entity.name,
                 recipient_email: user.email,
-                message_id: info.messageId
-            };
-            console.log('[EMAIL_AUDIT_LOG]', JSON.stringify(logEntry));
+                message_id: info.messageId,
+                from_email: fromEmail,
+                subject: mailOptions.subject
+            });
 
             return { success: true, messageId: info.messageId };
         } catch (error) {
             console.error('Error sending welcome email:', error);
+
+            logEmailAudit('WELCOME_EMAIL_ERROR', {
+                email_type: 'welcome',
+                entity_id: (entity && entity.entity_id) || undefined,
+                entity_name: (entity && entity.name) || undefined,
+                recipient_email: (user && user.email) || undefined,
+                error: error.message,
+                code: error.code || 'UNKNOWN'
+            });
 
             // Provide more detailed error information
             let errorMsg = error.message;
@@ -165,8 +178,159 @@ const emailService = {
         }
     },
 
+    // Send entity verification rejection email
+    async sendEntityRejectionEmail(entity, adminNotes = '') {
+        try {
+            logEmailAudit('REJECTION_EMAIL_TRIGGERED', {
+                email_type: 'entity_rejection',
+                entity_id: entity.entity_id,
+                entity_name: entity.name,
+                recipient_email: entity.email,
+                has_admin_notes: !!adminNotes
+            });
+
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+            const emailContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); padding: 20px; text-align: center;">
+                        <img src="https://adbond.net/assets/AdBond-Logo-1.png" alt="AdBond Logo" style="max-width: 150px; margin-bottom: 10px;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">Verification Status Update</h1>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div style="padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: -20px;">
+                        <h2 style="color: #333; margin-bottom: 20px;">Hello ${entity.name},</h2>
+                        
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            Thank you for your interest in becoming part of the AdBond community! We genuinely appreciate the time and effort you invested in submitting your application.
+                        </p>
+                        
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            After thoroughly reviewing your application, we've decided not to move forward with your entity registration at this time. This decision doesn't reflect on your business's value or potential – it simply means we may not be the perfect fit right now.
+                        </p>
+                        
+                        ${adminNotes ? `
+                        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 16px;">📝 Feedback from Our Review Team</h3>
+                            <p style="color: #856404; margin: 0; white-space: pre-wrap;">${adminNotes}</p>
+                        </div>` : ''}
+
+                        <div style="background: #e8f5e8; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <h3 style="color: #155724; margin: 0 0 10px 0; font-size: 16px;">🚀 What's Next?</h3>
+                            <ul style="color: #155724; margin: 10px 0; padding-left: 20px;">
+                                <li><strong>Reapply Later:</strong> Feel free to submit a new application in the future when your business evolves</li>
+                                <li><strong>Stay Connected:</strong> Follow our updates and announcements for new opportunities</li>
+                                <li><strong>Network Building:</strong> Consider joining our community forums to connect with other professionals</li>
+                                <li><strong>Partnership Options:</strong> Explore alternative ways to collaborate with AdBond members</li>
+                            </ul>
+                        </div>
+
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            We encourage you to keep growing your business and consider reapplying in the future. Our doors are always open to quality partners who align with our platform's vision.
+                        </p>
+
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            If you have questions about this decision or would like clarification on how to strengthen a future application, our support team is here to help.
+                        </p>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${frontendUrl}/support" 
+                               style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block;
+                                      margin-right: 15px;">
+                                Contact Support
+                            </a>
+                            <a href="${frontendUrl}" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      display: inline-block;">
+                                Visit AdBond
+                            </a>
+                        </div>
+
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                            <p style="color: #6c757d; margin: 0; font-size: 14px; text-align: center;">
+                                <strong>Application Details:</strong><br>
+                                Entity: ${entity.entity_metadata?.company_name || entity.name}<br>
+                                Type: ${entity.entity_type ? entity.entity_type.charAt(0).toUpperCase() + entity.entity_type.slice(1) : 'N/A'}<br>
+                                Submitted: ${new Date(entity.created_at).toLocaleDateString()}
+                            </p>
+                        </div>
+
+                        <p style="color: #777; font-size: 14px; line-height: 1.6; font-style: italic;">
+                            Thank you once again for considering AdBond. We wish you continued success in your business endeavors!
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background: #333; padding: 20px; text-align: center; color: #999; margin-top: 20px; border-radius: 0 0 8px 8px;">
+                        <p style="margin: 0; font-size: 12px;">
+                            © ${new Date().getFullYear()} AdBond. All rights reserved.
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 12px;">
+                            <a href="${frontendUrl}" style="color: #667eea; text-decoration: none;">Visit AdBond</a> |
+                            <a href="${frontendUrl}/support" style="color: #667eea; text-decoration: none;">Support</a>
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            const mailOptions = {
+                from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'AdBond <noreply@adbond.net>',
+                to: entity.email,
+                subject: 'Thank you for your interest in AdBond - Application Update',
+                html: emailContent
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Rejection email sent to ${entity.email} for entity ${entity.entity_id}`);
+            
+            logEmailAudit('REJECTION_EMAIL_SENT', {
+                email_type: 'entity_rejection',
+                entity_id: entity.entity_id,
+                entity_name: entity.name,
+                recipient_email: entity.email,
+                subject: mailOptions.subject,
+                has_admin_notes: !!adminNotes
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error sending rejection email:', error);
+            
+            logEmailAudit('REJECTION_EMAIL_ERROR', {
+                email_type: 'entity_rejection',
+                entity_id: (entity && entity.entity_id) || undefined,
+                entity_name: (entity && entity.name) || undefined,
+                recipient_email: (entity && entity.email) || undefined,
+                error: error.message,
+                code: error.code || 'UNKNOWN'
+            });
+
+            return { success: false, error: error.message };
+        }
+    },
+
     // Send email verification
     async sendVerificationEmail(email, firstName, token) {
+        logEmailAudit('VERIFICATION_EMAIL_TRIGGERED', {
+            email_type: 'email_verification',
+            recipient_email: email,
+            recipient_name: firstName,
+            has_token: !!token
+        });
+
         const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
 
         const mailOptions = {
@@ -222,14 +386,39 @@ const emailService = {
         try {
             await transporter.sendMail(mailOptions);
             console.log(`Verification email sent to ${email}`);
+            
+            logEmailAudit('VERIFICATION_EMAIL_SENT', {
+                email_type: 'email_verification',
+                recipient_email: email,
+                recipient_name: firstName,
+                subject: mailOptions.subject,
+                verification_url: verificationUrl
+            });
+
         } catch (error) {
             console.error('Error sending verification email:', error);
+            
+            logEmailAudit('VERIFICATION_EMAIL_ERROR', {
+                email_type: 'email_verification',
+                recipient_email: email,
+                recipient_name: firstName,
+                error: error.message,
+                code: error.code || 'UNKNOWN'
+            });
+
             throw new Error('Failed to send verification email');
         }
     },
 
     // Send identity verification success email
     async sendIdentityVerificationSuccess(email, firstName, verificationMethod) {
+        logEmailAudit('IDENTITY_VERIFICATION_EMAIL_TRIGGERED', {
+            email_type: 'identity_verification_success',
+            recipient_email: email,
+            recipient_name: firstName,
+            verification_method: verificationMethod
+        });
+
         const mailOptions = {
             from: process.env.EMAIL_FROM || 'AdBond <noreply@adbond.com>',
             to: email,
@@ -277,8 +466,26 @@ const emailService = {
         try {
             await transporter.sendMail(mailOptions);
             console.log(`Identity verification success email sent to ${email}`);
+            
+            logEmailAudit('IDENTITY_VERIFICATION_EMAIL_SENT', {
+                email_type: 'identity_verification_success',
+                recipient_email: email,
+                recipient_name: firstName,
+                verification_method: verificationMethod,
+                subject: mailOptions.subject
+            });
+
         } catch (error) {
             console.error('Error sending identity verification email:', error);
+            
+            logEmailAudit('IDENTITY_VERIFICATION_EMAIL_ERROR', {
+                email_type: 'identity_verification_success',
+                recipient_email: email,
+                recipient_name: firstName,
+                verification_method: verificationMethod,
+                error: error.message,
+                code: error.code || 'UNKNOWN'
+            });
             // Don't throw error here as it's not critical
         }
     },
@@ -295,6 +502,17 @@ const emailService = {
             messageContent,
             offerRequestDetails
         } = contactData;
+
+        logEmailAudit('AFFILIATE_CONTACT_EMAIL_TRIGGERED', {
+            email_type: 'affiliate_contact',
+            sender_email: senderEmail,
+            sender_name: senderName,
+            sender_company: senderCompany,
+            recipient_email: recipientEmail,
+            recipient_name: recipientName,
+            offer_request_title: offerRequestTitle,
+            has_message: !!messageContent
+        });
 
         const mailOptions = {
             from: process.env.EMAIL_FROM || 'AdBond <noreply@adbond.com>',
@@ -410,9 +628,33 @@ const emailService = {
         try {
             await transporter.sendMail(mailOptions);
             console.log(`Affiliate contact email sent to ${recipientEmail}`);
+            
+            logEmailAudit('AFFILIATE_CONTACT_EMAIL_SENT', {
+                email_type: 'affiliate_contact',
+                sender_email: senderEmail,
+                sender_name: senderName,
+                sender_company: senderCompany,
+                recipient_email: recipientEmail,
+                recipient_name: recipientName,
+                offer_request_title: offerRequestTitle,
+                subject: mailOptions.subject
+            });
+
             return { success: true, message: 'Email sent successfully' };
         } catch (error) {
             console.error('Error sending affiliate contact email:', error);
+            
+            logEmailAudit('AFFILIATE_CONTACT_EMAIL_ERROR', {
+                email_type: 'affiliate_contact',
+                sender_email: senderEmail,
+                sender_name: senderName,
+                recipient_email: recipientEmail,
+                recipient_name: recipientName,
+                offer_request_title: offerRequestTitle,
+                error: error.message,
+                code: error.code || 'UNKNOWN'
+            });
+
             throw new Error('Failed to send contact email');
         }
     },
@@ -421,6 +663,15 @@ const emailService = {
     async sendAdminNotificationEmail(entity) {
         try {
             console.log(`[EMAIL SERVICE] Sending admin notification for new entity registration: ${entity.name} (${entity.entity_id})`);
+
+            logEmailAudit('ADMIN_NOTIFICATION_EMAIL_TRIGGERED', {
+                email_type: 'admin_notification',
+                entity_id: entity.entity_id,
+                entity_name: entity.name,
+                entity_type: entity.entity_type,
+                entity_email: entity.email,
+                admin_email: process.env.ADMIN_EMAIL_USER
+            });
 
             // Verify admin email configuration before sending
             if (!process.env.ADMIN_EMAIL_USER || !process.env.ADMIN_EMAIL_FROM) {
@@ -534,10 +785,32 @@ const emailService = {
             await transporter.sendMail(mailOptions);
             console.log(`Admin notification email sent successfully to ${process.env.ADMIN_EMAIL_USER} for entity: ${entity.name}`);
 
+            logEmailAudit('ADMIN_NOTIFICATION_EMAIL_SENT', {
+                email_type: 'admin_notification',
+                entity_id: entity.entity_id,
+                entity_name: entity.name,
+                entity_type: entity.entity_type,
+                entity_email: entity.email,
+                admin_email: process.env.ADMIN_EMAIL_USER,
+                subject: mailOptions.subject
+            });
+
             return { success: true, message: 'Admin notification email sent successfully' };
 
         } catch (error) {
             console.error('Error sending admin notification email:', error);
+            
+            logEmailAudit('ADMIN_NOTIFICATION_EMAIL_ERROR', {
+                email_type: 'admin_notification',
+                entity_id: (entity && entity.entity_id) || undefined,
+                entity_name: (entity && entity.name) || undefined,
+                entity_type: (entity && entity.entity_type) || undefined,
+                entity_email: (entity && entity.email) || undefined,
+                admin_email: process.env.ADMIN_EMAIL_USER,
+                error: error.message,
+                code: error.code || 'UNKNOWN'
+            });
+
             return {
                 success: false,
                 error: error.message || 'Failed to send admin notification email'
@@ -548,6 +821,13 @@ const emailService = {
     // Send password reset email
     async sendPasswordResetEmail(email, firstName, resetToken) {
         try {
+            logEmailAudit('PASSWORD_RESET_EMAIL_TRIGGERED', {
+                email_type: 'password_reset',
+                recipient_email: email,
+                recipient_name: firstName,
+                has_reset_token: !!resetToken
+            });
+
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
             const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
@@ -627,13 +907,30 @@ const emailService = {
             await transporter.sendMail(mailOptions);
             console.log(`Password reset email sent successfully to ${email}`);
 
+            logEmailAudit('PASSWORD_RESET_EMAIL_SENT', {
+                email_type: 'password_reset',
+                recipient_email: email,
+                recipient_name: firstName,
+                subject: mailOptions.subject,
+                reset_url: resetUrl
+            });
+
             return { success: true, message: 'Password reset email sent successfully' };
 
         } catch (error) {
             console.error('Error sending password reset email:', error);
+            
+            logEmailAudit('PASSWORD_RESET_EMAIL_ERROR', {
+                email_type: 'password_reset',
+                recipient_email: email,
+                recipient_name: firstName,
+                error: error.message,
+                code: error.code || 'UNKNOWN'
+            });
+
             throw new Error('Failed to send password reset email');
         }
-    },
+    }
 };
 
 module.exports = emailService;

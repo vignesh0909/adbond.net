@@ -5,7 +5,8 @@ const { v4: uuidv4 } = require('uuid');
 const createUsersTableQuery = `
 CREATE TABLE IF NOT EXISTS users (
     user_id TEXT PRIMARY KEY,
-    entity_id TEXT REFERENCES entities(entity_id) ON DELETE SET NULL,
+    -- Remove FK here to break circular dependency on initial creation; we'll add it later via ALTER TABLE
+    entity_id TEXT,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100),
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -23,48 +24,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Add missing columns if they don't exist
-ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_required BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS temp_password_expires TIMESTAMP;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires TIMESTAMP;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_data JSONB DEFAULT '{}';
-
--- Migrate existing data to new JSONB column if old columns exist
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'linkedin_profile') THEN
-        UPDATE users 
-        SET verification_data = CASE 
-            WHEN identity_verified = TRUE THEN 
-                CASE verification_method
-                    WHEN 'linkedin' THEN jsonb_build_object(
-                        'identity_verified', TRUE,
-                        'verification_method', 'linkedin',
-                        'linkedin_profile', COALESCE(linkedin_profile, ''),
-                        'verification_date', verification_date::text
-                    )
-                    WHEN 'business_email' THEN jsonb_build_object(
-                        'identity_verified', TRUE,
-                        'verification_method', 'business_email',
-                        'business_email', email,
-                        'verification_date', verification_date::text
-                    )
-                    ELSE jsonb_build_object('identity_verified', FALSE)
-                END
-            ELSE jsonb_build_object('identity_verified', FALSE)
-        END
-        WHERE verification_data = '{}' OR verification_data IS NULL;
-        
-        -- Drop old columns after migration
-        ALTER TABLE users DROP COLUMN IF EXISTS linkedin_profile;
-        ALTER TABLE users DROP COLUMN IF EXISTS identity_verified;
-        ALTER TABLE users DROP COLUMN IF EXISTS verification_method;
-        ALTER TABLE users DROP COLUMN IF EXISTS verification_date;
-    END IF;
-END $$;
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

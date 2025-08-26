@@ -289,7 +289,7 @@ export default function RegisterEntityPage() {
                 <input type="text" name="payment_terms" value={entityMetadata.payment_terms || ''} onChange={handleMetadataChange} placeholder="Payment Terms (e.g., Net 15, Weekly) *" required className="input-field" />
                 <input type="number" name="offers_available" value={entityMetadata.offers_available || ''} onChange={handleMetadataChange} placeholder="Number of Offers Available *" required className="input-field" />
                 <input type="number" name="minimum_payout" value={entityMetadata.minimum_payout || ''} onChange={handleMetadataChange} placeholder="Minimum Payout threshold (USD) *" required className="input-field" />
-                <input type="number" step="0.01" name="referral_commission" value={entityMetadata.referral_commission || ''} onChange={handleMetadataChange} placeholder="Referral Commission (e.g., 0.05 for 5%) *" required className="input-field" />
+                <input type="number" step="0.01" name="referral_commission" value={entityMetadata.referral_commission || ''} onChange={handleMetadataChange} placeholder="Referral Commission (e.g., 0.05 for 5%)" className="input-field" />
             </div>
         </>
     );

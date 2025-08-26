@@ -41,10 +41,10 @@ CREATE INDEX IF NOT EXISTS idx_employees_designation ON affliate_contacts(design
 const createTables = async () => {
     try {
         await client.query(createAffliateTableQuery);
-        console.log('Companies table created successfully');
+        console.log('Affiliates table created successfully');
 
         await client.query(createAffEmployeesTableQuery);
-        console.log('Employees table created successfully');
+        console.log('Affiliate Contacts table created successfully');
     } catch (error) {
         console.error('Error creating tables:', error.message);
         throw error;

@@ -162,6 +162,31 @@ tables.forEach(table => {
     });
 });
 
+// After core tables exist, add FK from users.entity_id -> entities(entity_id) to avoid circular creation issues
+(async () => {
+    try {
+        const addUsersEntityFk = `
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'fk_users_entity' AND table_name = 'users'
+            ) THEN
+                ALTER TABLE users
+                ADD CONSTRAINT fk_users_entity
+                FOREIGN KEY (entity_id)
+                REFERENCES entities(entity_id)
+                ON DELETE SET NULL;
+            END IF;
+        END $$;`;
+
+        await client.query(addUsersEntityFk);
+        console.log('Ensured FK users.entity_id -> entities(entity_id) exists');
+    } catch (fkErr) {
+        console.error('Error ensuring users -> entities FK:', fkErr.message);
+    }
+})();
+
 // Entity model methods
 const entityModel = {
     // Validate and structure entity metadata based on entity type
@@ -171,7 +196,7 @@ const entityModel = {
         // Define required fields for each entity type
         const typeSpecificFields = {
             network: {
-                required: ['network_name', 'signup_url', 'tracking_platform', 'supported_models', 'verticals', 'payment_terms'],
+                required: ['company_name', 'signup_url', 'tracking_platform', 'supported_models', 'verticals', 'payment_terms'],
                 optional: ['offers_available', 'minimum_payout', 'referral_commission']
             },
             affiliate: {
