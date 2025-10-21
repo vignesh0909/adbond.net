@@ -23,6 +23,7 @@ import EntityDetails from './pages/entityDetails';
 import EmailVerificationPage from './pages/emailVerification';
 import ResetPasswordPage from './pages/resetPassword';
 import Wishlists from './pages/wishlists';
+import OpenChatPage from './pages/openChat';
 
 const App = () => {
   return (
@@ -70,6 +71,11 @@ const App = () => {
           <Route path="/profile" element={
             <ProtectedRoute requireAuth={true}>
               <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/chat" element={
+            <ProtectedRoute requireAuth={true}>
+              <OpenChatPage />
             </ProtectedRoute>
           } />
           <Route path="/offer/:offerId" element={<OfferDetails />} />

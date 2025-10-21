@@ -23,7 +23,7 @@ const entityRoutes = require('./routes/entity.router');
 const offersRoutes = require('./routes/offers.router');
 const reviewsRoutes = require('./routes/reviews.router');
 const affliateDBRoutes = require('./routes/affliate_db.router');
-const { authenticateToken } = require('./middleware/auth');
+const chatRoutes = require('./routes/chat.router');
 
 // Use routes
 app.use('/api/users', userRoutes);
@@ -32,6 +32,7 @@ app.use('/api/offers', offersRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/affliates', affliateDBRoutes);
 app.use('/api/affiliate-companies', affliateDBRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
