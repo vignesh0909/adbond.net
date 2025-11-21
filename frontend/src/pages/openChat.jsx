@@ -74,7 +74,7 @@ const ChatMessage = ({
   const toggleReply = () => setShowReply((prev) => !prev);
 
   const handleReplySubmit = async (event) => {
-    event.preventDefault();
+    if (event && event.preventDefault) event.preventDefault();
     const trimmed = replyText.trim();
 
     if (!trimmed) {
@@ -146,7 +146,6 @@ const ChatMessage = ({
             >
               <p className="text-[11px] uppercase tracking-wide text-blue-200 flex items-center gap-2">
                 Replying to {parentPreview.authorName}
-                <span className="text-[10px] text-blue-300/80">(jump)</span>
               </p>
               <p className="mt-1 text-sm text-gray-100 leading-5">{parentPreview.snippet}</p>
             </button>
@@ -173,6 +172,12 @@ const ChatMessage = ({
                 onChange={(event) => setReplyText(event.target.value)}
                 rows={3}
                 className="w-full rounded-xl border border-gray-700 bg-gray-950/80 text-sm text-gray-100 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!submitting) handleReplySubmit();
+                  }
+                }}
                 placeholder="Write a thoughtful reply…"
                 disabled={submitting}
               />
@@ -385,6 +390,39 @@ const OpenChatPage = () => {
     }
   };
 
+  // Reusable send function to support button and Enter key
+  const sendMessage = async () => {
+    const trimmed = newMessage.trim();
+
+    if (!trimmed) {
+      customToast.info('Please enter a message before sending.');
+      return;
+    }
+
+    try {
+      setSending(true);
+      const response = await chatAPI.postMessage({ content: trimmed });
+
+      if (response.success && response.message) {
+        setNewMessage('');
+        setMessages((prevMessages) => {
+          const exists = prevMessages.some((msg) => msg.message_id === response.message.message_id);
+          if (exists) return prevMessages;
+          return [...prevMessages, response.message];
+        });
+        scrollToBottom(true);
+        highlightMessage(response.message.message_id);
+      } else {
+        customToast.error(response.message || 'Unable to send message.');
+      }
+    } catch (error) {
+      const errorMessage = error?.response?.data?.message || error.message || 'Unable to send message.';
+      customToast.error(errorMessage);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleReply = useCallback(async (content, parentMessageId) => {
     const response = await chatAPI.postMessage({ content, parentMessageId });
 
@@ -509,8 +547,15 @@ const OpenChatPage = () => {
                 <textarea
                   value={newMessage}
                   onChange={(event) => setNewMessage(event.target.value)}
-                  rows={3}
-                  className="w-full bg-transparent text-sm text-gray-100 px-4 pt-4 resize-none focus:outline-none placeholder:text-gray-500"
+                    rows={3}
+                    className="w-full bg-transparent text-sm text-gray-100 px-4 pt-4 resize-none focus:outline-none placeholder:text-gray-500"
+                    onKeyDown={(e) => {
+                      // Enter to send, Shift+Enter for newline
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (!sending) sendMessage();
+                      }
+                    }}
                   placeholder="Press Enter to share something with everyone…"
                   disabled={sending}
                 />
